@@ -1,0 +1,46 @@
+name: Executable
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        julia-version:
+          - '1.5'
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build project # This would actually build your project, using zip for an example artifact
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.julia-version }}
+      - run: julia --project=@. -e "using Pkg; Pkg.instantiate()"
+      - run: julia --project=@. deps/build.jl
+      - name: Post-compilation script
+        run: vchdfe/bin/vchdfe --help
+      - name: Remove the files from the precompilation
+        run: rm vchdfe/bin/csv_file.csv
+      - name: Copy the test file into the bin folder
+        run: cp test.csv vchdfe/bin/test.csv
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+      - name: Compress binaries
+        run: tar -cvzf vchdfe-${{ steps.get_version.outputs.VERSION }}-${{ matrix.os }}.tar.gz vchdfe
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: vchdfe-${{ steps.get_version.outputs.VERSION }}-${{ matrix.os }}.tar.gz
+          tag: ${{ github.ref }}
+          overwrite: true

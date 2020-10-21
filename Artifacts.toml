@@ -1,0 +1,39 @@
+[huge_nocontrols_pruned]
+git-tree-sha1 = "714ea9319e72df0ed9472f6a10a8388abde511b2"
+lazy = true
+
+    [[huge_nocontrols_pruned.download]]
+    sha256 = "5743ed199dd6e6180f6fd721d3232bec0573a05d33f358c9a228a930e517ec12"
+    url = "https://vchdfe.s3-us-west-2.amazonaws.com/huge_pruned_main.tar.gz"
+
+[large_controls_pruned]
+git-tree-sha1 = "32955389e7a43bc0b7f209c8ea926d03ceccd70e"
+lazy = true
+
+    [[large_controls_pruned.download]]
+    sha256 = "e6ca435c7ac3bf7a8e425ab58581f36877845c099ad4da086d1990a3c270ac88"
+    url = "https://vchdfe.s3-us-west-2.amazonaws.com/large_controls_pruned_main.tar.gz"
+
+[large_nocontrols_pruned]
+git-tree-sha1 = "9d76f2d4872c7b2e87d11668fac2cbccd12dfebd"
+lazy = true
+
+    [[large_nocontrols_pruned.download]]
+    sha256 = "583ec55959b16ef93db210736c93daa8c8eab9097d4492347fe442237f6b3c2c"
+    url = "https://vchdfe.s3-us-west-2.amazonaws.com/large_pruned_main.tar.gz"
+
+[medium_controls_pruned]
+git-tree-sha1 = "70a133bad98fed5d09974eccfe0d7249ce1f6240"
+lazy = true
+
+    [[medium_controls_pruned.download]]
+    sha256 = "a896b114eb952e60212196ecd1dffe2ea8bded263590a5b93e3b30b069feb0e1"
+    url = "https://vchdfe.s3-us-west-2.amazonaws.com/medium_controls_pruned_main.tar.gz"
+
+[medium_nocontrols_pruned]
+git-tree-sha1 = "b916956e4eeac622b594aa9ddc77c565f1d56771"
+lazy = true
+
+    [[medium_nocontrols_pruned.download]]
+    sha256 = "e01474ebd8d7df6d645b0c865079a108c9fd33e052b7ab163bb2f5749bc58387"
+    url = "https://vchdfe.s3-us-west-2.amazonaws.com/medium_pruned_main.tar.gz"

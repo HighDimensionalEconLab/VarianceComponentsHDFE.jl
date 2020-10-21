@@ -1,0 +1,13 @@
+
+*.aux
+*.bbl
+*.blg
+*.log
+*.gz
+docs/tex/rough_notes.pdf
+docs/tex/rough_notes.out
+benchmark/tune.json
+benchmark/trial.md
+.vscode
+*.csv
+*.jld
