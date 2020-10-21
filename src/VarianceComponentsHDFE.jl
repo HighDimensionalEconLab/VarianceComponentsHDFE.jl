@@ -55,9 +55,9 @@ function parse_commandline()
             arg_type = String
             default = "Exact"
         "--simulations"
-            help = "number of simulations in the JLA algorithm"
+            help = "number of simulations in the JLA algorithm. If 0, defaults to 100 * log(#total fixed effect)"
             arg_type = Int
-            default = 100
+            default = 0
         "--header"
             help = "CSV file contains header"
             action = :store_true
