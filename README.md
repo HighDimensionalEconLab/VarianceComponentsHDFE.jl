@@ -15,13 +15,13 @@ The instructions below show how to manually install, and run the executable usin
 
 1. Open Terminal: CTRL + ALT + T
 
-2. To download the program in the home directory, run:
+2. To download the compressed file in the home directory, run the following code:
 
 ```
 cd ~
 wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.2/vchdfe-windows-latest.tar.gz | tar -xzv
 ```
-to download the compressed file. One can change the version number (i.e. v0.2) in the url to download a specific version. 
+One can change the version number (i.e. v0.2) in the url to download a specific version. 
 
 3. OPTIONAL: To add the bin folder to the PATH, you have to modify the `.bashrc` file in your home directory. Add 
 ```
