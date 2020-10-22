@@ -10,40 +10,6 @@
 
 The instructions below show how to manually install, and run the executable using a test sample. Follow the appropriate installation guide based on the operating system in use.
 
-## Linux
-### Installation Instructions for the Executable
-
-1. Open Terminal: CTRL + ALT + T
-
-2. To download the compressed file in the home directory, run the following code:
-
-```
-cd ~
-wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.2/vchdfe-windows-latest.tar.gz | tar -xzv
-```
-One can change the version number (i.e. v0.2) in the url to download a specific version. 
-
-3. OPTIONAL: To add the bin folder to the PATH, you have to modify the `.bashrc` file in your home directory. Add 
-```
-export PATH="/HOMEDIRECTORY/vchdfe/bin:$PATH"
-```
-where `HOMEDIRECTORY` is the absolute address of your home directory. You can find this address by running `pwd()` in the home directory. 
-
-4. Test using the sample test file:
-``` 
-vchdfe vchdfe\bin\test.csv --algorithm=JLAAlgorithm
-```
-
-### Using the Executable
-
-Use 
-
-```
-vchdfe.exe --help
-```
-
-to see a complete list of available arguments. 
-
 ## Windows
 
 ### Installation Instructions for the Executable
@@ -85,16 +51,45 @@ to see a complete list of available arguments.
 ### Using the Executable
 
 
+## Linux
+### Installation Instructions for the Executable
 
-The command line arguments are as follows:
-```
-    PathToExecutableDir/VarianceComponentsHDFEExecutable/bin/VarianceComponentsHDFE PathToCSVDataFile/data.csv --id=1 --firmid=2 --y=4 --algorithm=JLA --simulations=1000 --write_CSV --output_path=PathToCSVOutput/output.csv
-```
-  - The first argument is required and it is the path the the CSV file containing the data. The options `--id`, `--firmid`, `--y` indicate which columns of the CSV file contain the data for the worker IDs, firm IDs, and wages. `--algorithm` can be set to `Exact` or `JLA` and `--simulations` is the number of simulations in the JLA algorithm. `--write_CSV` is a flag that indicates the output will be written to a CSV file at `--output_path`. Additionally, you can run `PathToExecutableDir/VarianceComponentsHDFEExecutable/bin/VarianceComponentsHDFE --help` to see the arguments, options, and flags and their descriptions, and if applicable, default values.
+1. Open Terminal: CTRL + ALT + T
 
-To install a specifc version of the package, for example v0.2, and for a specific operating system: OSX, Windows, Ubuntu, one can run the following:
+2. To download the compressed file in the home directory, run the following code:
 
 ```
+cd ~
 wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.2/vchdfe-windows-latest.tar.gz | tar -xzv
 ```
+One can change the version number (i.e. v0.2) in the url to download a specific version. 
+
+3. OPTIONAL: To add the bin folder to the PATH, you have to modify the `.bashrc` file in your home directory. Add 
+```
+export PATH="/HOMEDIRECTORY/vchdfe/bin:$PATH"
+```
+where `HOMEDIRECTORY` is the absolute address of your home directory. You can find this address by running `pwd()` in the home directory. 
+
+To sourse the changes in `.bashrc` file, type:
+```
+source ~/.bashrc
+```
+
+4. Test using the sample test file:
+``` 
+vchdfe vchdfe\bin\test.csv --algorithm=JLAAlgorithm
+```
+
+### Using the Executable
+
+Use 
+
+```
+vchdfe.exe --help
+```
+
+to see a complete list of available arguments. 
+
+
+
 
