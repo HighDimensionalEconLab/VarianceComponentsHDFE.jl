@@ -30,7 +30,7 @@ $env:Path += ";$pwd\vchdfe\bin"
 4. Test using the sample test file:
 
 ```
-vchdfe.exe vchdfe\bin\test.csv
+vchdfe vchdfe\bin\test.csv
 ```
 
 ### Using the Executable
@@ -38,7 +38,7 @@ vchdfe.exe vchdfe\bin\test.csv
 Use 
 
 ```
-vchdfe.exe --help
+vchdfe --help
 ```
 
 to see a complete list of available arguments. 
@@ -84,7 +84,7 @@ vchdfe vchdfe\bin\test.csv
 Use 
 
 ```
-vchdfe.exe --help
+vchdfe --help
 ```
 
 to see a complete list of available arguments. 
