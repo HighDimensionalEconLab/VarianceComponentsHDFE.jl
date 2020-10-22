@@ -30,7 +30,7 @@ $env:Path += ";$pwd\vchdfe\bin"
 4. Test using the sample test file:
 
 ```
-vchdfe.exe vchdfe\bin\test.csv --algorithm=JLAAlgorithm
+vchdfe.exe vchdfe\bin\test.csv
 ```
 
 ### Using the Executable
@@ -66,9 +66,8 @@ One can change the version number (i.e. v0.2) in the url to download a specific 
 
 3. OPTIONAL: To add the bin folder to the PATH, you have to modify the `.bashrc` file in your home directory. Add 
 ```
-export PATH="/HOMEDIRECTORY/vchdfe/bin:$PATH"
+export PATH="~/vchdfe/bin:$PATH"
 ```
-where `HOMEDIRECTORY` is the absolute address of your home directory. You can find this address by running `pwd()` in the home directory. 
 
 To sourse the changes in `.bashrc` file, type:
 ```
@@ -77,7 +76,7 @@ source ~/.bashrc
 
 4. Test using the sample test file:
 ``` 
-vchdfe vchdfe\bin\test.csv --algorithm=JLAAlgorithm
+vchdfe vchdfe\bin\test.csv 
 ```
 
 ### Using the Executable
