@@ -33,22 +33,10 @@ $env:Path += ";$pwd\vchdfe\bin"
 vchdfe vchdfe\bin\test.csv
 ```
 
-### Using the Executable
-
-Use 
-
-```
-vchdfe --help
-```
-
-to see a complete list of available arguments. 
-
 
 
 ## MacOS
 ### Installation Instructions for the Executable
-
-### Using the Executable
 
 
 ## Linux
@@ -74,12 +62,16 @@ To sourse the changes in `.bashrc` file, type:
 source ~/.bashrc
 ```
 
-4. Test using the sample test file:
-``` 
-vchdfe vchdfe\bin\test.csv 
+
+# Testing
+
+After installation, run the follwoing command to test:
+```
+vchdfe vchdfe/bin/test.csv 
 ```
 
-### Using the Executable
+
+### The Executable
 
 Use 
 
