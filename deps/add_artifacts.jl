@@ -1,6 +1,6 @@
 #  NOTE:  This only needs to be run when the binaries change or need to be modified.
 using ArtifactUtils, Pkg.Artifacts, VarianceComponentsHDFE, CSV
-artifacts_path = joinpath(pkgdir(VarianceComponentsHDFE), "Artifacts.toml")
+artifacts_path = joinpath(pkgdir(VarianceComponentsHDFE), "deps/Artifacts.toml")
 url_prefix = "https://vchdfe.s3-us-west-2.amazonaws.com"
 add_artifact!(
             artifacts_path,
