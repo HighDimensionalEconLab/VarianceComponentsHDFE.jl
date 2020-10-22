@@ -50,16 +50,18 @@ $env:Path += ";$pwd\vchdfe\bin"
 4. Test using the sample test file:
 
 ```
-vchdfe\bin\vchdfe.exe vchdfe\bin\test.csv --algorithm=JLAAlgorithm
+vchdfe.exe vchdfe\bin\test.csv --algorithm=JLAAlgorithm
 ```
 
 ### Using the Executable
 
-In the same powershell, use the command below to run the executable:
+Use 
 
 ```
-vchdfe.exe vchdfe\bin\test.csv --algorithm=JLAAlgorithm
+vchdfe.exe --help
 ```
+
+to see a complete list of available arguments. 
 
 
 
