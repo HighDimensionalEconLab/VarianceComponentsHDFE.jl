@@ -29,6 +29,11 @@ export PATH="/HOMEDIRECTORY/vchdfe/bin:$PATH"
 ```
 where `HOMEDIRECTORY` is the absolute address of your home directory. You can find this address by running `pwd()` in the home directory. 
 
+To sourse the changes in `.bashrc` file, type:
+```
+source ~/.bashrc
+```
+
 4. Test using the sample test file:
 ``` 
 vchdfe vchdfe\bin\test.csv --algorithm=JLAAlgorithm
