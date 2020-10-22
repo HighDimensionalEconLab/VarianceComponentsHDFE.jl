@@ -34,22 +34,31 @@ vchdfe\bin\vchdfe.exe vchdfe\bin\test.csv --algorithm=JLAAlgorithm
 
 ### Installation Instructions for the Executable
 
-Open Powershell: Use windows + R, then type "powershell". 
+1. Choose where you want to install the package, open up a powershell terminal (windows + R, then type "powershell"), and go to that location.
 
-In the powershell, run:
+2. In the powershell, install the latest version:
 
 ```
 wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.2/vchdfe-windows-latest.tar.gz | tar -xzv
 ```
+3. Add the current directory to PATH:
 
-This command downloads the binary files. One can change the version number (i.e. v0.2) in the url to download a specific version. 
+```
+$env:Path += ";$pwd\vchdfe\bin"
+```
+
+4. Test using the sample test file:
+
+```
+vchdfe\bin\vchdfe.exe vchdfe\bin\test.csv --algorithm=JLAAlgorithm
+```
 
 ### Using the Executable
 
 In the same powershell, use the command below to run the executable:
 
 ```
-vchdfe\bin\vchdfe.exe vchdfe\bin\test.csv --algorithm=JLAAlgorithm
+vchdfe.exe vchdfe\bin\test.csv --algorithm=JLAAlgorithm
 ```
 
 
