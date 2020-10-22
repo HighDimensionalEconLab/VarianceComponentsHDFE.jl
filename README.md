@@ -8,9 +8,12 @@
 - [Development Setup](develop.md)
 
 
-For using the executable, it is required to first install it. Follow the installation guide based on your operating system in use.
+The instructions below show how to download, install, and run the executable using a test sample. Follow the installation guide based on the operating system in use.
 
-### Linux
+## Linux
+### Installation Instructions for the Executable
+
+### Using the Executable
 
 
 
@@ -38,7 +41,12 @@ vchdfe\bin\vchdfe.exe vchdfe\bin\test.csv --algorithm=JLAAlgorithm
 
 
 
-### MacOS
+## MacOS
+### Installation Instructions for the Executable
+
+### Using the Executable
+
+
 The command line arguments are as follows:
 ```
     PathToExecutableDir/VarianceComponentsHDFEExecutable/bin/VarianceComponentsHDFE PathToCSVDataFile/data.csv --id=1 --firmid=2 --y=4 --algorithm=JLA --simulations=1000 --write_CSV --output_path=PathToCSVOutput/output.csv
@@ -47,10 +55,7 @@ The command line arguments are as follows:
   
 ## Using the Executable
 
-### Linux
 
-
-### MacOS
 To install a specifc version of the package, for example v0.2, and for a specific operating system: OSX, Windows, Ubuntu, one can run the following:
 
 ```
