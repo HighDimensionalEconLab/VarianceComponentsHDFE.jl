@@ -54,7 +54,7 @@ wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/re
 ```
 One can change the version number (i.e. v0.2) in the url to download a specific version. 
 
-3. OPTIONAL: To add the bin folder to the PATH, you have to modify the `.bashrc` file in your home directory. Add 
+3. OPTIONAL: To add the bin folder to the PATH, you have to modify the `.bashrc` file in your home directory. Add the following line to the bottom of `.bashrc` and save it. 
 ```
 export PATH="~/vchdfe/bin:$PATH"
 ```
