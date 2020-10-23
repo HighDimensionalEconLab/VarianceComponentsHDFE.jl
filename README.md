@@ -28,7 +28,7 @@ Note: To be able to use wget on Windows Internet Explorer should has been launch
 3. (OPTIONAL): Add the current directory to PATH:
 
 ```
-$env:Path += ";$pwd\vchdfe\bin"
+setx PATH "$env:path;$pwd\vchdfe\bin" -m
 ```
 Note: To permanently change the path, you need to run powershell as adminstrator. 
 
