@@ -19,7 +19,9 @@ The instructions below show how to manually install, and run the executable usin
 2. In the powershell, install the latest version:
 
 ```
-wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.3/vchdfe--windows-latest.tar.gz | tar -xzv
+wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.3/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
+ 
+tar -xvf vchdfe-ubuntu-latest.tar.gz
 ```
 Note: To be able to use wget on Windows Internet Explorer should has been launched at least once. 
 
