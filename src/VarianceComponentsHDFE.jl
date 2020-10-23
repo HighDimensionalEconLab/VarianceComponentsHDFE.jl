@@ -51,9 +51,9 @@ function parse_commandline()
             help = "Computing and showing covariace effects"
             action = :store_false
         "--algorithm"
-            help = "type of algorithm: exact or JLA"
+            help = "type of algorithm: Exact or JLA. It defaults to be Exact if the number of observations is less than 5000, and JLA otherwise."
             arg_type = String
-            default = "Exact"
+            default = "Default"
         "--simulations"
             help = "number of simulations in the JLA algorithm. If 0, defaults to 100 * log(#total fixed effect)"
             arg_type = Int
@@ -151,6 +151,15 @@ function real_main()
     y = data[:,observation_idx]
 
     controls = nothing
+
+    if algorithm == "Default" | algorithm == "default"
+        if length(y) > 5000
+            algorithm = "JLA"
+        else
+            algorithm = "Exact"
+        end
+    end
+    
 
     if algorithm == "Exact"
         #todo work with settings arguments
