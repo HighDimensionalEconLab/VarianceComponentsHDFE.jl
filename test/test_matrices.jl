@@ -30,9 +30,9 @@ using Random
     obs_id_lo1 = [1;2;3;4;6;7;8;9]
     obs_id_lo = collect(1:8)
     # @test find_connected_set(y_full,id_full,firmid_full; verbose=true) == (obs_id = obs_id_full , y = y_full , id = id_full, firmid = firmid_full )
-    @test find_connected_set(y_full,id_full,firmid_full; settings = VCHDFESettings(print_level = 1)) == (obs_id = obs_id_full , y = y_full , first_id = id_full, second_id = firmid_full )
+    @test find_connected_set(y_full,id_full,firmid_full,  VCHDFESettings(print_level = 1)) == (obs_id = obs_id_full , y = y_full , first_id = id_full, second_id = firmid_full )
 
-    @test prunning_connected_set(y_full,id_full,firmid_full, obs_id_full; settings = VCHDFESettings(print_level = 1)) == (obs_id = obs_id_p , y = y_p , first_id = id_p, second_id = firmid_p )
+    @test prunning_connected_set(y_full,id_full,firmid_full, obs_id_full,  VCHDFESettings(print_level = 1)) == (obs_id = obs_id_p , y = y_p , first_id = id_p, second_id = firmid_p )
 
     @test drop_single_obs(y_p,id_p,firmid_p,obs_id_p) == (obs_id = obs_id_lo1 , y = y_lo , first_id = id_lo, second_id = firmid_lo )
 
