@@ -152,7 +152,7 @@ function real_main()
 
     controls = nothing
 
-    if algorithm == "Default" | algorithm == "default"
+    if algorithm == "Default"
         if length(y) > 5000
             algorithm = "JLA"
         else
