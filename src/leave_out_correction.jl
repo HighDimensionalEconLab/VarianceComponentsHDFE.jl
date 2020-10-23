@@ -60,7 +60,7 @@ end
 
 
 #1) Finds AKM largest connected set
-function find_connected_set(y, first_idvar, second_idvar; settings)
+function find_connected_set(y, first_idvar, second_idvar, settings)
 
     #Observation identifier to join later the FE
     obs_id = collect(1:size(y,1))
@@ -112,7 +112,7 @@ function find_connected_set(y, first_idvar, second_idvar; settings)
 end
 
 #2) Pruning and finding Leave-Out Largest connected set
-function prunning_connected_set(yvec, first_idvar, second_idvar, obs_id; settings)
+function prunning_connected_set(yvec, first_idvar, second_idvar, obs_id, settings)
 
     seconds = unique(sort(second_idvar))
     second_id = indexin(second_idvar, seconds)
@@ -882,8 +882,8 @@ function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
     # compute y, id firmid, controls, settings
     # compute y, first_id second_id, controls, settings
     (settings.print_level > 0) && println("Finding the leave-one-out connected set")
-    @unpack obs_id,  y  , first_id , second_id  = find_connected_set(y,first_id,second_id;settings)
-    @unpack obs_id,  y  , first_id , second_id  = prunning_connected_set(y,first_id,second_id, obs_id;settings)
+    @unpack obs_id,  y  , first_id , second_id  = find_connected_set(y,first_id,second_id,settings)
+    @unpack obs_id,  y  , first_id , second_id  = prunning_connected_set(y,first_id,second_id, obs_id,settings)
     @unpack obs_id,  y  , first_id , second_id  = drop_single_obs(y,first_id,second_id, obs_id)
     controls == nothing ? nothing : controls = controls[obs_id,:]
 
