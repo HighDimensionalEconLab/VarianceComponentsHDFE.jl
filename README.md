@@ -19,11 +19,11 @@ The instructions below show how to manually install, and run the executable usin
 2. In the powershell, install the latest version:
 
 ```
-wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.4/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
+wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
  
 tar -xvf vchdfe-windows-latest.tar.gz
 ```
-Note: To be able to use wget on Windows Internet Explorer should has been launched at least once. 
+Note: If you have errors using wget, try to open microsoft internet explorer once and close it.  See [here](https://wahlnetwork.com/2015/11/17/solving-the-first-launch-configuration-error-with-powershells-invoke-webrequest-cmdlet/)
 
 3. (OPTIONAL): Add the current directory to PATH:
 
@@ -53,7 +53,7 @@ vchdfe vchdfe\bin\test.csv
 
 ```
 cd ~
-wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.4/vchdfe-v0.1.4-ubuntu-latest.tar.gz | tar -xzv
+wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5/vchdfe-v0.1.5-ubuntu-latest.tar.gz | tar -xzv
 ```
 One can change the version number (i.e. v0.2) in the url to download a specific version. 
 
