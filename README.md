@@ -43,6 +43,27 @@ vchdfe vchdfe\bin\test.csv
 ## MacOS
 ### Installation Instructions for the Executable
 
+1. Open Terminal: Press COMMAND + SPACE to open spotlight search, and type terminal and hit RETURN.
+
+2. To download the compressed file in the home directory, run the following code:
+
+```
+cd
+wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5/vchdfe-v0.1.5-macos-latest.tar.gz | tar -xzv
+```
+
+One can change the version number (i.e. v0.2) in the url to download a specific version. 
+
+3. (OPTIONAL): To add the bin folder to the PATH, you have to modify the `.bash_profile` file in your home directory. Add the following line to the bottom of `.bash_profile` and save it. 
+```
+export PATH="~/vchdfe/bin:$PATH"
+```
+
+To source the changes in `.bash_profile` file, type:
+```
+source ~/.bash_profile
+```
+
 
 ## Ubuntu
 ### Installation Instructions for the Executable
@@ -62,7 +83,7 @@ One can change the version number (i.e. v0.2) in the url to download a specific 
 export PATH="~/vchdfe/bin:$PATH"
 ```
 
-To sourse the changes in `.bashrc` file, type:
+To source the changes in `.bashrc` file, type:
 ```
 source ~/.bashrc
 ```
