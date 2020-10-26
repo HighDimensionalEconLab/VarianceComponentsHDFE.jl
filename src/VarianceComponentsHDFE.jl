@@ -19,7 +19,7 @@ include("solvers.jl")
 
 export find_connected_set,prunning_connected_set,drop_single_obs, index_constr
 export compute_movers, check_clustering, eff_res
-export do_Pii, lincom_KSS, compute_matchid, leave_out_estimation, compute_whole
+export do_Pii, lincom_KSS, compute_matchid, leave_out_estimation, get_leave_one_out_set
 export VCHDFESettings, JLAAlgorithm, ExactAlgorithm, AbstractLeverageAlgorithm
 
 # Exporting these functions for ease of benchmarking/testing
@@ -179,7 +179,12 @@ function real_main()
         )
     end
 
-    @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y,first_id,second_id,controls,settings)
+    # @assert settings.first_id_effects == true && settings.cov_effects == true
+
+    @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y, first_id, second_id, settings, nothing)
+
+    # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y,first_id,second_id,controls,settings)
+    @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings)
 
     if parsed_args["write_detailed_CSV"]
 

@@ -114,7 +114,7 @@ const K=0
     # @test    isapprox(eff_res(settings_JLA.leverage_algorithm, Xtest,id_lo,firmid_lo,match_id, K, settings_JLA).Lambda_P, sparse( [1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8], [0.99,0.75,0.5,0.5,0.75,0.75,0.5,0.5] ), atol = 1e-4)
 end
 
-@testset "Compute_whole" begin
+@testset "A throughout Test" begin
     y_full = [0.146297; 0.29686 ;  0.54344; 0.432677 ; 0.464866 ; 0.730622 ; 0.619239; 0.753429; 0.0863208; 0.372084 ;  0.958089]
     id_full = [1; 1; 2;2 ; 3; 4;4 ;5;5 ;6;6]
     firmid_full = [1;2;1;1;1;1;2;2;2;2;3]
@@ -122,7 +122,12 @@ end
     @testset "Exact Algorithm, person_effects = true, cov_effects = true" begin
         settings_exact = VCHDFESettings(leverage_algorithm = ExactAlgorithm(), first_id_effects=true, cov_effects=true)
 
-        @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y_full,id_full,firmid_full,nothing,settings_exact)
+        @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y_full, id_full, firmid_full, settings_exact, nothing)
+
+    # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y,first_id,second_id,controls,settings)
+        @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings_exact)
+
+        # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y_full,id_full,firmid_full,nothing,settings_exact)
 
         # println("θ_second: $θ_second \n θ_first:$θ_first \n, θCOV: $θCOV \n obs: $obs \n β: $β \n Dalpha: $Dalpha \n Fpsi: $Fpsi \n Pii: $Pii \n Bii_first: $Bii_first \n Bii_second: $Bii_second \n Bii_cov: $Bii_cov \n")
         @test β ≈ [0.2313735, 0.5076485000000001, 0.6847255, 0.4198749, 0.019589999999999996]
@@ -137,7 +142,13 @@ end
     @testset "JLA Algorithm with three simulations" begin
         settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=3), first_id_effects=true, cov_effects=true)
 
-        @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y_full,id_full,firmid_full,nothing,settings_JLA)
+        # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y_full,id_full,firmid_full,nothing,settings_JLA)
+
+        @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y_full, id_full, firmid_full, settings_JLA, nothing)
+
+        # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y,first_id,second_id,controls,settings)
+        @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings_JLA)
+    
 
         # println("θ_second: $θ_second \n θ_first:$θ_first \n, θCOV: $θCOV \n obs: $obs \n β: $β \n Dalpha: $Dalpha \n Fpsi: $Fpsi \n Pii: $Pii \n Bii_first: $Bii_first \n Bii_second: $Bii_second \n Bii_cov: $Bii_cov \n")
         @test β ≈ [0.2313735, 0.5076485000000001, 0.6847255, 0.4198749, 0.019589999999999996]
