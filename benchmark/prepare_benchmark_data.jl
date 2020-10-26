@@ -3,7 +3,7 @@ using JLD, CSV, DataFrames, DataFramesMeta
 #using DataDeps
 using ArtifactUtils, Pkg.Artifacts
 
-artifacts_path = joinpath(pkgdir(VarianceComponentsHDFE), "Artifacts.toml")
+artifacts_path = joinpath(pkgdir(VarianceComponentsHDFE), "deps\\Artifacts.toml")
 
 # add in code to generate .jld, .csv, etc. in the benchmark/data directory
 # This should only generate if the file doesn't exist, or if this `force_generate = true`
