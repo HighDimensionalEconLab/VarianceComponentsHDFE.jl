@@ -11,3 +11,4 @@ benchmark/trial.md
 .vscode
 *.csv
 *.jld
+docs/build
