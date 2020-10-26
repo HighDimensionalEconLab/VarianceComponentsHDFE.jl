@@ -25,7 +25,7 @@ jobs:
         with:
           version: ${{ matrix.julia-version }}
       - run: julia --project=@. -e "using Pkg; Pkg.instantiate()"
-      - run: julia --project=@. deps/build.jl
+      - run: julia --project=@. deps/make_binary.jl
       - name: Post-compilation script
         run: vchdfe/bin/vchdfe --help
       - name: Remove the files from the precompilation
