@@ -874,10 +874,8 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
 end
 
-# Do everything naively with no inplace operations, just to get the desired result
-function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
-
-    @assert settings.first_id_effects == true && settings.cov_effects == true
+function get_leave_one_out_set(y, first_id, second_id, settings, controls)
+        @assert settings.first_id_effects == true && settings.cov_effects == true
 
     # compute y, id firmid, controls, settings
     # compute y, first_id second_id, controls, settings
@@ -887,27 +885,43 @@ function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
     @unpack obs_id,  y  , first_id , second_id  = drop_single_obs(y,first_id,second_id, obs_id)
     controls == nothing ? nothing : controls = controls[obs_id,:]
 
-    if settings.print_level > 0
-        # compute the number of movers
-        num_movers = length(unique(compute_movers(first_id,second_id).movers .* first_id)) - 1 
-
-        println("\n","Summary statistics of the leave-one-out connected set:")
-        println("Number of observations: ", length(obs_id))
-        println("Number of $(settings.first_id_display_small)s: ", length(unique(first_id)))
-        println("Number of movers: ", num_movers)
-        println("Mean $(settings.observation_id_display_small): ", mean(y))
-        println("Variance of $(settings.observation_id_display_small): ", var(y))
-    end
-
-    @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings)
-
-    if settings.print_level > 0
-        println("Bias-Corrected Variance Components:")
-        println("Bias-Corrected variance of $(settings.first_id_display_small): $θ_first")
-        println("Bias-Corrected variance of $(settings.second_id_display_small): $θ_second")
-        println("Bias-Corrected covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) effects: $θCOV")
-    end
-
-    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, obs = obs_id, β = β, Dalpha = Dalpha, Fpsi = Fpsi, Pii = Pii, Bii_first = Bii_first,
-            Bii_second = Bii_second, Bii_cov = Bii_cov)
+    return (obs = obs_id, y = y, first_id = first_id, second_id = second_id, controls = controls)
 end
+
+# Do everything naively with no inplace operations, just to get the desired result
+# function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
+
+#     @assert settings.first_id_effects == true && settings.cov_effects == true
+
+#     # compute y, id firmid, controls, settings
+#     # compute y, first_id second_id, controls, settings
+#     (settings.print_level > 0) && println("Finding the leave-one-out connected set")
+#     @unpack obs_id,  y  , first_id , second_id  = find_connected_set(y,first_id,second_id;settings)
+#     @unpack obs_id,  y  , first_id , second_id  = prunning_connected_set(y,first_id,second_id, obs_id;settings)
+#     @unpack obs_id,  y  , first_id , second_id  = drop_single_obs(y,first_id,second_id, obs_id)
+#     controls == nothing ? nothing : controls = controls[obs_id,:]
+
+#     if settings.print_level > 0
+#         # compute the number of movers
+#         num_movers = length(unique(compute_movers(first_id,second_id).movers .* first_id)) - 1 
+
+#         println("\n","Summary statistics of the leave-one-out connected set:")
+#         println("Number of observations: ", length(obs_id))
+#         println("Number of $(settings.first_id_display_small)s: ", length(unique(first_id)))
+#         println("Number of movers: ", num_movers)
+#         println("Mean $(settings.observation_id_display_small): ", mean(y))
+#         println("Variance of $(settings.observation_id_display_small): ", var(y))
+#     end
+
+#     @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings)
+
+#     if settings.print_level > 0
+#         println("Bias-Corrected Variance Components:")
+#         println("Bias-Corrected variance of $(settings.first_id_display_small): $θ_first")
+#         println("Bias-Corrected variance of $(settings.second_id_display_small): $θ_second")
+#         println("Bias-Corrected covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) effects: $θCOV")
+#     end
+
+#     return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, obs = obs_id, β = β, Dalpha = Dalpha, Fpsi = Fpsi, Pii = Pii, Bii_first = Bii_first,
+#             Bii_second = Bii_second, Bii_cov = Bii_cov)
+# end
