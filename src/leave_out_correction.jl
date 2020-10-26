@@ -875,7 +875,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 end
 
 function get_leave_one_out_set(y, first_id, second_id, settings, controls)
-        @assert settings.first_id_effects == true && settings.cov_effects == true
+    @assert settings.first_id_effects == true && settings.cov_effects == true
 
     # compute y, id firmid, controls, settings
     # compute y, first_id second_id, controls, settings
