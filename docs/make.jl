@@ -17,5 +17,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl", latest = "main"
+    repo="github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl", devbranch = "main"
 )
