@@ -18,23 +18,49 @@ struct AMGPreconditionedLLS <: AbstractGraphLLSAlgorithm  end
 struct DirectLLS <: AbstractLLSAlgorithm  end  # no graph required
 
 abstract type AbstractLeverageAlgorithm end
+
+"""
+Data type to pass to VCHDFESettings type, to indicate Exact algorithm
+"""
 struct ExactAlgorithm <: AbstractLeverageAlgorithm  end
+
+"""
+Data type to pass to VCHDFESettings type, to indicate JLA algorithm
+
+### Fields
+
+* `num_simulations`: number of simulations in estimation. If num_simulations = 0, defaults to 100 * log(#total fixed effect)"
+"""
 @with_kw struct JLAAlgorithm <: AbstractLeverageAlgorithm
     num_simulations::Int64 = 0
 end
 
-using DocStringExtensions
-
 """
-$(SIGNITURES)
-this is for VHDFESettings
+
+
+The VCHDFESettings type is to pass information to methods regarding which algorithm to use. 
+
+### Fields
+
+* `cg_maxiter`: maximum number of iterations (default = 300)
+* `leverage_algorithm`: which type of algorithm to use (default = ExactAlgorithm())
+* `first_id_effects`: includes first id effects. At this version it is required to include the first_id_effects. (default = true)
+* `cov_effects`: includes covariance of first-second id effects. At this version it is required to include the cov_effects. (default = true)
+* `print_level`: prints the state of the program in std output. If print_level = 0, the app prints nothing in the std output. (default = 1)
+* `first_id_display_small`: name of the first id in lower cases (default = person)
+* `first_id_display`: name of the first id (default = Person)
+* `second_id_display_small`: name of the second id in lower cases (default = firm)
+* `second_id_display`: name of the second id (default = Firm)
+* `observation_id_display_small`: name of the observation id in lower cases (default = wage)
+* `observation_id_display`: name of the observation id (default = Wage)
+
 """
 @with_kw struct VCHDFESettings{LeverageAlgorithm}
     cg_maxiter::Int64 = 300
     leverage_algorithm::LeverageAlgorithm = ExactAlgorithm()
     #clustering_level::String = "obs"
-    first_id_effects::Bool = false
-    cov_effects::Bool = false
+    first_id_effects::Bool = true
+    cov_effects::Bool = true
     print_level::Int64 = 1
     first_id_display_small::String = "person"
     first_id_display::String = "Person"
@@ -276,7 +302,7 @@ end
 
 #5) Compute Movers
 """
-A short summary of function $(SIGNITURES):
+    compute_movers(first_id,second_id)
 
 Returns a vector that indicates whether the `first_id` (e.g. worker) is a mover across `second_id` (e.g. firms), as well as a vector with the number of periods that each `first_id` appears.
 
@@ -822,7 +848,7 @@ function compute_matchid(second_id,first_id)
 end
 
 """
-A short summary of function $(SIGNITURES):
+    leave_out_estimation(y,first_id,second_id,controls,settings)
 
 Returns the bias-corrected components, the vector of coefficients, the corresponding fixed effects for every observation, and the diagonal matrices containing the Pii and Biis. 
 
@@ -901,7 +927,7 @@ end
 
 
 """
-A short summary of function $(SIGNITURES):
+    get_leave_one_out_set(y, first_id, second_id, settings, controls)
 
 Returns a tuple with the observation number of the original dataset that belongs to the Leave-out connected set as described in Kline,Saggio, Solvesten. It also provides the corresponding outcome and identifiers in this connected set. 
 

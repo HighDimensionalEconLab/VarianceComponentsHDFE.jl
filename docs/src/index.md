@@ -88,7 +88,9 @@ A detailed list of the output is provided below.
 ## Functions in this package
 
 ```@docs
-
+    ExactAlgorithm
+    JLAAlgorithm
+    VCHDFESettings
     leave_out_estimation(y,first_id,second_id,controls,settings)
     compute_movers(first_id,second_id)
     get_leave_one_out_set(y, first_id, second_id, settings, controls)
