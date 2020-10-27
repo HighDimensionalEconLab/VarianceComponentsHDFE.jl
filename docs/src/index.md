@@ -13,6 +13,64 @@ With the use of random projections techniques, it is possible to run leave out e
 
 The algorithm prints the plug-in and the bias-corrected variance components estimators for the first identifier effects (e.g. variance of worker effects), the second identifier effects (e.g. variance of firm effects), and the covariance of both these effects (e.g. covariance of worker-firm effects). The user may choose to compute only a subset of these three components. Additionally, the executable will create a CSV file that stores vector of coefficients, the fixed effects for every observation in the leave-out connected set, as well as the diagonal matrices for $$P_{ii}$$s and $$B_{ii}$$s.
 
+Use 
+
+```
+vchdfe --help
+```
+
+to see a complete list of available arguments:
+  
+    positional arguments:
+      path                  path to CSV file containing data
+
+    optional arguments:
+      --first_id FIRST_ID   column index in CSV file for the first ID
+                            (e.g. Person).  Use the most granular type.
+                            (type: Int64, default: 1)
+      --second_id SECOND_ID
+                            column index in CSV file for the second ID
+                            (e.g. Firm).  Use the less granular type.
+                            (type: Int64, default: 2)
+      --observation_id OBSERVATION_ID
+                            column index in CSV file for observation (e.g.
+                            Wage). (type: Int64, default: 4)
+      --first_id_effects    Computing and showing first_id effects
+      --cov_effects         Computing and showing covariace effects
+      --algorithm ALGORITHM
+                            type of algorithm: Exact or JLA. It defaults
+                            to be Exact if the number of observations is
+                            less than 5000, and JLA otherwise. (default:
+                            "Default")
+      --simulations SIMULATIONS
+                            number of simulations in the JLA algorithm. If
+                            0, defaults to 100 * log(#total fixed effect)
+                            (type: Int64, default: 0)
+      --header              CSV file contains header
+      --first_id_display FIRST_ID_DISPLAY
+                            The display text associated with first_id
+                            (e.g. Person). (default: "Person")
+      --second_id_display SECOND_ID_DISPLAY
+                            The display text associated with second_id
+                            (e.g. Firm) (default: "Firm")
+      --observation_id_display OBSERVATION_ID_DISPLAY
+                            The display text associated with observable_id
+                            (e.g. Wage) (default: "Wage")
+      --detailed_output_path DETAILED_OUTPUT_PATH
+                            path to the CSV for the detailed output for
+                            each observable (default:
+                            "C:\\Users\\owner\\Desktop\\vchdfe\\variance_components.csv")
+      --results_path RESULTS_PATH
+                            path to the results of the output (default:
+                            "C:\\Users\\owner\\Desktop\\vchdfe\\results.txt")
+      --write_detailed_CSV  write the detailed output to a CSV
+      --write_results       write the results to a file
+      --print_level PRINT_LEVEL
+                            Level of verbosity of output. (type: Int64,
+                            default: 1)
+      -h, --help            show this help message and exit
+      
+      
 A detailed list of the output is provided below.
                       
                            
