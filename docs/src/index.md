@@ -11,7 +11,7 @@ With the use of random projections techniques, it is possible to run leave out e
 
 The algorithm prints the plug-in and the bias-corrected variance components estimators for the first identifier effects (e.g. variance of worker effects), the second identifier effects (e.g. variance of firm effects), and the covariance of both these effects (e.g. covariance of worker-firm effects). The user may choose to compute only a subset of these three components. Additionally, the executable will create a CSV file that stores vector of coefficients, the fixed effects for every observation in the leave-out connected set, as well as the diagonal matrices for $$P_{ii}$$s and $$B_{ii}$$s.
 
-#Main functions
+## Main functions
 
 ```@docs
     leave_out_estimation(y,first_id,second_id,controls,settings)
@@ -27,7 +27,7 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 
 
 
-# About the current version
+## About the current version
 
 
 - The bias-correction currently only runs on a model without controls.
