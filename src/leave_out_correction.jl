@@ -269,6 +269,11 @@ function index_constr(clustering_var, id, match_id )
 end
 
 #5) Compute Movers
+"""
+    compute_movers(first_id,second_id)
+
+Returns a vector that indicates whether the `first_id' (e.g. worker) is a mover across `second_id' (e.g. firms), as well as a vector with the number of periods that each `first_id' appears.
+"""
 function compute_movers(first_id,second_id)
 
     gcs = [NaN; first_id[1:end-1]]
@@ -806,7 +811,11 @@ function compute_matchid(second_id,first_id)
     return match_id2
 end
 
+"""
+    leave_out_estimation(y,first_id,second_id,controls,settings)
 
+Returns the bias-corrected components, the vector of coefficients, the corresponding fixed effects for every observation, and the diagonal matrices containing the Pii and Biis. At the current version only `controls=nothing' is supported.
+"""
 #10) Leave Out Function
 function leave_out_estimation(y,first_id,second_id,controls,settings)
 
@@ -874,6 +883,12 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
 end
 
+
+"""
+    get_leave_one_out_set(y, first_id, second_id, settings, controls)
+
+Returns a tuple with the observation number of the original dataset that belongs to the Leave-out connected set as described in Kline,Saggio, Solvesten. It also provides the corresponding outcome and identifiers in this connected set. At the current version only `controls=nothing' is supported.
+"""
 function get_leave_one_out_set(y, first_id, second_id, settings, controls)
     @assert settings.first_id_effects == true && settings.cov_effects == true
 
