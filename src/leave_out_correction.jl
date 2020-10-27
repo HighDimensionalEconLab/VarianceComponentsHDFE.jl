@@ -814,7 +814,7 @@ end
 """
     leave_out_estimation(y,first_id,second_id,controls,settings)
 
-Returns the bias-corrected components, the vector of coefficients, the corresponding fixed effects for every observation, and the diagonal matrices containing the Pii and Biis. At the current version only `controls=nothing' is supported.
+Returns the bias-corrected components, the vector of coefficients, the corresponding fixed effects for every observation, and the diagonal matrices containing the Pii and Biis. At the current version only `controls=nothing` is supported.
 """
 function leave_out_estimation(y,first_id,second_id,controls,settings)
 
