@@ -9,6 +9,8 @@
 #include(string(Pkg.dir("Laplacians") , "/src/matlabSolvers.jl"))
 getlagged(x) = [NaN; x[1:(end - 1)]]
 
+using DocStringExtensions
+
 
 #Defining types and structures
 abstract type AbstractLLSAlgorithm end
@@ -20,11 +22,15 @@ struct DirectLLS <: AbstractLLSAlgorithm  end  # no graph required
 abstract type AbstractLeverageAlgorithm end
 
 """
+$(TYPEDEF)
+
 Data type to pass to VCHDFESettings type, to indicate Exact algorithm
 """
 struct ExactAlgorithm <: AbstractLeverageAlgorithm  end
 
 """
+$(TYPEDEF)
+
 Data type to pass to VCHDFESettings type, to indicate JLA algorithm
 
 ### Fields
@@ -36,7 +42,7 @@ Data type to pass to VCHDFESettings type, to indicate JLA algorithm
 end
 
 """
-
+$(TYPEDEF)
 
 The VCHDFESettings type is to pass information to methods regarding which algorithm to use. 
 
@@ -302,7 +308,7 @@ end
 
 #5) Compute Movers
 """
-    compute_movers(first_id,second_id)
+$(SIGNATURES)
 
 Returns a vector that indicates whether the `first_id` (e.g. worker) is a mover across `second_id` (e.g. firms), as well as a vector with the number of periods that each `first_id` appears.
 
@@ -848,7 +854,7 @@ function compute_matchid(second_id,first_id)
 end
 
 """
-    leave_out_estimation(y,first_id,second_id,controls,settings)
+$(SIGNATURES)
 
 Returns the bias-corrected components, the vector of coefficients, the corresponding fixed effects for every observation, and the diagonal matrices containing the Pii and Biis. 
 
@@ -927,7 +933,7 @@ end
 
 
 """
-    get_leave_one_out_set(y, first_id, second_id, settings, controls)
+$(SIGNATURES)
 
 Returns a tuple with the observation number of the original dataset that belongs to the Leave-out connected set as described in Kline,Saggio, Solvesten. It also provides the corresponding outcome and identifiers in this connected set. 
 
