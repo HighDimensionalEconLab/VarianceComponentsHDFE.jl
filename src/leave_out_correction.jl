@@ -272,7 +272,7 @@ end
 """
     compute_movers(first_id,second_id)
 
-Returns a vector that indicates whether the `first_id' (e.g. worker) is a mover across `second_id' (e.g. firms), as well as a vector with the number of periods that each `first_id' appears.
+Returns a vector that indicates whether the `first_id` (e.g. worker) is a mover across `second_id` (e.g. firms), as well as a vector with the number of periods that each `first_id' appears.
 """
 function compute_movers(first_id,second_id)
 
