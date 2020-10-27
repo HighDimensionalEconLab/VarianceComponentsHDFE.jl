@@ -886,7 +886,7 @@ end
 """
     get_leave_one_out_set(y, first_id, second_id, settings, controls)
 
-Returns a tuple with the observation number of the original dataset that belongs to the Leave-out connected set as described in Kline,Saggio, Solvesten. It also provides the corresponding outcome and identifiers in this connected set. At the current version only `controls=nothing' is supported.
+Returns a tuple with the observation number of the original dataset that belongs to the Leave-out connected set as described in Kline,Saggio, Solvesten. It also provides the corresponding outcome and identifiers in this connected set. At the current version only `controls=nothing` is supported.
 """
 function get_leave_one_out_set(y, first_id, second_id, settings, controls)
     @assert settings.first_id_effects == true && settings.cov_effects == true
