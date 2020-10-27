@@ -1,9 +1,11 @@
 
 
 # VarianceComponentsHDFE
----
 
 This package runs Kline, Saggio and Sølvsten (KSS) bias correction of variance components in two-way fixed effects models. The link to the repository is [this]( https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl).
+
+
+## About the executable/app
 
 The algorithm's purpose is to find two diagonal matrices that store all $$P_{ii}$$ and $$B_{ii}$$, and then proceed to compute the bias-correction of the (biased) plug-in estimators. To do so, you will only be required to run an executable file (app) where the user only needs to input the original data (in .csv format) that contains a first identifier (e.g. worker id), a second identifier (e.g firm id) and outcome (e.g. log wage).
 
@@ -11,20 +13,27 @@ With the use of random projections techniques, it is possible to run leave out e
 
 The algorithm prints the plug-in and the bias-corrected variance components estimators for the first identifier effects (e.g. variance of worker effects), the second identifier effects (e.g. variance of firm effects), and the covariance of both these effects (e.g. covariance of worker-firm effects). The user may choose to compute only a subset of these three components. Additionally, the executable will create a CSV file that stores vector of coefficients, the fixed effects for every observation in the leave-out connected set, as well as the diagonal matrices for $$P_{ii}$$s and $$B_{ii}$$s.
 
-## Main functions
+A detailed list of the output is provided below.
+                      
+                           
+- `obs` : observation identifier in the original dataset that belong to the Leave-out connected set. For instance, if the number 3 appears in this vector, it means that the third observation in the original dataset belongs to the leave-out connected set. 
+- `first_id`: the first identifier corresponding to each observation in `obs` (e.g. worked ids in the leave-out connected set).
+- `second_id`: the second identifier corresponding to each observation in `obs` (e.g. firm ids in the leave-out connected set).
+- `beta`: the vector of coefficients
+- `D_alpha`: the fixed effect for the first identifier corresponding to each observation. We can obtain the plug-in estimator of the variance component of this effect by computing the variance of this vector.
+- `F_psi`: the fixed effect for the second identifier corresponding to each observation. We can obtain the plug-in estimator of the variance component of this effect by computing the variance of this vector.
+- `Pii`: statistical leverage corresponding to each observation in `obs`.
+- `Bii_first`: The Bii to correct the variance of `first_id` effects corresponding to each observation in `obs`.
+- `Bii_second`: The Bii to correct the variance of `second_id` effects corresponding to each observation in `obs`.
+- `Bii_cov`: The Bii to correct the co-variance of `first_id` and `second_id` effects corresponding to each observation in `obs`.
+
+## Functions in this package
 
 ```@docs
     leave_out_estimation(y,first_id,second_id,controls,settings)
     compute_movers(first_id,second_id)
     get_leave_one_out_set(y, first_id, second_id, settings, controls)
 ```
-
-
-```@index
-```
-
-
-
 
 
 ## About the current version
