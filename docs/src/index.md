@@ -23,6 +23,7 @@ Modules = [VarianceComponentsHDFE]
 
 # About the current version
 
--The bias-correction currently only runs on a model without controls.
+
+- The bias-correction currently only runs on a model without controls.
 - If the user wants, they can manually preadjust on her own the outcome. For instance, in an AKM context, the user can run first
     $$y = \mbox{person effect} + \mbox{firm effect} + Xb + e$$ and feed into the routine $$y-Xb$$ as the outcome.
