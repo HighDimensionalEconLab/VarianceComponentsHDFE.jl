@@ -29,7 +29,8 @@ Note: To be able to use wget on Windows Internet Explorer should has been launch
 ```
 setx PATH "$env:path;$pwd\vchdfe\bin" -m
 ```
-Note: To permanently change the path, you need to run powershell as adminstrator. 
+!!! Note
+To permanently change the path, you need to run powershell as adminstrator. 
 
 4. Test using the sample test file:
 
