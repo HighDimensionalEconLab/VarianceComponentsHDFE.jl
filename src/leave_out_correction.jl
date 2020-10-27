@@ -23,6 +23,12 @@ struct ExactAlgorithm <: AbstractLeverageAlgorithm  end
     num_simulations::Int64 = 0
 end
 
+using DocStringExtensions
+
+"""
+$(SIGNITURES)
+this is for VHDFESettings
+"""
 @with_kw struct VCHDFESettings{LeverageAlgorithm}
     cg_maxiter::Int64 = 300
     leverage_algorithm::LeverageAlgorithm = ExactAlgorithm()
@@ -270,7 +276,7 @@ end
 
 #5) Compute Movers
 """
-    compute_movers(first_id,second_id)
+A short summary of function $(SIGNITURES):
 
 Returns a vector that indicates whether the `first_id` (e.g. worker) is a mover across `second_id` (e.g. firms), as well as a vector with the number of periods that each `first_id` appears.
 
@@ -816,7 +822,7 @@ function compute_matchid(second_id,first_id)
 end
 
 """
-    leave_out_estimation(y,first_id,second_id,controls,settings)
+A short summary of function $(SIGNITURES):
 
 Returns the bias-corrected components, the vector of coefficients, the corresponding fixed effects for every observation, and the diagonal matrices containing the Pii and Biis. 
 
@@ -895,7 +901,7 @@ end
 
 
 """
-    get_leave_one_out_set(y, first_id, second_id, settings, controls)
+A short summary of function $(SIGNITURES):
 
 Returns a tuple with the observation number of the original dataset that belongs to the Leave-out connected set as described in Kline,Saggio, Solvesten. It also provides the corresponding outcome and identifiers in this connected set. 
 
