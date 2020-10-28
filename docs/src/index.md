@@ -87,11 +87,24 @@ A detailed list of the output is provided below.
 
 ## Functions in this package
 
+### Main Functions 
+
+
 ```@docs
     leave_out_estimation(y,first_id,second_id,controls,settings)
+    get_leave_one_out_set(y, first_id, second_id, settings, controls)    
+```
+
+### Auxiliary Functions
+
+```@docs
+    find_connected_set(y, first_idvar, second_idvar, settings)
+    prunning_connected_set(yvec, first_idvar, second_idvar, obs_id, settings)
+    drop_single_obs(yvec, first_idvar, second_idvar,obs_id)
     compute_movers(first_id,second_id)
-    get_leave_one_out_set(y, first_id, second_id, settings, controls)
-    
+    eff_res(::ExactAlgorithm, X,first_id,second_id,match_id, K, settings)
+    eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
+    compute_matchid(second_id,first_id)   
 ```
 
 ## Datatypes in this package
@@ -109,4 +122,4 @@ A detailed list of the output is provided below.
 
 - The bias-correction currently only runs on a model without controls.
 - If the user wants, they can manually preadjust on her own the outcome. For instance, in an AKM context, the user can run first
-    $$y = person effect + firm effect + Xb + e$$ and feed into the routine $$y-Xb$$ as the outcome.
+    $$y = pe + fe + Xb + e$$ , where $$pe$$ are person effects and $$fe$$ are firm effects, and feed into the routine $$y-Xb$$ as the outcome.
