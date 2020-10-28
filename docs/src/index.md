@@ -10,6 +10,37 @@ second identier (e.g firm id) and outcome (e.g. log wage). The link to the repos
 
 The algorithm prints the plug-in and the bias-corrected variance components estimators for the first identifier effects (e.g. variance of worker effects), the second identifier effects (e.g. variance of firm effects), and the covariance of both these effects (e.g. covariance of worker-firm effects). The user may choose to compute only a subset of these three components. Additionally, the executable will create a CSV file that stores outcome, ids, and the fixed effects for every observation belonging to the leave-out connected set as defined in KSS. The algorithm also saves the statistical leverages, Pii, as well the weighting terms defined as Bii in KSS.
 
+## Installation (Windows)
+
+1. Open up a powershell terminal (Windows + R, then type "powershell"), and press Enter.
+
+2. Change the current directory by typing `cd "your_desired_path"`. 
+
+Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
+
+2. In the powershell, install the latest version:
+
+```
+wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
+ 
+tar -xvf vchdfe-windows-latest.tar.gz
+```
+
+Note that to be able to use wget on Windows Internet Explorer should have been launched at least once. 
+
+3. (OPTIONAL): Add the current directory to PATH:
+
+```
+setx PATH "$env:path;$pwd\vchdfe\bin" -m
+```
+Note: To permanently change the path, you need to run powershell as adminstrator. 
+
+4. Test using the sample test file:
+
+```
+vchdfe vchdfe\bin\test.csv
+```
+
 ## Use
 
 
