@@ -98,6 +98,17 @@ end
 
 
 #1) Finds AKM largest connected set
+"""
+$(SIGNATURES)
+
+Returns a tuple of observation belonging to the largest connected set with the corresponding identifiers and outcomes. This requires to have the data sorted by first identifier, and time period (e.g. we sort by worked id and year). This is also the set where we can run AKM models with the original data.
+
+### Arguments
+* `y`: outcome (e.g. log wage)
+* `first_id`: first identifier (e.g. worker id)
+* `second_id`: second identifier (e.g. firm id)
+* `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
+"""
 function find_connected_set(y, first_idvar, second_idvar, settings)
 
     #Observation identifier to join later the FE
@@ -150,6 +161,18 @@ function find_connected_set(y, first_idvar, second_idvar, settings)
 end
 
 #2) Pruning and finding Leave-Out Largest connected set
+"""
+$(SIGNATURES)
+
+This function prunes the dataset from articulation points. If the first identifier is worker id it means that it prunes workers that would disconnect the graph if they were dropped.
+
+### Arguments
+* `yvec`: outcome (e.g. log wage)
+* `first_idvar`: first identifier (e.g. worker id)
+* `second_idvar`: second identifier (e.g. firm id)
+* `obs_id`: observation identifier.
+* `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
+"""
 function prunning_connected_set(yvec, first_idvar, second_idvar, obs_id, settings)
 
     seconds = unique(sort(second_idvar))
@@ -236,7 +259,17 @@ function prunning_connected_set(yvec, first_idvar, second_idvar, obs_id, setting
 end
 
 #3) Drops Single Observations
+"""
+$(SIGNATURES)
 
+This function drops observations that correspond with first identifiers with a single observation. For example, if first identifier is worker id, it will drop observations for workers that only appear once in the data.
+
+### Arguments
+* `yvec`: outcome (e.g. log wage)
+* `first_idvar`: first identifier (e.g. worker id)
+* `second_idvar`: second identifier (e.g. firm id)
+* `obs_id`: observation identifier.
+"""
 function drop_single_obs(yvec, first_idvar, second_idvar,obs_id)
 
     seconds = unique(sort(second_idvar))
@@ -266,7 +299,6 @@ function drop_single_obs(yvec, first_idvar, second_idvar,obs_id)
 end
 
 #4) Finds the observations connected for every cluster
-
 function index_constr(clustering_var, id, match_id )
     NT = length(clustering_var)
     counter = ones(size(clustering_var,1));
@@ -346,7 +378,19 @@ end
 
 
 #6) Eff res : Compute Effective Resistance - Lambda Matrices
+"""
+$(SIGNATURES)
 
+This function computes the diagonal matrices containing Pii and Bii under the Exact Algorithm. See appendix in KSS for more information.
+
+### Arguments
+* `X`: the design matrix in the linear model.
+* `first_id`: first identifier (e.g. worker id)
+* `second_id`: second identifier (e.g. firm id)
+* `match_id`: match identifier between first and second identifier.For example, match can be the identifier of every worker-firm combination.
+* `K`: number of covariates in addition to the fixed effects. Currently only 0 is supported.
+* `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
+"""
 function eff_res(::ExactAlgorithm, X,first_id,second_id,match_id, K, settings)
 
     #Indexing Observations
@@ -595,7 +639,19 @@ function eff_res(::ExactAlgorithm, X,first_id,second_id,match_id, K, settings)
 end
 
 
+"""
+$(SIGNATURES)
 
+This function computes the diagonal matrices containing Pii and Bii under Johnson-Linderstrauss Algorithm. See appendix in KSS for more information.
+
+### Arguments
+* `X`: the design matrix in the linear model.
+* `first_id`: first identifier (e.g. worker id)
+* `second_id`: second identifier (e.g. firm id)
+* `match_id`: match identifier between first and second identifier.For example, match can be the identifier of every worker-firm combination.
+* `K`: number of covariates in addition to the fixed effects. Currently only 0 is supported.
+* `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
+"""
 function eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
 
     #Indexing Observations
@@ -846,6 +902,15 @@ end
 
 
 #9) Creates match first_id using second_id id
+"""
+$(SIGNATURES)
+
+Computes a match identifier for every combination of first and second identifier. For example, this can be the match identifier of worker-firm combinations.
+
+### Arguments
+* `first_id`: first identifier (e.g. worker id)
+* `second_id`: second identifier (e.g. firm id)
+"""
 function compute_matchid(second_id,first_id)
     match_id2 = string.(first_id).*string.("+",second_id)
     match_id2 = indexin(match_id2, unique(match_id2))
