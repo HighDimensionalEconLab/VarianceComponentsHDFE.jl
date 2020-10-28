@@ -16,9 +16,9 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 
 2. Change the current directory by typing `cd "your_desired_path"`. 
 
-Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
+ Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
 
-2. In the powershell, install the latest version:
+3. In the powershell, install the latest version:
 
 ```
 wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
@@ -26,16 +26,16 @@ wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/release
 tar -xvf vchdfe-windows-latest.tar.gz
 ```
 
-Note that to be able to use wget on Windows Internet Explorer should have been launched at least once. 
+ Note that to be able to use wget on Windows Internet Explorer should have been launched at least once. 
 
-3. (OPTIONAL): Add the current directory to PATH:
+4. (OPTIONAL): Add the current directory to PATH:
 
 ```
 setx PATH "$env:path;$pwd\vchdfe\bin" -m
 ```
 Note: To permanently change the path, you need to run powershell as adminstrator. 
 
-4. Test using the sample test file:
+5. Test using the sample test file:
 
 ```
 vchdfe vchdfe\bin\test.csv
