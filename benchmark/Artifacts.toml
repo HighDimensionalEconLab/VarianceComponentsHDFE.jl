@@ -1,3 +1,11 @@
+[huge_nocontrols_pruned]
+git-tree-sha1 = "714ea9319e72df0ed9472f6a10a8388abde511b2"
+lazy = true
+
+    [[huge_nocontrols_pruned.download]]
+    sha256 = "5743ed199dd6e6180f6fd721d3232bec0573a05d33f358c9a228a930e517ec12"
+    url = "https://vchdfe.s3-us-west-2.amazonaws.com/huge_pruned_main.tar.gz"
+
 [large_controls_pruned]
 git-tree-sha1 = "32955389e7a43bc0b7f209c8ea926d03ceccd70e"
 lazy = true
