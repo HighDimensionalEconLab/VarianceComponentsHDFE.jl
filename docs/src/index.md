@@ -116,19 +116,19 @@ A detailed list of the output is provided below.
 
 ## Examples 
 
-Suppose we have a dataset `my_data.csv` that is stored in `"C:\\Users\\owner\\Desktop\\vchdfe\\"`. The structure of the data is such that the fifth column corresponds to the worker identifier and the third column corresponds to the firm identifier (what we refer to first and second identifiers, respectively). Moreover, we want to store the output in the following path `"C:\\Users\\owner\\Desktop\\vchdfe\\output.csv"`. Important: if the dataset has less than 5000 observations the app will default to use the exact algorithm; otherwise it will compute JLA. See Appendix in KSS for more information. 
+Suppose we have a dataset `my_data.csv` that is stored in `"C:\\Users\\owner\\Desktop\\vchdfe\\"`. The structure of the data is such that the fifth column corresponds to the worker identifier and the third column corresponds to the firm identifier (what we refer to first and second identifiers, respectively). Moreover, we want to store a summary of the results here `"C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt"`, and the detailed output (Pii and Bii matrices, stored fixed effects, etc.) here  `"C:\\Users\\owner\\Desktop\\vchdfe\\output.csv"`. Important: if the dataset has less than 5000 observations the app will default to use the exact algorithm; otherwise it will compute JLA. See Appendix in KSS for more information. 
 
 
 1. To obtain all three bias-corrected components (variance of worker effects, variance of firm effects, and covariance of worker-firm effects), we only need to type in the powershell 
 
 ```
-vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv"
+vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv" --results_path "C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt"
 ```
 
 2. To run the same thing but with only 1000 simulations, we type in the powershell 
 
 ```
-vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv" --simulations 1000
+vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --write_results  --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv" --results_path "C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt" --simulations 1000
 ```
 
 3. To only obtain the bias-correction for the variance of firm effects, we type in the powershell 
