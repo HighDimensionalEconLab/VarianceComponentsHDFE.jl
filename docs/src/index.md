@@ -2,7 +2,7 @@
 
 # VarianceComponentsHDFE
 
-This package estimates a two-way fixed effects model and computes its associated variance components using the methodology developed by Kline, Saggio and Sølvsten (KSS). This is achieved by running an executable (app) in the terminal/powershell. The user needs to input to the app the path to the original data (in .csv format) and indicate the corresponding column in the .csv that contains the first identier (e.g. the worker id), the second identier (e.g the firm id) and the outcome (e.g. log wage). The link to the repository is [this]( https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl).
+This package estimates a two-way fixed effects model and computes its associated variance components using the methodology developed by Kline, Saggio and Sølvsten (KSS). This is achieved by running an executable (app) in the terminal/powershell. The user needs to input to the app the path to the original data (in .csv format) and indicate the corresponding column in the .csv that contains the first identier (e.g. the worker id), the second identier (e.g the firm id) and the outcome (e.g. log wage). The link to the repository is [this](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl).
 
 
 ## About the executable/app
@@ -12,6 +12,8 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 ## Installation (Windows)
 
 1. Open up a powershell terminal (Windows + R, then type "powershell"), and press Enter.
+
+Note: It is recommended to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator"
 
 2. Change the current directory by typing `cd "your_desired_path"`. 
 
@@ -32,7 +34,7 @@ tar -xvf vchdfe-windows-latest.tar.gz
 ```
 setx PATH "$env:path;$pwd\vchdfe\bin" -m
 ```
-Note: To permanently change the path, you need to run powershell as adminstrator. 
+Note: To permanently change the path, you need to run powershell as administrator. 
 
 5. Test using the sample test file:
 
@@ -48,6 +50,8 @@ Before this, make sure you've completed the installation steps shown above. The 
 vchdfe path_to_data [--option option_value]
 ```
 where `[]` denote optional arguments. 
+
+Note: You can use this simple syntax if you added the binary path to your system path (Step 4 in above). Otherwise, you need to point to the binary directory to call vchdfe. 
 
 To use the executable you only need to open powershell (Windows + R, then type "powershell" and press Enter). You can see a list of examples provided in a section below or type in the powershell
 
