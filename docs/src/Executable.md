@@ -61,17 +61,25 @@ cd desired_installation_path
 wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.1/vchdfe-v0.1.5.1-macos-latest.tar.gz | tar -xzv
 ```
 
+And then close the terminal.
 
-3. (RECOMMENDED): To add the bin folder to the PATH, you have to modify the `.bash_profile` file in your home directory. Add the following line to the bottom of `.bash_profile` and save it. 
+3. Add the installation directory to PATH. To do so you must open again a terminal window as in Step 1. Run 
 
 ```
-export PATH="~/vchdfe/bin:$PATH"
+touch ~/.bash_profile; open ~/.bash_profile
 ```
 
-To source the changes in `.bash_profile` file, type:
+This will open a file known as `.bash_profile`, where you can copy and pase the following line  
+
+```
+export PATH="desired_installation_path/vchdfe/bin:$PATH"
+```
+where `desired_installation_path` is the folder where you installed the executable in the previous steps. Next we save the file we just modified and close it. Finally, to make sure that it will load those changes without rebooting the computer, run the following line in the terminal
+
 ```
 source ~/.bash_profile
 ```
+and you can proceed to close the terminal. 
 
 # Executable guide
 
@@ -83,8 +91,6 @@ The basic syntax of this command is
 vchdfe path_to_data [--option option_value]
 ```
 where `[]` denote optional arguments. 
-
-Note: It is highly recommeded that during installation you added the binary path to your system path described in Step 4 of Windows instructions or Step 3 of MacOS instructions. If you weren't able to do so, please open the terminal. Windows users must open as administrator:  open Windows menu, type "powershell", right-click on the powershell, click "run as administrator".  In the terminal run `cd installation_path`, then do  Step 4 of Windows instructions or Step 3 of MacOS instructions according to your case. 
 
 You can see a list of examples provided in a section below or type in the powershell
 
