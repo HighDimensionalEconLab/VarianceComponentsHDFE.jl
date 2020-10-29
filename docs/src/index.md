@@ -124,12 +124,12 @@ The detailed output file includes:
 - `first_id`: the first identifier corresponding to each observation in `obs` (e.g. worked ids in the leave-out connected set).
 - `second_id`: the second identifier corresponding to each observation in `obs` (e.g. firm ids in the leave-out connected set).
 - `beta`: the vector of coefficients
-- `D_alpha`: the fixed effect for the first identifier corresponding to each observation. We can obtain the plug-in estimator of the variance component of this effect by computing the variance of this vector.
-- `F_psi`: the fixed effect for the second identifier corresponding to each observation. We can obtain the plug-in estimator of the variance component of this effect by computing the variance of this vector.
+- `D_alpha`: the fixed effect for the first identifier corresponding to each observation. 
+- `F_psi`: the fixed effect for the second identifier corresponding to each observation. 
 - `Pii`: statistical leverage corresponding to each observation in `obs`.
-- `Bii_first`: The Bii to correct the variance of `first_id` effects corresponding to each observation in `obs`.
-- `Bii_second`: The Bii to correct the variance of `second_id` effects corresponding to each observation in `obs`.
-- `Bii_cov`: The Bii to correct the co-variance of `first_id` and `second_id` effects corresponding to each observation in `obs`.
+- `Bii_first`: The Bii for the variance of `first_id` effects corresponding to each observation in `obs`.
+- `Bii_second`: The Bii for the variance of `second_id` effects corresponding to each observation in `obs`.
+- `Bii_cov`: The Bii for the co-variance of `first_id` and `second_id` effects corresponding to each observation in `obs`.
 
 ## Examples 
 
