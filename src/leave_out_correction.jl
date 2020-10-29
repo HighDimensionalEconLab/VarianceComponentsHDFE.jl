@@ -614,12 +614,14 @@ function eff_res(::ExactAlgorithm, X,first_id,second_id,match_id, K, settings)
     Lambda_B_second=sparse(rows,cols,Bii_second,NT,NT)
     Lambda_B_second=Lambda_B_second+triu(Lambda_B_second,1)'
 
+    Lambda_B_cov = nothing
     #Lambda B cov(fe,pe)
     if settings.cov_effects == true
         Lambda_B_cov=sparse(rows,cols,Bii_cov,NT,NT)
         Lambda_B_cov=Lambda_B_cov+triu(Lambda_B_cov,1)'
     end
-
+    
+    Lambda_B_first = nothing
     #Lambda B, var(pe)
     if settings.first_id_effects == true
         Lambda_B_first=sparse(rows,cols,Bii_first,NT,NT)
@@ -628,14 +630,14 @@ function eff_res(::ExactAlgorithm, X,first_id,second_id,match_id, K, settings)
 
 
     #TODO: maybe we can make the function to be inplace with those Lambdas
-    if settings.first_id_effects == false & settings.cov_effects == false
-        return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second)
-    elseif settings.first_id_effects == true & settings.cov_effects == false
-        return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first)
-    elseif settings.first_id_effects == true  & settings.cov_effects == true
-        return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first, Lambda_B_cov=Lambda_B_cov)
-    end
-
+    # if settings.first_id_effects == false & settings.cov_effects == false
+    #     return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second)
+    # elseif settings.first_id_effects == true & settings.cov_effects == false
+    #     return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first)
+    # elseif settings.first_id_effects == true  & settings.cov_effects == true
+    #     return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first, Lambda_B_cov=Lambda_B_cov)
+    # end
+    return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first, Lambda_B_cov=Lambda_B_cov)
 end
 
 
@@ -728,7 +730,7 @@ function eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
             rademach = rademach .- mean(rademach)
             ZB = compute_sol[Threads.threadid()]( [rademach*Fvar...] ; verbose=false)
 
-
+            ZB_first = []
             if settings.first_id_effects == true | settings.cov_effects == true
                 ZB_first = compute_sol[Threads.threadid()]( [rademach*Dvar...] ; verbose=false)
             end
@@ -876,6 +878,7 @@ function eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
     Lambda_B_second=sparse(rows,cols,Bii_second,NT,NT)
     Lambda_B_second=Lambda_B_second+triu(Lambda_B_second,1)'
 
+    Lambda_B_cov = nothing
     #Lambda B cov(fe,pe)
     if settings.cov_effects == true
         Lambda_B_cov=sparse(rows,cols,Bii_cov,NT,NT)
@@ -883,19 +886,22 @@ function eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
     end
 
     #Lambda B, var(pe)
+    Lambda_B_first = nothing
     if settings.first_id_effects == true
         Lambda_B_first=sparse(rows,cols,Bii_first,NT,NT)
         Lambda_B_first=Lambda_B_first+triu(Lambda_B_first,1)'
     end
 
 
-    if settings.first_id_effects == false & settings.cov_effects == false
-        return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second)
-    elseif settings.first_id_effects == true & settings.cov_effects == false
-        return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first)
-    elseif settings.first_id_effects == true  & settings.cov_effects == true
-        return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first, Lambda_B_cov=Lambda_B_cov)
-    end
+    # if settings.first_id_effects == false & settings.cov_effects == false
+    #     return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second)
+    # elseif settings.first_id_effects == true & settings.cov_effects == false
+    #     return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first)
+    # elseif settings.first_id_effects == true  & settings.cov_effects == true
+    #     return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first, Lambda_B_cov=Lambda_B_cov)
+    # end
+
+    return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first, Lambda_B_cov=Lambda_B_cov)
 
 end
 
@@ -990,9 +996,17 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
     θCOV = settings.cov_effects==true ? σ2_ψα_AKM -(1/NT)*y'*Lambda_B_cov*eta_h : nothing
 
+    Pii = diag(Lambda_P)
 
-    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = pe, Fpsi = fe, Pii = diag(Lambda_P), Bii_first = diag(Lambda_B_first),
-            Bii_second = diag(Lambda_B_second), Bii_cov = diag(Lambda_B_cov))
+    Bii_second = diag(Lambda_B_second)
+
+    Bii_first = settings.first_id_effects == true ? diag(Lambda_B_first) : nothing
+
+    Bii_cov = settings.cov_effects == true ? diag(Lambda_B_cov) : nothing
+
+
+    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = pe, Fpsi = fe, Pii = Pii, Bii_first = Bii_first,
+            Bii_second = Bii_second, Bii_cov = Bii_cov)
 
 end
 
@@ -1010,7 +1024,7 @@ Returns a tuple with the observation number of the original dataset that belongs
 * `controls`: at this version only `controls=nothing` is supported.
 """
 function get_leave_one_out_set(y, first_id, second_id, settings, controls)
-    @assert settings.first_id_effects == true && settings.cov_effects == true
+    # @assert settings.first_id_effects == true && settings.cov_effects == true
 
     # compute y, id firmid, controls, settings
     # compute y, first_id second_id, controls, settings

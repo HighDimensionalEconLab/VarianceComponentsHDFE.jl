@@ -139,7 +139,28 @@ end
         @test Bii_second ≈ diag(diagm([0.5, 0.5, 0, 0, 0.5, 0.5, 0, 0]))
         @test Bii_cov ≈ diag(diagm([-0.25, -0.25, 0, 0, -0.25, -0.25, 0, 0]))
     end
-    @testset "JLA Algorithm with three simulations" begin
+    @testset "Exact Algorithm, person_effects = false, cov_effects = false" begin
+        settings_exact = VCHDFESettings(leverage_algorithm = ExactAlgorithm(), first_id_effects=false, cov_effects=false)
+
+        @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y_full, id_full, firmid_full, settings_exact, nothing)
+
+    # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y,first_id,second_id,controls,settings)
+        @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings_exact)
+
+        # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y_full,id_full,firmid_full,nothing,settings_exact)
+
+        # println("θ_second: $θ_second \n θ_first:$θ_first \n, θCOV: $θCOV \n obs: $obs \n β: $β \n Dalpha: $Dalpha \n Fpsi: $Fpsi \n Pii: $Pii \n Bii_first: $Bii_first \n Bii_second: $Bii_second \n Bii_cov: $Bii_cov \n")
+        @test β ≈ [0.2313735, 0.5076485000000001, 0.6847255, 0.4198749, 0.019589999999999996]
+        @test θ_second ≈ -0.004178833653678571
+        @test [θ_first, θCOV] == [nothing, nothing]
+        @test Dalpha ≈  [0.2313735, 0.2313735, 0.5076485000000001, 0.5076485000000001, 0.6847255, 0.6847255, 0.4198749, 0.4198749] 
+        @test Fpsi ≈  [0.019589999999999996, 0.0, 0.019589999999999996, 0.019589999999999996, 0.019589999999999996, 0.0, 0.0, 0.0]
+        @test Pii ≈ diag(diagm([0.75, 0.75, 0.5, 0.5, 0.75, 0.75, 0.5, 0.5]))
+        @test Bii_first == nothing
+        @test Bii_second ≈ diag(diagm([0.5, 0.5, 0, 0, 0.5, 0.5, 0, 0]))
+        @test isequal(Bii_cov, nothing)
+    end
+    @testset "JLA Algorithm with three simulations, person and cov effects = true" begin
         settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=3), first_id_effects=true, cov_effects=true)
 
         # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y_full,id_full,firmid_full,nothing,settings_JLA)
@@ -159,6 +180,28 @@ end
         @test isapprox(Bii_first, diag(diagm([0.770833, 1.10417, 0.375, 0.375, 0.604167, 0.270833, 0.375, 0.375])), atol = 1e-4)
         @test isapprox(Bii_second, diag(diagm([1.41667, 1.41667, 0, 0, 1.41667, 1.41667, 0, 0])), atol = 1e-4)
         @test isapprox(Bii_cov, diag(diagm([-0.625, -0.708333, 0, 0, -0.791667, -0.541667, 0, 0])), atol = 1e-4)
+    end
+    @testset "JLA Algorithm with three simulations, person and cov effects = false" begin
+        settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=3), first_id_effects=false, cov_effects=false)
+
+        # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y_full,id_full,firmid_full,nothing,settings_JLA)
+
+        @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y_full, id_full, firmid_full, settings_JLA, nothing)
+
+        # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y,first_id,second_id,controls,settings)
+        @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings_JLA)
+    
+
+        # println("θ_second: $θ_second \n θ_first:$θ_first \n, θCOV: $θCOV \n obs: $obs \n β: $β \n Dalpha: $Dalpha \n Fpsi: $Fpsi \n Pii: $Pii \n Bii_first: $Bii_first \n Bii_second: $Bii_second \n Bii_cov: $Bii_cov \n")
+        @test β ≈ [0.2313735, 0.5076485000000001, 0.6847255, 0.4198749, 0.019589999999999996]
+        @test θ_second ≈ -0.17707507536052222
+        @test [θ_first, θCOV] == [nothing, nothing]
+        @test Dalpha ≈ [0.2313735, 0.2313735, 0.5076485000000001, 0.5076485000000001, 0.6847255, 0.6847255, 0.4198749, 0.4198749]
+        @test Fpsi ≈  [0.019589999999999996, 0.0, 0.019589999999999996, 0.019589999999999996, 0.019589999999999996, 0.0, 0.0, 0.0]
+        @test Pii ≈ diag(diagm([0.99, 0.99, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]))
+        @test isequal(Bii_first, nothing)
+        @test isapprox(Bii_second, diag(diagm([1.41667, 1.41667, 0, 0, 1.41667, 1.41667, 0, 0])), atol = 1e-4)
+        @test isequal(Bii_cov,nothing)
     end
 end
 
