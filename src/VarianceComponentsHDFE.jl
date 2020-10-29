@@ -44,11 +44,11 @@ function parse_commandline()
             help = "column index in CSV file for observation (e.g. Wage)."
             arg_type = Int
             default = 4
-        "--first_id_effects"
-            help = "Computing and showing first_id effects"
+        "--no_first_id_effects"
+            help = "No computing and showing of first_id effects"
             action = :store_false
-        "--cov_effects"
-            help = "Computing and showing covariace effects"
+        "--no_cov_effects"
+            help = "No computing and showing of covariace effects"
             action = :store_false
         "--algorithm"
             help = "type of algorithm: Exact or JLA. It defaults to be Exact if the number of observations is less than 5000, and JLA otherwise."

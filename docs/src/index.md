@@ -74,8 +74,8 @@ to see a complete list of available arguments:
       --observation_id OBSERVATION_ID
                             column index in CSV file for observation (e.g.
                             Wage). (type: Int64, default: 4)
-      --first_id_effects    Computing and showing first_id effects
-      --cov_effects         Computing and showing covariance effects
+      --no_first_id_effects No computing and showing of first_id effects
+      --no_cov_effects      No computing and showing of covariance effects
       --algorithm ALGORITHM
                             type of algorithm: Exact or JLA. It defaults
                             to be Exact if the number of observations is
@@ -157,7 +157,7 @@ vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id
 3. To only obtain the bias-correction for the variance of firm effects, we type in the powershell 
 
 ```
-Modify this Alim
+vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results  --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv" --results_path "C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt" --simulations 1000
 ```
 
 ## Functions in this package
