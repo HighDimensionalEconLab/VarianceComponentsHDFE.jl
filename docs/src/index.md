@@ -2,14 +2,18 @@
 
 # VarianceComponentsHDFE
 
-This package estimates a two-way fixed effects model and computes its associated variance components using the methodology developed by Kline, Saggio and Sølvsten (KSS). This is achieved by running an executable (app) in the terminal/powershell. The user needs to input to the app the path to the original data (in .csv format) and indicate the corresponding column in the .csv that contains the first identier (e.g. the worker id), the second identier (e.g the firm id) and the outcome (e.g. log wage). The link to the repository is [this](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl).
+This package estimates a two-way fixed effects model and computes its associated variance components using the methodology developed by Kline, Saggio and Sølvsten (KSS). We provide the usual Julia Package as well as an executable/app that can be run in the terminal. For more details about this please see the corresponding Executable section. The link to the repository can be found  [here](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl).
+
+Please submit any bug or problem [here](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/issues).
 
 
 ## About the executable/app
 
 The algorithm prints the plug-in and the bias-corrected variance components estimators for the first identifier effects (e.g. variance of worker effects), the second identifier effects (e.g. variance of firm effects), and the covariance of both these effects (e.g. covariance of worker-firm effects). The user may choose to compute only a subset of these three components. Additionally, the executable will create a CSV file that stores the outcome variable, the first and second set of identifiers, and the estimated fixed effects for every observation that belongs to the leave-out connected set as defined in KSS. The algorithm also saves the statistical leverages, Pii, as well the weighting terms defined as Bii in KSS for a given variance component.
 
-## Installation (Windows)
+## Installation 
+
+### Windows
 
 1. Open up a powershell terminal. We recommend to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator". 
 
@@ -44,9 +48,31 @@ setx PATH "$env:path;$pwd\vchdfe\bin" -m
 vchdfe vchdfe\bin\test.csv
 ```
 
+### MacOS
+
+1. Open Terminal: Press COMMAND + SPACE to open spotlight search, and type terminal and hit RETURN.
+
+2. To download the compressed file in some desired installation directory, run the following code:
+
+```
+cd desired_installation_path
+wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.1/vchdfe-v0.1.5.1-macos-latest.tar.gz | tar -xzv
+```
+
+3. (RECOMMENDED): To add the bin folder to the PATH, you have to modify the `.bash_profile` file in your home directory. Add the following line to the bottom of `.bash_profile` and save it. 
+
+```
+export PATH="~/vchdfe/bin:$PATH"
+```
+
+To source the changes in `.bash_profile` file, type:
+```
+source ~/.bash_profile
+```
+
 ## Executable guide
 
-Before this, make sure you've completed the installation steps shown above. To use the executable you only need to open powershell (Windows + R, then type "powershell" and press Enter). 
+Before this, make sure you've completed the installation steps shown above. To use the executable you only need to open the terminal. Windows users can press the keys Windows + R, then type "powershell" and press Enter. MacOS users can press COMMAND + SPACE to open spotlight search, and type terminal and hit RETURN. 
 
 The basic syntax of this command is 
 
