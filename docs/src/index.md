@@ -33,7 +33,7 @@ wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/release
 tar -xvf vchdfe-windows-latest.tar.gz
 ```
 
-  Note that to be able to use wget on Windows Internet Explorer should have been launched at least once. 
+  Note that to be able to use wget on Windows you must have launched Internet Explorer at least once before. 
 
 4. Add the installation directory to PATH. This will allow us to run the program everytime without specifying where the program is installed. To do so copy and paste the following line: 
 
@@ -145,7 +145,7 @@ to see a complete list of available arguments:
       
       
 
-The executable can provide two different type of outputs. The first (that we refer to as Results) is a log file, in txt format, that writes a summary of the main results : bias-corrected components and some statistics from the leave-out sample. The second type of output (that we refer to as Detailed Output) is a DataFrame, stored in csv format, that saves important objects computed throughout the algorithm such a subset of the original data corresponding to the leave-out sample, the corresponding Pii and Bii, and the vector of coefficients used to compute the plug-in variance components. 
+The executable can provide two different type of outputs. The first (that we refer to as Results) is a log file, in txt format, that writes a summary of the main results : bias-corrected components and some statistics from the leave-out sample. The second type of output (that we refer to as Detailed Output) is a DataFrame, stored in csv format, that saves important objects computed throughout the algorithm such a subset of the original data corresponding to the leave-out sample, the corresponding Pii and Bii, and the fixed effects that can be used to compute the plug-in variance components. 
 
 The program provides two outputs: a file contains the main results and a detailed output file. 
 
@@ -163,7 +163,6 @@ The detailed output file includes:
 - `observation` : observation identifier in the original dataset that belong to the Leave-out connected set. For instance, if the number 3 appears in this vector, it means that the third observation in the original dataset belongs to the leave-out connected set. 
 - `first_id`: the first identifier corresponding to each observation in `obs` (e.g. worked ids in the leave-out connected set).
 - `second_id`: the second identifier corresponding to each observation in `obs` (e.g. firm ids in the leave-out connected set).
-- `beta`: the vector of coefficients used to compute the plug-in variance components.
 - `D_alpha`: the fixed effect for the first identifier corresponding to each observation. 
 - `F_psi`: the fixed effect for the second identifier corresponding to each observation. 
 - `Pii`: statistical leverage corresponding to each observation in `obs`.
