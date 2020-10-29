@@ -11,49 +11,49 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 
 ## Installation (Windows)
 
-1. Open up a powershell terminal (Windows + R, then type "powershell"), and press Enter.
+1. Open up a powershell terminal. We recommend to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator". 
 
-Note: It is recommended to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator"
-
-2. Change the current directory by typing `cd "your_desired_path"`. 
+2. Change the current directory to where you want to install the executable by typing `cd "desired_installation_path"` in the powershell.
 
  Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
 
-3. In the powershell, install the latest version:
+3. In the powershell, install the latest version by running:
 
-```
-wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
- 
-tar -xvf vchdfe-windows-latest.tar.gz
-```
+ ```
+ wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
+
+ tar -xvf vchdfe-windows-latest.tar.gz
+ ```
 
  Note that to be able to use wget on Windows Internet Explorer should have been launched at least once. 
 
-4. (OPTIONAL): Add the current directory to PATH:
+4. Add the installation directory to PATH. This will allow us to run the program everytime without specifying where the program is installed. To do so copy and paste the following line: 
 
-```
-setx PATH "$env:path;$pwd\vchdfe\bin" -m
-```
-Note: To permanently change the path, you need to run powershell as administrator. 
+ ```
+ setx PATH "$env:path;$pwd\vchdfe\bin" -m
+ ```
+ Note: This change will be permanent only if you ran powershell as administrator. Otherwise, everytime you need to run the program you need to specify the installation folder : we would have to type  `"installation_path"\\vchdfe\\bin\\vchdfe` instead of `vchdfe` everytime we want to run the program. 
 
-5. Test using the sample test file:
+5. (OPTIONAL) You can test the program using the sample test file provided with the executable:
 
-```
-vchdfe vchdfe\bin\test.csv
-```
+ ```
+ vchdfe vchdfe\bin\test.csv
+ ```
 
 ## Executable guide
 
-Before this, make sure you've completed the installation steps shown above. The basic syntax for this command is 
+Before this, make sure you've completed the installation steps shown above. To use the executable you only need to open powershell (Windows + R, then type "powershell" and press Enter). 
+
+The basic syntax of this command is 
 
 ```
 vchdfe path_to_data [--option option_value]
 ```
 where `[]` denote optional arguments. 
 
-Note: You can use this simple syntax if you added the binary path to your system path (Step 4 in above). Otherwise, you need to point to the binary directory to call vchdfe. 
+Note: You can use this simple syntax if you added the binary path to your system path. See the Note in Step 4 of installation steps for more details. 
 
-To use the executable you only need to open powershell (Windows + R, then type "powershell" and press Enter). You can see a list of examples provided in a section below or type in the powershell
+You can see a list of examples provided in a section below or type in the powershell
 
 ```
 vchdfe --help
