@@ -13,7 +13,11 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 
 1. Open up a powershell terminal. We recommend to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator". 
 
-2. Change the current directory to where you want to install the executable by typing `cd "desired_installation_path"` in the powershell.
+2. Change the current directory to where you want to install the executable by typing  in the powershell
+
+```
+cd "desired_installation_path"
+```
 
 Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
 
