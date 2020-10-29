@@ -81,7 +81,7 @@ vchdfe path_to_data [--option option_value]
 ```
 where `[]` denote optional arguments. 
 
-Note: You can use this simple syntax if you added the binary path to your system path. See the Note in Step 4 of installation steps for more details. 
+Note: It is highly recommeded that during installation you added the binary path to your system path described in Step 4 of Windows instructions or Step 3 of MacOS instructions. If you weren't able to do so, please open the terminal. Windows users must open as administrator:  open Windows menu, type "powershell", right-click on the powershell, click "run as administrator".  In the terminal run `cd installation_path`, then do  Step 4 of Windows instructions or Step 3 of MacOS instructions according to your case. 
 
 You can see a list of examples provided in a section below or type in the powershell
 
@@ -151,7 +151,7 @@ The program provides two outputs: a file contains the main results and a detaile
 
 ### Results output
 
-By using the argument `--write_results` followed by `--results_path MYFILE`, you can specify that you want to write the results in `MYFILE`. 
+By using the argument `--write_results` followed by `--results_path MYFILE`, you can specify that you want to write the table with the main results in `MYFILE`. 
 
 
 ### Detailed output
@@ -173,25 +173,28 @@ The detailed output file includes:
 
 ## Examples 
 
-Suppose we have a dataset `my_data.csv` that is stored in `"C:\\Users\\owner\\Desktop\\vchdfe\\"`. The structure of the data is such that the fifth column corresponds to the worker identifier and the third column corresponds to the firm identifier. Moreover, we want to store a summary of the results in this location `"C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt"`, and the detailed output (Pii and Bii matrices, stored fixed effects, etc.) here  `"C:\\Users\\owner\\Desktop\\vchdfe\\output.csv"`. 
+Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The structure of the data is such that the fifth column corresponds to the worker identifier and the third column corresponds to the firm identifier. Moreover, we want to store a summary of the results in this location `"project_path/summary.txt"`, and the detailed output (Pii and Bii matrices, stored fixed effects, etc.) here  `"project_path/output.csv"`. 
 
 
-1. To obtain all three bias-corrected components (variance of worker effects, variance of firm effects, and covariance of worker-firm effects), we only need to type in the powershell 
-
-```
-vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv" --results_path "C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt"
-```
-
-2. To run the same thing while specifying 1000 simulations for the JLA algorithm that estimates (Pii,Bii) described in the computational appendix of KSS, we type in the powershell 
+1. To obtain all three bias-corrected components (variance of worker effects, variance of firm effects, and covariance of worker-firm effects), we only need to type in the terminal 
 
 ```
-vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --write_results  --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv" --results_path "C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt" --algorithm JLA --simulations 1000
+cd project_path
+vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt
+```
+
+2. To run the same thing while specifying 1000 simulations for the JLA algorithm that estimates (Pii,Bii) described in the computational appendix of KSS, we type in the terminal 
+
+```
+cd project_path
+vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt --algorithm JLA --simulations 1000
 ```
 
 3. To only obtain the bias-correction for the variance of firm effects, we type in the powershell 
 
 ```
-vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results  --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv" --results_path "C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt" --algorithm JLA --simulations 1000
+cd project_path
+vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  --algorithm JLA --simulations 1000
 ```
 
 ## Functions in this package
