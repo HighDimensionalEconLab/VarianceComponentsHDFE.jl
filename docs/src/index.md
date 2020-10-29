@@ -56,17 +56,20 @@ to see a complete list of available arguments:
 
     optional arguments:
       --first_id FIRST_ID   column index in CSV file for the first ID
-                            (e.g. Person).  Use the most granular type.
+                            The user should specify the most "granular"
+                            id here. For instance, in the AKM context,
+                            this id would correspond to worker ids.
                             (type: Int64, default: 1)
       --second_id SECOND_ID
                             column index in CSV file for the second ID
-                            (e.g. Firm).  Use the less granular type.
+                            Use the less granular type (e.g. Firm in the 
+                            AKM example)
                             (type: Int64, default: 2)
       --observation_id OBSERVATION_ID
                             column index in CSV file for observation (e.g.
                             Wage). (type: Int64, default: 4)
       --first_id_effects    Computing and showing first_id effects
-      --cov_effects         Computing and showing covariace effects
+      --cov_effects         Computing and showing covariance effects
       --algorithm ALGORITHM
                             type of algorithm: Exact or JLA. It defaults
                             to be Exact if the number of observations is
