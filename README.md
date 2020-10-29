@@ -18,7 +18,7 @@ The instructions below show how to manually install, and run the executable usin
 2. In the powershell, install the latest version:
 
 ```
-wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
+wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.1/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
  
 tar -xvf vchdfe-windows-latest.tar.gz
 ```
@@ -48,7 +48,7 @@ vchdfe vchdfe\bin\test.csv
 
 ```
 cd
-wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5/vchdfe-v0.1.5-macos-latest.tar.gz | tar -xzv
+wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.1/vchdfe-v0.1.5.1-macos-latest.tar.gz | tar -xzv
 ```
 
 One can change the version number (i.e. v0.2) in the url to download a specific version. 
@@ -73,7 +73,7 @@ source ~/.bash_profile
 
 ```
 cd ~
-wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5/vchdfe-v0.1.5-ubuntu-latest.tar.gz | tar -xzv
+wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.1/vchdfe-v0.1.5.1-ubuntu-latest.tar.gz | tar -xzv
 ```
 One can change the version number (i.e. v0.2) in the url to download a specific version. 
 
