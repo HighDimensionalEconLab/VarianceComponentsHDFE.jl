@@ -19,7 +19,7 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 cd "desired_installation_path"
 ```
 
-Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
+  Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
 
 3. In the powershell, install the latest version by running:
 
@@ -29,14 +29,14 @@ wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/release
 tar -xvf vchdfe-windows-latest.tar.gz
 ```
 
-Note that to be able to use wget on Windows Internet Explorer should have been launched at least once. 
+  Note that to be able to use wget on Windows Internet Explorer should have been launched at least once. 
 
 4. Add the installation directory to PATH. This will allow us to run the program everytime without specifying where the program is installed. To do so copy and paste the following line: 
 
 ```
 setx PATH "$env:path;$pwd\vchdfe\bin" -m
 ```
-Note: This change will be permanent only if you ran powershell as administrator. Otherwise, everytime you need to run the program you need to specify the installation folder : we would have to type  `"installation_path"\\vchdfe\\bin\\vchdfe` instead of `vchdfe` everytime we want to run the program. 
+  Note: This change will be permanent only if you ran powershell as administrator. Otherwise, everytime you need to run the program you need to specify the installation folder : we would have to type  `"installation_path"\\vchdfe\\bin\\vchdfe` instead of `vchdfe` everytime we want to run the program. 
 
 5. (OPTIONAL) You can test the program using the sample test file provided with the executable:
 
