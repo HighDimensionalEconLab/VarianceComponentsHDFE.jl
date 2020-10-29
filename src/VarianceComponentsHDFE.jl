@@ -208,7 +208,7 @@ function real_main()
                            first_id = first_id_output,
                            second_id = second_id_output,
                            y = y_output,
-                           beta = vcat(β,missings(max(max_length-length(β),0))),
+                        #    beta = vcat(β,missings(max(max_length-length(β),0))),
                            D_alpha = Dalpha,
                            F_psi = Fpsi,
                            Pii = Pii,
