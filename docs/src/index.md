@@ -2,12 +2,12 @@
 
 # VarianceComponentsHDFE
 
-This package estimates the variance components from a two-way fixed effects model using the methodology developed by Kline, Saggio and Sølvsten (KSS). This is achieved by running an executable (app) in the terminal/powershell. The user needs to input to the app the path to the original data (in .csv format) and indicate the corresponding column that contains the first identier (e.g. worker id), the second identier (e.g firm id) and the outcome (e.g. log wage). The link to the repository is [this]( https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl).
+This package estimates a two-way fixed effects model and computes its associated variance components using the methodology developed by Kline, Saggio and Sølvsten (KSS). This is achieved by running an executable (app) in the terminal/powershell. The user needs to input to the app the path to the original data (in .csv format) and indicate the corresponding column in the .csv that contains the first identier (e.g. the worker id), the second identier (e.g the firm id) and the outcome (e.g. log wage). The link to the repository is [this]( https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl).
 
 
 ## About the executable/app
 
-The algorithm prints the plug-in and the bias-corrected variance components estimators for the first identifier effects (e.g. variance of worker effects), the second identifier effects (e.g. variance of firm effects), and the covariance of both these effects (e.g. covariance of worker-firm effects). The user may choose to compute only a subset of these three components. Additionally, the executable will create a CSV file that stores the outcome variable, the first and second set of identifiers, and the estimated fixed effects for every observation that belongs to the leave-out connected set as defined in KSS. The algorithm also saves the statistical leverages, Pii, as well the weighting terms defined as Bii in KSS.
+The algorithm prints the plug-in and the bias-corrected variance components estimators for the first identifier effects (e.g. variance of worker effects), the second identifier effects (e.g. variance of firm effects), and the covariance of both these effects (e.g. covariance of worker-firm effects). The user may choose to compute only a subset of these three components. Additionally, the executable will create a CSV file that stores the outcome variable, the first and second set of identifiers, and the estimated fixed effects for every observation that belongs to the leave-out connected set as defined in KSS. The algorithm also saves the statistical leverages, Pii, as well the weighting terms defined as Bii in KSS for a given variance component.
 
 ## Installation (Windows)
 
@@ -73,8 +73,8 @@ to see a complete list of available arguments:
                             less than 5000, and JLA otherwise. (default:
                             "Default")
       --simulations SIMULATIONS
-                            number of simulations in the JLA algorithm. If
-                            0, defaults to 100 * log(#total fixed effect)
+                            number of simulations in the JLA algorithm. It
+                            defaults to 100 * log(#total fixed effect)
                             (type: Int64, default: 0)
       --header              CSV file contains header
       --first_id_display FIRST_ID_DISPLAY
@@ -102,7 +102,7 @@ to see a complete list of available arguments:
       
       
 A detailed list of the output is provided below.
-The program provides two outputs: an output file contains the main results and a detailed output file. 
+The program provides two outputs: a file contains the main results and a detailed output file. 
 
 ### Results output
 
