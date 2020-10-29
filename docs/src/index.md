@@ -151,13 +151,13 @@ vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id
 2. To run the same thing while specifying 1000 simulations for the JLA algorithm that estimates (Pii,Bii) described in the computational appendix of KSS, we type in the powershell 
 
 ```
-vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --write_results  --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv" --results_path "C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt" --simulations 1000
+vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --write_results  --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv" --results_path "C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt" --algorithm JLA --simulations 1000
 ```
 
 3. To only obtain the bias-correction for the variance of firm effects, we type in the powershell 
 
 ```
-vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results  --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv" --results_path "C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt" --simulations 1000
+vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results  --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv" --results_path "C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt" --algorithm JLA --simulations 1000
 ```
 
 ## Functions in this package
