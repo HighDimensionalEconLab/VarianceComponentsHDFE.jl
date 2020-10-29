@@ -2,13 +2,12 @@
 
 # VarianceComponentsHDFE
 
-This package runs Kline, Saggio and Sølvsten (KSS) bias correction of variance components in two-way fixed effects models. This is achieved by running an executable (app) where the user only needs to input the original data (in .csv format) that contains a first identier (e.g. worker id), a
-second identier (e.g firm id) and outcome (e.g. log wage). The link to the repository is [this]( https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl).
+This package estimates the variance components from a two-way fixed effects model using the methodology developed by Kline, Saggio and Sølvsten (KSS). This is achieved by running an executable (app) in the terminal/powershell. The user needs to input to the app the path to the original data (in .csv format) and indicate the corresponding column that contains the first identier (e.g. worker id), the second identier (e.g firm id) and the outcome (e.g. log wage). The link to the repository is [this]( https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl).
 
 
 ## About the executable/app
 
-The algorithm prints the plug-in and the bias-corrected variance components estimators for the first identifier effects (e.g. variance of worker effects), the second identifier effects (e.g. variance of firm effects), and the covariance of both these effects (e.g. covariance of worker-firm effects). The user may choose to compute only a subset of these three components. Additionally, the executable will create a CSV file that stores outcome, ids, and the fixed effects for every observation belonging to the leave-out connected set as defined in KSS. The algorithm also saves the statistical leverages, Pii, as well the weighting terms defined as Bii in KSS.
+The algorithm prints the plug-in and the bias-corrected variance components estimators for the first identifier effects (e.g. variance of worker effects), the second identifier effects (e.g. variance of firm effects), and the covariance of both these effects (e.g. covariance of worker-firm effects). The user may choose to compute only a subset of these three components. Additionally, the executable will create a CSV file that stores the outcome variable, the first and second set of identifiers, and the estimated fixed effects for every observation that belongs to the leave-out connected set as defined in KSS. The algorithm also saves the statistical leverages, Pii, as well the weighting terms defined as Bii in KSS.
 
 ## Installation (Windows)
 
@@ -131,7 +130,7 @@ The detailed output file includes:
 
 ## Examples 
 
-Suppose we have a dataset `my_data.csv` that is stored in `"C:\\Users\\owner\\Desktop\\vchdfe\\"`. The structure of the data is such that the fifth column corresponds to the worker identifier and the third column corresponds to the firm identifier (what we refer to first and second identifiers, respectively). Moreover, we want to store a summary of the results here `"C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt"`, and the detailed output (Pii and Bii matrices, stored fixed effects, etc.) here  `"C:\\Users\\owner\\Desktop\\vchdfe\\output.csv"`. Important: if the dataset has less than 5000 observations the app will default to use the exact algorithm; otherwise it will compute JLA. See Appendix in KSS for more information. 
+Suppose we have a dataset `my_data.csv` that is stored in `"C:\\Users\\owner\\Desktop\\vchdfe\\"`. The structure of the data is such that the fifth column corresponds to the worker identifier and the third column corresponds to the firm identifier. Moreover, we want to store a summary of the results in this location `"C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt"`, and the detailed output (Pii and Bii matrices, stored fixed effects, etc.) here  `"C:\\Users\\owner\\Desktop\\vchdfe\\output.csv"`. 
 
 
 1. To obtain all three bias-corrected components (variance of worker effects, variance of firm effects, and covariance of worker-firm effects), we only need to type in the powershell 
@@ -140,7 +139,7 @@ Suppose we have a dataset `my_data.csv` that is stored in `"C:\\Users\\owner\\De
 vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv" --results_path "C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt"
 ```
 
-2. To run the same thing but with only 1000 simulations, we type in the powershell 
+2. To run the same thing while specifying 1000 simulations for the JLA algorithm that estimates (Pii,Bii) described in the computational appendix of KSS, we type in the powershell 
 
 ```
 vchdfe "C:\\Users\\owner\\Desktop\\vchdfe\\my_data.csv" --first_id 5 --second_id 3 --write_results  --write_detailed_CSV --detailed_output_path "C:\\Users\\owner\\Desktop\\vchdfe\\output.csv" --results_path "C:\\Users\\owner\\Desktop\\vchdfe\\summary.txt" --simulations 1000
@@ -187,6 +186,7 @@ Modify this Alim
 ## About the current version
 
 
-- The bias-correction currently only runs on a model without controls.
-- If the user wants, they can manually preadjust on her own the outcome. For instance, in an AKM context, the user can run first
+- The bias-correction currently only runs on a two-way fixed effects model without controls.
+
+- The user can manually preadjust the outcome. For instance, in an AKM context, the user can run first
     $$y = pe + fe + Xb + e$$ , where $$pe$$ are person effects and $$fe$$ are firm effects, and feed into the routine $$y-Xb$$ as the outcome.
