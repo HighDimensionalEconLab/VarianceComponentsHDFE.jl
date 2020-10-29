@@ -17,40 +17,38 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 
 2. Change the current directory to where you want to install the executable by typing  in the powershell
 
-```
-cd "desired_installation_path"
-```
+    ```
+    cd "desired_installation_path"
+    ```
 
-  Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
+    Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
 
-{:start="3"}
 
 3. In the powershell, install the latest version by running:
 
-```
-wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.1/vchdfe-v0.1.5.1-ubuntu-latest.tar.gz -O vchdfe-windows-latest.tar.gz
- 
-tar -xvf vchdfe-windows-latest.tar.gz
-```
+    ```
+    wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.1/vchdfe-v0.1.5.1-ubuntu-latest.tar.gz -O vchdfe-windows-latest.tar.gz
 
-  Note that to be able to use wget on Windows you must have launched Internet Explorer at least once before. 
+    tar -xvf vchdfe-windows-latest.tar.gz
+    ```
 
-{:start="4"}
+    Note that to be able to use wget on Windows you must have launched Internet Explorer at least once before. 
+
+
 
 4. Add the installation directory to PATH. This will allow us to run the program everytime without specifying where the program is installed. To do so copy and paste the following line: 
 
-```
-setx PATH "$env:path;$pwd\vchdfe\bin" -m
-```
-  Note: This change will be permanent only if you ran powershell as administrator. Otherwise, everytime you need to run the program you need to specify the installation folder : we would have to type  `"installation_path"\\vchdfe\\bin\\vchdfe` instead of `vchdfe` everytime we want to run the program. 
+    ```
+    setx PATH "$env:path;$pwd\vchdfe\bin" -m
+    ```
+    Note: This change will be permanent only if you ran powershell as administrator. Otherwise, everytime you need to run the program you need to specify the installation folder : we would have to type  `"installation_path"\\vchdfe\\bin\\vchdfe` instead of `vchdfe` everytime we want to run the program. 
 
-{:start="5"}
 
 5. (OPTIONAL) You can test the program using the sample test file provided with the executable:
 
-```
-vchdfe vchdfe\bin\test.csv
-```
+    ```
+    vchdfe vchdfe\bin\test.csv
+    ```
 
 ## MacOS
 
@@ -58,22 +56,22 @@ vchdfe vchdfe\bin\test.csv
 
 2. To download the compressed file in some desired installation directory, run the following code:
 
-```
-cd desired_installation_path
-wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.1/vchdfe-v0.1.5.1-macos-latest.tar.gz | tar -xzv
-```
-{:start="3"}
+    ```
+    cd desired_installation_path
+    wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.1/vchdfe-v0.1.5.1-macos-latest.tar.gz | tar -xzv
+    ```
+
 
 3. (RECOMMENDED): To add the bin folder to the PATH, you have to modify the `.bash_profile` file in your home directory. Add the following line to the bottom of `.bash_profile` and save it. 
 
-```
-export PATH="~/vchdfe/bin:$PATH"
-```
+    ```
+    export PATH="~/vchdfe/bin:$PATH"
+    ```
 
-To source the changes in `.bash_profile` file, type:
-```
-source ~/.bash_profile
-```
+    To source the changes in `.bash_profile` file, type:
+    ```
+    source ~/.bash_profile
+    ```
 
 # Executable guide
 
@@ -182,24 +180,24 @@ Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The 
 
 1. To obtain all three bias-corrected components (variance of worker effects, variance of firm effects, and covariance of worker-firm effects), we only need to type in the terminal 
 
-```
-cd project_path
-vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt
-```
+    ```
+    cd project_path
+    vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt
+    ```
 
 2. To run the same thing while specifying 1000 simulations for the JLA algorithm that estimates (Pii,Bii) described in the computational appendix of KSS, we type in the terminal 
 
-```
-cd project_path
-vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt --algorithm JLA --simulations 1000
-```
+    ```
+    cd project_path
+    vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt --algorithm JLA --simulations 1000
+    ```
 
 3. To only obtain the bias-correction for the variance of firm effects, we type in the powershell 
 
-```
-cd project_path
-vchdfe my_data.csv --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  --algorithm JLA --simulations 1000
-```
+    ```
+    cd project_path
+    vchdfe my_data.csv --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  --algorithm JLA --simulations 1000
+    ```
 
 # About the current version
 
