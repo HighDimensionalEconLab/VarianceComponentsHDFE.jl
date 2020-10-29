@@ -42,8 +42,14 @@ vchdfe vchdfe\bin\test.csv
 
 ## Executable guide
 
-Use
+Before this, make sure you've completed the installation steps shown above. The basic syntax for this command is 
 
+```
+vchdfe path_to_data [--option option_value]
+```
+where `[]` denote optional arguments. 
+
+To use the executable you only need to open powershell (Windows + R, then type "powershell" and press Enter). You can see a list of examples provided in a section below or type in the powershell
 
 ```
 vchdfe --help
@@ -104,14 +110,14 @@ to see a complete list of available arguments:
       -h, --help            show this help message and exit
       
       
-A detailed list of the output is provided below.
+
+The executable can provide two different type of outputs. The first (that we refer to as Results) is a log file, in txt format, that writes a summary of the main results : bias-corrected components and some statistics from the leave-out sample. The second type of output (that we refer to as Detailed Output) is a DataFrame, stored in csv format, that saves important objects computed throughout the algorithm such a subset of the original data corresponding to the leave-out sample, the corresponding Pii and Bii, and the vector of coefficients used to compute the plug-in variance components. 
+
 The program provides two outputs: a file contains the main results and a detailed output file. 
 
 ### Results output
 
 By using the argument `--write_results` followed by `--results_path MYFILE`, you can specify that you want to write the results in `MYFILE`. 
-
-The output file is a `.txt` file including
 
 
 ### Detailed output
@@ -123,7 +129,7 @@ The detailed output file includes:
 - `observation` : observation identifier in the original dataset that belong to the Leave-out connected set. For instance, if the number 3 appears in this vector, it means that the third observation in the original dataset belongs to the leave-out connected set. 
 - `first_id`: the first identifier corresponding to each observation in `obs` (e.g. worked ids in the leave-out connected set).
 - `second_id`: the second identifier corresponding to each observation in `obs` (e.g. firm ids in the leave-out connected set).
-- `beta`: the vector of coefficients
+- `beta`: the vector of coefficients used to compute the plug-in variance components.
 - `D_alpha`: the fixed effect for the first identifier corresponding to each observation. 
 - `F_psi`: the fixed effect for the second identifier corresponding to each observation. 
 - `Pii`: statistical leverage corresponding to each observation in `obs`.
