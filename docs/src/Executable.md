@@ -69,7 +69,7 @@ And then close the terminal.
 touch ~/.bash_profile; open ~/.bash_profile
 ```
 
-This will open a file known as `.bash_profile`, where you can copy and pase the following line  
+This will open a file known as `.bash_profile`, where you can copy and paste the following line  
 
 ```
 export PATH="desired_installation_path/vchdfe/bin:$PATH"
