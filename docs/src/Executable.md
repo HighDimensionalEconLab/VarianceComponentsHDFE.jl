@@ -79,7 +79,13 @@ where `desired_installation_path` is the folder where you installed the executab
 ```
 source ~/.bash_profile
 ```
-and you can proceed to close the terminal. 
+
+4. (OPTIONAL) You can test the program using the sample test file provided with the executable:
+
+```
+vchdfe vchdfe\bin\test.csv
+```
+You can now proceed to close the terminal.
 
 # Executable guide
 
