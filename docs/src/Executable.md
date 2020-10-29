@@ -192,24 +192,24 @@ Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The 
 
 1. To obtain all three bias-corrected components (variance of worker effects, variance of firm effects, and covariance of worker-firm effects), we only need to type in the terminal 
 
-    ```
-    cd project_path
-    vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt
-    ```
+```
+cd project_path
+vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt
+```
 
 2. To run the same thing while specifying 1000 simulations for the JLA algorithm that estimates (Pii,Bii) described in the computational appendix of KSS, we type in the terminal 
 
-    ```
-    cd project_path
-    vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt --algorithm JLA --simulations 1000
-    ```
+```
+cd project_path
+vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt --algorithm JLA --simulations 1000
+```
 
 3. To only obtain the bias-correction for the variance of firm effects, we type in the powershell 
 
-    ```
-    cd project_path
-    vchdfe my_data.csv --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  --algorithm JLA --simulations 1000
-    ```
+```
+cd project_path
+vchdfe my_data.csv --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  --algorithm JLA --simulations 1000
+```
 
 # About the current version
 
