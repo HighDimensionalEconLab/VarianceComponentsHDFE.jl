@@ -41,7 +41,9 @@ Note: To permanently change the path, you need to run powershell as adminstrator
 vchdfe vchdfe\bin\test.csv
 ```
 
-## Use
+## Executable guide
+
+Use
 
 
 ```
@@ -101,9 +103,22 @@ to see a complete list of available arguments:
       
       
 A detailed list of the output is provided below.
-                      
+The program provides two outputs: an output file contains the main results and a detailed output file. 
+
+### Results output
+
+By using the argument `--write_results` followed by `--results_path MYFILE`, you can specify that you want to write the results in `MYFILE`. 
+
+The output file is a `.txt` file including
+
+
+### Detailed output
+
+You can save all the output details in a CSV file. You need to use `--write_detailed_CSV` followed by `--detailed_output_path MYFILE`, where `MYFILE` is the path to the detailed output file. 
+
+The detailed output file includes:                                                                                                                                                                                                                              
                            
-- `obs` : observation identifier in the original dataset that belong to the Leave-out connected set. For instance, if the number 3 appears in this vector, it means that the third observation in the original dataset belongs to the leave-out connected set. 
+- `observation` : observation identifier in the original dataset that belong to the Leave-out connected set. For instance, if the number 3 appears in this vector, it means that the third observation in the original dataset belongs to the leave-out connected set. 
 - `first_id`: the first identifier corresponding to each observation in `obs` (e.g. worked ids in the leave-out connected set).
 - `second_id`: the second identifier corresponding to each observation in `obs` (e.g. firm ids in the leave-out connected set).
 - `beta`: the vector of coefficients
