@@ -22,7 +22,7 @@ Note: It is recommended to run powershell as administrator for installation. To 
 3. In the powershell, install the latest version:
 
 ```
-wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
+wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.1/vchdfe-v0.1.5.1-ubuntu-latest.tar.gz -O vchdfe-windows-latest.tar.gz
  
 tar -xvf vchdfe-windows-latest.tar.gz
 ```
