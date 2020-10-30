@@ -673,7 +673,7 @@ function eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
     compute_sol = []
     for i in 1:Threads.nthreads()
         P = approxcholOperator(ldli,buffs[:,i])
-        push!(compute_sol,approxcholSolver(P,la))
+        push!(compute_sol,approxcholSolver(P,la;tol=1e-12))
     end
 
     #Initialize output
