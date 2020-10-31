@@ -676,6 +676,11 @@ function eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
         push!(compute_sol,approxcholSolver(P,la;tol=1e-12))
     end
 
+    #Pre-allocate solution vectors
+    Z = zeros(N+J,Threads.nthreads())
+    ZB = zeros(N+J,Threads.nthreads())
+    ZB_first = settings.cov_effects ==true ? zeros(N+J,Threads.nthreads()) : nothing 
+
     #Initialize output
     Pii=zeros(M)
     Bii_second=zeros(M)
@@ -706,7 +711,7 @@ function eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
         sel_stayers=(gcs.==1).*(movers.==false)
         stayers_matches_sel=[match_id[z] for z in findall(x->x == true , sel_stayers)]
         Tinv=1 ./T
-        elist_JLL=[first_id_movers N.+second_id_movers first_id_movers N.+second_id_movers]
+        elist_JLL=[first_id_movers N.+second_id_movers]
 
         M=size(elist_JLL,1)
         Pii_movers=zeros(M)
@@ -719,39 +724,34 @@ function eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
         Dvar=hcat(X[:,1:N], spzeros(NT,J-1))
 
         Threads.@threads for i=1:p
-
             #Draw Rademacher entry
             rademach = rand(1,NT) .> 0.5
             rademach = rademach - (rademach .== 0)
             rademach = rademach ./sqrt(p)
 
-            Z  = compute_sol[Threads.threadid()]( [rademach*X...] ; verbose=false)
+            Z[1:end-1,Threads.threadid()]  .= compute_sol[Threads.threadid()]( [rademach*X...] ; verbose=false)
 
             rademach = rademach .- mean(rademach)
-            ZB = compute_sol[Threads.threadid()]( [rademach*Fvar...] ; verbose=false)
+            ZB[1:end-1,Threads.threadid()] .= compute_sol[Threads.threadid()]( [rademach*Fvar...] ; verbose=false)
 
-            ZB_first = []
             if settings.first_id_effects == true | settings.cov_effects == true
-                ZB_first = compute_sol[Threads.threadid()]( [rademach*Dvar...] ; verbose=false)
+                ZB_first[1:end-1,Threads.threadid()] .= compute_sol[Threads.threadid()]( [rademach*Dvar...] ; verbose=false)
             end
 
-            Z = [Z;0.0]
-            ZB = [ZB;0.0]
-            ZB_first = [ZB_first;0.0]
+            #Z[:,Threads.threadid()] = [Z[:,Threads.threadid()];0.0]
+            #ZB[:,Threads.threadid()] = [ZB[:,Threads.threadid()];0.0]
+            #ZB_first[:,Threads.threadid()] = [ZB_first[:,Threads.threadid()];0.0]
 
             #Computing
-            Pii_movers = Pii_movers .+ ( [Z[j]  for j in elist_JLL[:,1] ]  .- [Z[j]  for j in elist_JLL[:,2] ] ) .* ( [Z[j]  for j in elist_JLL[:,3] ]  .- [Z[j]  for j in elist_JLL[:,4] ] )
-            Bii_second_movers = Bii_second_movers .+ ( [ZB[j]  for j in elist_JLL[:,1] ]  .- [ZB[j]  for j in elist_JLL[:,2] ] ) .* ( [ZB[j]  for j in elist_JLL[:,3] ]  .- [ZB[j]  for j in elist_JLL[:,4] ] )
+            Pii_movers = Pii_movers .+ ( [Z[j,Threads.threadid()]  for j in elist_JLL[:,1] ]  .- [Z[j,Threads.threadid()]  for j in elist_JLL[:,2] ] ) .* ( [Z[j,Threads.threadid()]  for j in elist_JLL[:,1] ]  .- [Z[j,Threads.threadid()]  for j in elist_JLL[:,2] ] )
+            Bii_second_movers = Bii_second_movers .+ ( [ZB[j,Threads.threadid()]  for j in elist_JLL[:,1] ]  .- [ZB[j,Threads.threadid()]  for j in elist_JLL[:,2] ] ) .* ( [ZB[j,Threads.threadid()]  for j in elist_JLL[:,1] ]  .- [ZB[j,Threads.threadid()]  for j in elist_JLL[:,2] ] )
 
             if settings.first_id_effects == true
-                Bii_first_movers = Bii_first_movers .+  ( [ZB_first[j]  for j in elist_JLL[:,1] ]  .- [ZB_first[j]  for j in elist_JLL[:,2] ] ) .* ( [ZB_first[j]  for j in elist_JLL[:,3] ]  .- [ZB_first[j]  for j in elist_JLL[:,4] ] )
+                Bii_first_movers = Bii_first_movers .+  ( [ZB_first[j,Threads.threadid()] for j in elist_JLL[:,1] ]  .- [ZB_first[j,Threads.threadid()]  for j in elist_JLL[:,2] ] ) .* ( [ZB_first[j,Threads.threadid()]  for j in elist_JLL[:,1] ]  .- [ZB_first[j,Threads.threadid()] for j in elist_JLL[:,2] ] )
             end
 
             if settings.cov_effects == true
-                ZB[N+1:end] .= ZB[N+1:end]
-                ZB_first[N+1:end] .= ZB_first[N+1:end]
-                Bii_cov_movers = Bii_cov_movers .+ ( [ZB[j]  for j in elist_JLL[:,1] ]  .- [ZB[j]  for j in elist_JLL[:,2] ] ) .* ( [ZB_first[j]  for j in elist_JLL[:,3] ]  .- [ZB_first[j]  for j in elist_JLL[:,4] ] )
-                # Bii_cov_movers = Bii_cov_movers .+ ( [ZB[j]  for j in elist_JLL[:,1] ]  .- [ZB[j]  for j in elist_JLL[:,2] ] ) .* ( [ZB_first[j]  for j in elist_JLL[:,3] ]  .- [ZB_first[j]  for j in elist_JLL[:,4] ] )
+                Bii_cov_movers = Bii_cov_movers .+ ( [ZB[j,Threads.threadid()]   for j in elist_JLL[:,1] ]  .- [ZB[j,Threads.threadid()]  for j in elist_JLL[:,2] ] ) .* ( [ZB_first[j,Threads.threadid()]  for j in elist_JLL[:,1] ]  .- [ZB_first[j,Threads.threadid()]  for j in elist_JLL[:,2] ] )
             end
 
         end
