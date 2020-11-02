@@ -726,6 +726,8 @@ function eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
         Fvar= hcat(spzeros(NT,N), X[:,N+1:N+J-1])
         Dvar=hcat(X[:,1:N], spzeros(NT,J-1))
 
+        (settings.print_level > 0) && println("Running JLA with ",p," simulations.")
+
         Threads.@threads for i=1:p
             #Draw Rademacher entry
             rademach[Threads.threadid(),:] =  rand(1,NT) .> 0.5
