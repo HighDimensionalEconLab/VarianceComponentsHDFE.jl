@@ -24,7 +24,7 @@ function approxcholSolver(P::PreallocatedLinearOperator, la::AbstractArray; tol:
     verbose_=verbose
 
     f = function(b;tol=tol_, maxits=maxits_, verbose=verbose_)
-        xaug = Krylov.cg(la,[b; -sum(b)] .- mean([b; -sum(b)]), M=P, rtol = tol, itmax=maxits, verbose=verbose)[1]
+        xaug = Krylov.cg(la,[b; -sum(b)] .- mean([b; -sum(b)]), M=P, rtol = tol, itmax=maxits, verbose=false)[1]
         xaug .= xaug .- xaug[end]
         return xaug[1:end-1]
     end
@@ -44,7 +44,7 @@ function approxcholSolver(ldli::LDLinv, la::AbstractArray; tol::Real=1e-6, maxit
     verbose_=verbose
 
     f = function(b;tol=tol_, maxits=maxits_, verbose=verbose_)
-        xaug = Krylov.cg(la,[b; -sum(b)] .- mean([b; -sum(b)]), M=P, rtol = tol, itmax=maxits, verbose=verbose)[1]
+        xaug = Krylov.cg(la,[b; -sum(b)] .- mean([b; -sum(b)]), M=P, rtol = tol, itmax=maxits, verbose=false)[1]
         xaug .= xaug .- xaug[end]
         return xaug[1:end-1]
     end
@@ -68,7 +68,7 @@ function approxcholSolver(sddm::AbstractArray; tol::Real=1e-6, maxits=300, verbo
     verbose_=verbose
 
     f = function(b;tol=tol_, maxits=maxits_, verbose=verbose_)
-        xaug = Krylov.cg(la,[b; -sum(b)] .- mean([b; -sum(b)]), M=P, rtol = tol, itmax=maxits, verbose=verbose)[1]
+        xaug = Krylov.cg(la,[b; -sum(b)] .- mean([b; -sum(b)]), M=P, rtol = tol, itmax=maxits, verbose=false)[1]
         xaug .= xaug .- xaug[end]
         return xaug[1:end-1]
     end
