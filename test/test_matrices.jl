@@ -175,9 +175,14 @@ end
         @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings_JLA)
     
 
-        # println("θ_second: $θ_second \n θ_first:$θ_first \n, θCOV: $θCOV \n obs: $obs \n β: $β \n Dalpha: $Dalpha \n Fpsi: $Fpsi \n Pii: $Pii \n Bii_first: $Bii_first \n Bii_second: $Bii_second \n Bii_cov: $Bii_cov \n")
-        @test β ≈ [0.2313735, 0.5076485000000001, 0.6847255, 0.4198749, 0.019589999999999996]
-        @test isapprox([θ_second, θ_first, θCOV] ,  [-0.0045945419556785785, 0.00592537744258884, -0.0023531073877489203], atol=1e-1) #Rewrite this
+        println("θ_second: $θ_second \n θ_first:$θ_first \n, θCOV: $θCOV \n obs: $obs \n β: $β \n Dalpha: $Dalpha \n Fpsi: $Fpsi \n Pii: $Pii \n Bii_first: $Bii_first \n Bii_second: $Bii_second \n Bii_cov: $Bii_cov \n")
+        # @test β ≈ [0.2313735, 0.5076485000000001, 0.6847255, 0.4198749, 0.019589999999999996]
+        @test isapprox([θ_second, θ_first, θCOV] ,  [-0.17707507536052222, -0.17145102440488802, 0.10101283333196641], atol=1e-1) #Rewrite this
+
+        @test Pii ≈ diag(diagm([0.99, 0.99, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]))
+        @test isapprox(Bii_first, diag(diagm([0.770833, 1.10417, 0.375, 0.375, 0.604167, 0.270833, 0.375, 0.375])), atol = 1e-4)	
+        @test isapprox(Bii_second, diag(diagm([1.41667, 1.41667, 0, 0, 1.41667, 1.41667, 0, 0])), atol = 1e-4)	
+        @test isapprox(Bii_cov, diag(diagm([-0.625, -0.708333, 0, 0, -0.791667, -0.541667, 0, 0])), atol = 1e-4)
     end
     @testset "JLA Algorithm with three simulations, person and cov effects = false" begin
         Random.seed!(1234)
@@ -191,9 +196,14 @@ end
         @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings_JLA)
     
 
-        # println("θ_second: $θ_second \n θ_first:$θ_first \n, θCOV: $θCOV \n obs: $obs \n β: $β \n Dalpha: $Dalpha \n Fpsi: $Fpsi \n Pii: $Pii \n Bii_first: $Bii_first \n Bii_second: $Bii_second \n Bii_cov: $Bii_cov \n")
-        @test β ≈ [0.2313735, 0.5076485000000001, 0.6847255, 0.4198749, 0.019589999999999996]
-        @test isapprox(θ_second ,  -0.0014584152995119073, atol=1e-2) #Rewrite this
+        println("θ_second: $θ_second \n θ_first:$θ_first \n, θCOV: $θCOV \n obs: $obs \n β: $β \n Dalpha: $Dalpha \n Fpsi: $Fpsi \n Pii: $Pii \n Bii_first: $Bii_first \n Bii_second: $Bii_second \n Bii_cov: $Bii_cov \n")
+        # @test β ≈ [0.2313735, 0.5076485000000001, 0.6847255, 0.4198749, 0.019589999999999996]
+        @test isapprox(θ_second ,  -0.17707507536052222, atol=1e-2) #Rewrite this
+
+        @test Pii ≈ diag(diagm([0.99, 0.99, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]))	
+        @test isequal(Bii_first, nothing)	
+        @test isapprox(Bii_second, diag(diagm([1.41667, 1.41667, 0, 0, 1.41667, 1.41667, 0, 0])), atol = 1e-4)	
+        @test isequal(Bii_cov,nothing)
 
     end
 end
