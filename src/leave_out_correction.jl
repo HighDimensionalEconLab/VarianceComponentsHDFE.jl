@@ -664,7 +664,7 @@ function eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
     M=size(elist,1)
     J = maximum(second_id)
     N = maximum(first_id)
-    p = lev.num_simulations == 0 ? ceil(log2(NT)/0.005) : lev.num_simulations
+    p = lev.num_simulations == 0 ? ceil(log(N+J)/0.01) : lev.num_simulations
 
     #Define solver
     S_xx = X'*X
@@ -681,6 +681,9 @@ function eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
     ZB = zeros(N+J,Threads.nthreads())
     ZB_first = settings.cov_effects ==true ? zeros(N+J,Threads.nthreads()) : nothing 
 
+    #Pre-allocate Rademacher Vectors
+    rademach = zeros(Threads.nthreads(), NT)
+    
     #Initialize output
     Pii=zeros(M)
     Bii_second=zeros(M)
@@ -725,17 +728,17 @@ function eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
 
         Threads.@threads for i=1:p
             #Draw Rademacher entry
-            rademach = rand(1,NT) .> 0.5
-            rademach = rademach - (rademach .== 0)
-            rademach = rademach ./sqrt(p)
+            rademach[Threads.threadid(),:] =  rand(1,NT) .> 0.5
+            rademach[Threads.threadid(),:]  = rademach[Threads.threadid(),:]  .- (rademach[Threads.threadid(),:]  .== 0)
+            rademach[Threads.threadid(),:]  = rademach[Threads.threadid(),:]  ./sqrt(p)
 
-            Z[1:end-1,Threads.threadid()]  .= compute_sol[Threads.threadid()]( [rademach*X...] ; verbose=false)
+            Z[1:end-1,Threads.threadid()]  .= compute_sol[Threads.threadid()]( [rademach[Threads.threadid(),:]'*X...] ; verbose=false)
 
-            rademach = rademach .- mean(rademach)
-            ZB[1:end-1,Threads.threadid()] .= compute_sol[Threads.threadid()]( [rademach*Fvar...] ; verbose=false)
+            rademach[Threads.threadid(),:] = rademach[Threads.threadid(),:] .- mean(rademach[Threads.threadid(),:])
+            ZB[1:end-1,Threads.threadid()] .= compute_sol[Threads.threadid()]( [rademach[Threads.threadid(),:]'*Fvar...] ; verbose=false)
 
             if settings.first_id_effects == true | settings.cov_effects == true
-                ZB_first[1:end-1,Threads.threadid()] .= compute_sol[Threads.threadid()]( [rademach*Dvar...] ; verbose=false)
+                ZB_first[1:end-1,Threads.threadid()] .= compute_sol[Threads.threadid()]( [rademach[Threads.threadid(),:]'*Dvar...] ; verbose=false)
             end
 
             #Z[:,Threads.threadid()] = [Z[:,Threads.threadid()];0.0]
