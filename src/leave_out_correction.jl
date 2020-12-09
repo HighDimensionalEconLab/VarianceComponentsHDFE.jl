@@ -1081,7 +1081,7 @@ function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
 end
 
 
-function lincom_KSS(y,X,Z,Transform,Lambda_P; joint_test =false, labels=nothing, restrict=nothing, nsim = 10000, settings = settings)
+function lincom_KSS(y,X,Z, beta,Transform,Lambda_P; joint_test =false, labels=nothing, restrict=nothing, nsim = 10000, settings = settings)
     #SET DIMENSIONS
     n=size(X,1)
     K=size(X,2)
@@ -1089,10 +1089,6 @@ function lincom_KSS(y,X,Z,Transform,Lambda_P; joint_test =false, labels=nothing,
     Z=hcat(ones(size(Z,1)), Z)
 
     # PART 1: ESTIMATE HIGH DIMENSIONAL MODEL
-    xx=X'*X
-    xy=X'*y
-    compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
-    beta = compute_sol([xy...];verbose=false)
     eta=y-X*beta
 
     # PART 1B: VERIFY LEAVE OUT COMPUTATION
