@@ -1043,39 +1043,200 @@ function get_leave_one_out_set(y, first_id, second_id, settings, controls)
 end
 
 # Do everything naively with no inplace operations, just to get the desired result
-# function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
+function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
 
-#     @assert settings.first_id_effects == true && settings.cov_effects == true
+    @assert settings.first_id_effects == true && settings.cov_effects == true
 
-#     # compute y, id firmid, controls, settings
-#     # compute y, first_id second_id, controls, settings
-#     (settings.print_level > 0) && println("Finding the leave-one-out connected set")
-#     @unpack obs_id,  y  , first_id , second_id  = find_connected_set(y,first_id,second_id;settings)
-#     @unpack obs_id,  y  , first_id , second_id  = prunning_connected_set(y,first_id,second_id, obs_id;settings)
-#     @unpack obs_id,  y  , first_id , second_id  = drop_single_obs(y,first_id,second_id, obs_id)
-#     controls == nothing ? nothing : controls = controls[obs_id,:]
+    # compute y, id firmid, controls, settings
+    # compute y, first_id second_id, controls, settings
+    (settings.print_level > 0) && println("Finding the leave-one-out connected set")
+    @unpack obs_id,  y  , first_id , second_id  = find_connected_set(y,first_id,second_id;settings)
+    @unpack obs_id,  y  , first_id , second_id  = prunning_connected_set(y,first_id,second_id, obs_id;settings)
+    @unpack obs_id,  y  , first_id , second_id  = drop_single_obs(y,first_id,second_id, obs_id)
+    controls == nothing ? nothing : controls = controls[obs_id,:]
 
-#     if settings.print_level > 0
-#         # compute the number of movers
-#         num_movers = length(unique(compute_movers(first_id,second_id).movers .* first_id)) - 1 
+    if settings.print_level > 0
+        # compute the number of movers
+        num_movers = length(unique(compute_movers(first_id,second_id).movers .* first_id)) - 1 
 
-#         println("\n","Summary statistics of the leave-one-out connected set:")
-#         println("Number of observations: ", length(obs_id))
-#         println("Number of $(settings.first_id_display_small)s: ", length(unique(first_id)))
-#         println("Number of movers: ", num_movers)
-#         println("Mean $(settings.observation_id_display_small): ", mean(y))
-#         println("Variance of $(settings.observation_id_display_small): ", var(y))
-#     end
+        println("\n","Summary statistics of the leave-one-out connected set:")
+        println("Number of observations: ", length(obs_id))
+        println("Number of $(settings.first_id_display_small)s: ", length(unique(first_id)))
+        println("Number of movers: ", num_movers)
+        println("Mean $(settings.observation_id_display_small): ", mean(y))
+        println("Variance of $(settings.observation_id_display_small): ", var(y))
+    end
 
-#     @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings)
+    @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings)
 
-#     if settings.print_level > 0
-#         println("Bias-Corrected Variance Components:")
-#         println("Bias-Corrected variance of $(settings.first_id_display_small): $θ_first")
-#         println("Bias-Corrected variance of $(settings.second_id_display_small): $θ_second")
-#         println("Bias-Corrected covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) effects: $θCOV")
-#     end
+    if settings.print_level > 0
+        println("Bias-Corrected Variance Components:")
+        println("Bias-Corrected variance of $(settings.first_id_display_small): $θ_first")
+        println("Bias-Corrected variance of $(settings.second_id_display_small): $θ_second")
+        println("Bias-Corrected covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) effects: $θCOV")
+    end
 
-#     return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, obs = obs_id, β = β, Dalpha = Dalpha, Fpsi = Fpsi, Pii = Pii, Bii_first = Bii_first,
-#             Bii_second = Bii_second, Bii_cov = Bii_cov)
-# end
+    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, obs = obs_id, β = β, Dalpha = Dalpha, Fpsi = Fpsi, Pii = Pii, Bii_first = Bii_first,
+            Bii_second = Bii_second, Bii_cov = Bii_cov, X = X, y = y, N = max(first_id))
+end
+
+
+function lincom_KSS(y,X,Z,Transform,clustering_var,Lambda_P; joint_test =false, labels=nothing, restrict=nothing, nsim = 10000, settings = settings)
+    #SET DIMENSIONS
+    n=size(X,1)
+    K=size(X,2)
+    #Add Constant
+    Z=hcat(ones(size(Z,1)), Z)
+
+    # PART 1: ESTIMATE HIGH DIMENSIONAL MODEL
+    xx=X'*X
+    xy=X'*y
+    compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
+    beta = compute_sol([xy...];verbose=false)
+    eta=y-X*beta
+
+    # PART 1B: VERIFY LEAVE OUT COMPUTATION
+    if Lambda_P == nothing
+        Lambda_P=do_Pii(X,clustering_var)
+    end
+
+    if Lambda_P != nothing && clustering_var !=nothing
+        nnz_1=nnz(Lambda_P)
+        nnz_2=check_clustering(clustering_var).nnz_2
+
+        if nnz_1 == nnz_2
+            println("The structure of the specified Lambda_P is consistent with the level of clustering required by the user.")
+        elseif nnz_1 != nnz_2
+            error("The user wants cluster robust inference but the Lambda_P provided by the user is not consistent with the level of clustering asked by the user. Try to omit input Lambda_P when running lincom_KSS")
+        end
+    end
+    I_Lambda_P = I-Lambda_P
+    eta_h = I_Lambda_P\eta
+
+    #PART 2: SET UP MATRIX FOR SANDWICH FORMULA
+    rows,columns, V = findnz(Lambda_P)
+
+    aux= 0.5*(y[rows].*eta_h[columns] + y[columns].*eta_h[rows])
+    sigma_i=sparse(rows,columns,aux,n,n)
+
+    aux= 0.5*(eta[rows].*eta[columns] + eta[columns].*eta[rows])
+    sigma_i_res=sparse(rows,columns,aux,n,n)
+
+    r=size(Z,2);
+    wy=Transform*beta
+    zz=Z'*Z
+
+    numerator=Z\wy
+    chet=wy-Z*numerator
+    aux= 0.5*(chet[rows].*chet[columns] + chet[columns].*chet[rows])
+    sigma_i_chet=sparse(rows,columns,aux,n,n)
+
+    #PART 3: COMPUTE
+    denominator=zeros(r,1)
+    denominator_RES=zeros(r,1)
+
+    for q=1:r
+        v=sparse([q],[1.0],[1.0],r,1)
+        v=zz\[v...]
+        v=Z*v
+        v=Transform'*v
+
+        right = compute_sol(v;verbose=false)
+
+        left=right'
+
+        denominator[q]=left*(X'*sigma_i*X)*right
+        denominator_RES[q]=left*(X'*sigma_i_res*X)*right
+    end
+
+    test_statistic=numerator./(sqrt.(denominator))
+    #zz_inv=zz^(-1)
+    SE_linear_combination_NAI=zz\(Z'*sigma_i_chet*Z)/zz
+
+
+    #PART 4: REPORT
+    println("Inference on Linear Combinations:")
+    if labels == nothing
+        for q=2:r
+            if q <= r
+                println("Linear Combination - Column Number ", q-1," of Z: ", numerator[q] )
+                println("Standard Error of the Linear Combination - Column Number ", q-1," of Z: ", sqrt(denominator[q]) )
+                println("T-statistic - Column Number ", q-1, " of Z: ", test_statistic[q])
+            end
+        end
+    else
+        for q=2:r
+            tell_me = labels[q-1]
+            println("Linear Combination associated with ", tell_me,": ", numerator[q] )
+            println("Standard Error  associated with ", tell_me,": ", sqrt(denominator[q]) )
+            println("T-statistic  associated with ", tell_me,": ", test_statistic[q])
+        end
+    end
+
+
+    # PART 5: Joint-test. Quadratic form beta'*A*beta
+    if joint_test == true
+
+        if restrict  == nothing
+            restrict=sparse(collect(1:r-1),collect(2:r),1.0,r-1,r)
+        end
+
+        v=restrict*(zz\(Z'*Transform))
+        v=v'
+        #v=sparse(v) #ldiv doesn't work for sparse RHS
+        r=size(v,2)
+
+        #Auxiliary
+        aux=xx\v[:,:]
+        opt_weight=v'*aux
+        opt_weight=opt_weight^(-1)
+        opt_weight=(1/r)*(opt_weight+opt_weight')/2
+
+        #Eigenvalues, eigenvectors, and relevant components
+        lambda , Qtilde = eigs( v*opt_weight*v', xx; nev=r,ritzvec=true)
+        lambda = Real.(lambda)
+        Qtilde = Real.(Qtilde)
+        #lambdaS, QtildeS = eigs(v*opt_weight*v', xx; nev=1,which=:SM,ritzvec=true)
+        #lambdaS = [lambdaL; lambdaS]
+        #Qtilde = hcat(QtildeL,QtildeS)
+
+        W=X*Qtilde
+        V_b=W'*sigma_i*W
+        V_b = (1/2)*(V_b + V_b')
+
+        #Now focus on obtaining matrix Lambda_B with the A test associated with a joint hypothesis testing.
+        Bii=opt_weight^(0.5)*aux';
+        Bii=Bii*X'
+        Bii=Bii'
+        Bii = 0.5*(Bii[rows,:].*Bii[columns,:] + Bii[columns,:].*Bii[rows,:])
+        Bii = sum(Bii,dims=2)[:]
+        Lambda_B=sparse(rows,columns,Bii,n,n)
+
+        #Leave Out Joint-Statistic
+        stat=(v'*beta)'*opt_weight*(v'*beta)-y'*Lambda_B*eta_h
+
+        #Now simulate critical values under the null.
+        mu=zeros(r)
+        sigma = V_b
+        b_sim = MvNormal(mu,sigma)
+        b_sim = rand(b_sim, nsim)
+
+        #theta_star_sim=sum(lambda'.*(b_sim.^2 - diag(V_b)'),2)
+        theta_star_sim = sum(lambda.*b_sim.^2 .- lambda.* diag(V_b),dims=1)
+        pvalue=mean(theta_star_sim.>stat)
+
+        #Report
+        println("Joint-Test Statistic: ", stat)
+        println("p-value: ", pvalue)
+
+    end
+
+    test_statistic=test_statistic[2:end]
+    linear_combination=numerator[2:end]
+    SE_linear_combination_KSS=sqrt.(denominator[2:end])
+    SE_linear_combination_RES=sqrt.(denominator_RES[2:end])
+    SE_linear_combination_NAI=diag(SE_linear_combination_NAI)
+    SE_linear_combination_NAI=sqrt.(SE_linear_combination_NAI[2:end])
+
+    return nothing
+end
