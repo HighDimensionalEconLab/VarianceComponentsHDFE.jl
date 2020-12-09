@@ -1081,7 +1081,7 @@ function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
 end
 
 
-function lincom_KSS(y,X,Z,Transform,clustering_var,Lambda_P; joint_test =false, labels=nothing, restrict=nothing, nsim = 10000, settings = settings)
+function lincom_KSS(y,X,Z,Transform,Lambda_P; joint_test =false, labels=nothing, restrict=nothing, nsim = 10000, settings = settings)
     #SET DIMENSIONS
     n=size(X,1)
     K=size(X,2)
@@ -1096,20 +1096,6 @@ function lincom_KSS(y,X,Z,Transform,clustering_var,Lambda_P; joint_test =false, 
     eta=y-X*beta
 
     # PART 1B: VERIFY LEAVE OUT COMPUTATION
-    if Lambda_P == nothing
-        Lambda_P=do_Pii(X,clustering_var)
-    end
-
-    if Lambda_P != nothing && clustering_var !=nothing
-        nnz_1=nnz(Lambda_P)
-        nnz_2=check_clustering(clustering_var).nnz_2
-
-        if nnz_1 == nnz_2
-            println("The structure of the specified Lambda_P is consistent with the level of clustering required by the user.")
-        elseif nnz_1 != nnz_2
-            error("The user wants cluster robust inference but the Lambda_P provided by the user is not consistent with the level of clustering asked by the user. Try to omit input Lambda_P when running lincom_KSS")
-        end
-    end
     I_Lambda_P = I-Lambda_P
     eta_h = I_Lambda_P\eta
 
