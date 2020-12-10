@@ -14,6 +14,19 @@ run_full_test = get(ENV, "JLA_TESTCSV", "false")  == "true" ? true : false
 pkg_dir = pkgdir(VarianceComponentsHDFE)
 
 
+@testset "compute_whole" begin
+    #Full Network
+    y_full = [0.146297; 0.29686 ;  0.54344; 0.432677 ; 0.464866 ; 0.730622 ; 0.619239; 0.753429; 0.0863208; 0.372084 ;  0.958089]
+    id_full = [1; 1; 2;2 ; 3; 4;4 ;5;5 ;6;6]
+    firmid_full = [1;2;1;1;1;1;2;2;2;2;3]
+    obs_id_full = collect(1:11)
+
+    @unpack θ_first, θ_second, θCOV, obs_id, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, N = compute_whole(y_full, id_full, firmid_full, nothing, VCHDFESettings(print_level = 1))
+
+    @test 1 == 1    
+end
+
+
 @testset "PruneNetwork" begin
     #Full Network
     y_full = [0.146297; 0.29686 ;  0.54344; 0.432677 ; 0.464866 ; 0.730622 ; 0.619239; 0.753429; 0.0863208; 0.372084 ;  0.958089]

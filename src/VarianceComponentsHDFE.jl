@@ -21,6 +21,7 @@ export find_connected_set,prunning_connected_set,drop_single_obs, index_constr
 export compute_movers, check_clustering, eff_res
 export do_Pii, lincom_KSS, compute_matchid, leave_out_estimation, get_leave_one_out_set
 export VCHDFESettings, JLAAlgorithm, ExactAlgorithm, AbstractLeverageAlgorithm
+export compute_whole, lincom_KSS
 
 # Exporting these functions for ease of benchmarking/testing
 export computeLDLinv, approxcholOperator, approxcholSolver

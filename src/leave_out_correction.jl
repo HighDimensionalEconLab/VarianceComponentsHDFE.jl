@@ -10,6 +10,7 @@
 getlagged(x) = [NaN; x[1:(end - 1)]]
 
 using DocStringExtensions
+using VarianceComponentsHDFE
 
 
 #Defining types and structures
@@ -1050,8 +1051,8 @@ function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
     # compute y, id firmid, controls, settings
     # compute y, first_id second_id, controls, settings
     (settings.print_level > 0) && println("Finding the leave-one-out connected set")
-    @unpack obs_id,  y  , first_id , second_id  = find_connected_set(y,first_id,second_id;settings)
-    @unpack obs_id,  y  , first_id , second_id  = prunning_connected_set(y,first_id,second_id, obs_id;settings)
+    @unpack obs_id,  y  , first_id , second_id  = find_connected_set(y,first_id,second_id,settings)
+    @unpack obs_id,  y  , first_id , second_id  = prunning_connected_set(y,first_id,second_id, obs_id,settings)
     @unpack obs_id,  y  , first_id , second_id  = drop_single_obs(y,first_id,second_id, obs_id)
     controls == nothing ? nothing : controls = controls[obs_id,:]
 
@@ -1068,7 +1069,7 @@ function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
     end
 
     @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings)
-
+    
     if settings.print_level > 0
         println("Bias-Corrected Variance Components:")
         println("Bias-Corrected variance of $(settings.first_id_display_small): $θ_first")
@@ -1076,24 +1077,34 @@ function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
         println("Bias-Corrected covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) effects: $θCOV")
     end
 
-    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, obs = obs_id, β = β, Dalpha = Dalpha, Fpsi = Fpsi, Pii = Pii, Bii_first = Bii_first,
-            Bii_second = Bii_second, Bii_cov = Bii_cov, X = X, y = y, N = max(first_id))
+    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, obs_id = obs_id, β = β, Dalpha = Dalpha, Fpsi = Fpsi, Pii = Pii, Bii_first = Bii_first,
+            Bii_second = Bii_second, Bii_cov = Bii_cov, y = y, N = maximum(first_id))
 end
 
 
-function lincom_KSS(y,X,Z, beta,Transform,Lambda_P; joint_test =false, labels=nothing, restrict=nothing, nsim = 10000, settings = settings)
-    #SET DIMENSIONS
+function lincom_KSS(y,X, β, regressors,Lambda_P, N, obs_id; fixed_effects=1, labels=nothing, joint_test =false, joint_test_regressors, nsim = 10000, settings = settings)
+    # SET DIMENSIONS
     n=size(X,1)
     K=size(X,2)
-    #Add Constant
-    Z=hcat(ones(size(Z,1)), Z)
+
+    # Constructing Z Constant
+    Z = ones(size(regressors[1][obs_id], 1)) #TODO
+    for regressor in regressors
+        Z = hcat(Z, regressor[obs_id])
+    end
 
     # PART 1: ESTIMATE HIGH DIMENSIONAL MODEL
-    eta=y-X*beta
+    eta=y-X*β
 
     # PART 1B: VERIFY LEAVE OUT COMPUTATION
     I_Lambda_P = I-Lambda_P
     eta_h = I_Lambda_P\eta
+
+    # PART 1C: Generating the Transform Matrix
+    NT = size(y, 1)
+    Fvar=hcat(spzeros(NT,N), X[:,N+1:N+J-1])
+    Dvar=hcat(X[:,1:N], spzeros(NT,J-1))
+    Transform = Fvar ? fixed_effects == 1 : Dvar
 
     #PART 2: SET UP MATRIX FOR SANDWICH FORMULA
     rows,columns, V = findnz(Lambda_P)
@@ -1105,7 +1116,7 @@ function lincom_KSS(y,X,Z, beta,Transform,Lambda_P; joint_test =false, labels=no
     sigma_i_res=sparse(rows,columns,aux,n,n)
 
     r=size(Z,2);
-    wy=Transform*beta
+    wy=Transform*β
     zz=Z'*Z
 
     numerator=Z\wy
@@ -1195,7 +1206,7 @@ function lincom_KSS(y,X,Z, beta,Transform,Lambda_P; joint_test =false, labels=no
         Lambda_B=sparse(rows,columns,Bii,n,n)
 
         #Leave Out Joint-Statistic
-        stat=(v'*beta)'*opt_weight*(v'*beta)-y'*Lambda_B*eta_h
+        stat=(v'*β)'*opt_weight*(v'*β)-y'*Lambda_B*eta_h
 
         #Now simulate critical values under the null.
         mu=zeros(r)
@@ -1222,3 +1233,4 @@ function lincom_KSS(y,X,Z, beta,Transform,Lambda_P; joint_test =false, labels=no
 
     return nothing
 end
+
