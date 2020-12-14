@@ -131,8 +131,8 @@ function real_main()
     second_idx = parsed_args["second_id"]
     observation_idx = parsed_args["observation_id"]
     algorithm = parsed_args["algorithm"]
-    first_id_effects = parsed_args["first_id_effects"]
-    cov_effects = parsed_args["cov_effects"]
+    first_id_effects = parsed_args["no_first_id_effects"] == 1 ? 0 : 1
+    cov_effects = parsed_args["no_cov_effects"] == 1 ? 0 : 1
     simulations = parsed_args["simulations"]
     first_id_display = parsed_args["first_id_display"]
     second_id_display = parsed_args["second_id_display"]
