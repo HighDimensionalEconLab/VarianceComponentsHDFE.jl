@@ -1185,7 +1185,7 @@ function lincom_KSS(df,y,X, β, regressors,Lambda_P, obs_id; fixed_effects=1, jo
 
 
     # PART 5: Joint-test. Quadratic form beta'*A*beta
-    if joint_test == true
+    if joint_test_regressors == true
 
         if restrict  == nothing
             restrict=sparse(collect(1:r-1),collect(2:r),1.0,r-1,r)
