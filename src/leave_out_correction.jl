@@ -10,7 +10,6 @@
 getlagged(x) = [NaN; x[1:(end - 1)]]
 
 using DocStringExtensions
-using VarianceComponentsHDFE
 
 
 #Defining types and structures
@@ -1070,6 +1069,18 @@ function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
 
     @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings)
     
+    #first (worker) Dummies
+    D = sparse(collect(1:NT),first_id,1)
+
+    #second (firm) Dummies
+    F = sparse(collect(1:NT),second_id,1)
+
+    # N+J x N+J-1 restriction matrix
+    S= sparse(1.0I, J-1, J-1)
+    S=vcat(S,sparse(-zeros(1,J-1)))
+
+    X = hcat(D, -F*S)
+
     if settings.print_level > 0
         println("Bias-Corrected Variance Components:")
         println("Bias-Corrected variance of $(settings.first_id_display_small): $θ_first")
@@ -1078,20 +1089,26 @@ function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
     end
 
     return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, obs_id = obs_id, β = β, Dalpha = Dalpha, Fpsi = Fpsi, Pii = Pii, Bii_first = Bii_first,
-            Bii_second = Bii_second, Bii_cov = Bii_cov, y = y, N = maximum(first_id))
+            Bii_second = Bii_second, Bii_cov = Bii_cov, X=X, yvec = y)
 end
 
 
-function lincom_KSS(y,X, β, regressors,Lambda_P, N, obs_id; fixed_effects=1, labels=nothing, joint_test =false, joint_test_regressors, nsim = 10000, settings = settings)
+function lincom_KSS(df,y,X, β, regressors,Lambda_P, obs_id; fixed_effects=1, joint_test_regressors =false, nsim = 10000, settings = settings)
+    #regressors is a vector of strings
+    labels = regressors
+
+    symbols = []
+    for zindex=1:length(regressors)
+        push!(symbols, regressors[zindex])
+    end
+
     # SET DIMENSIONS
     n=size(X,1)
     K=size(X,2)
 
-    # Constructing Z Constant
-    Z = ones(size(regressors[1][obs_id], 1)) #TODO
-    for regressor in regressors
-        Z = hcat(Z, regressor[obs_id])
-    end
+    # Constructing Z matrix of Regressors
+    Z = Matrix(df[obs_id, symbols])
+    Z = hcat(ones(size(Z, 1)), Z) 
 
     # PART 1: ESTIMATE HIGH DIMENSIONAL MODEL
     eta=y-X*β
