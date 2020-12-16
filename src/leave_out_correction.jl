@@ -1069,6 +1069,10 @@ function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
 
     @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings)
     
+
+    NT = size(y,1)
+    N = maximum(first_id)
+    J = maximum(second_id)
     #first (worker) Dummies
     D = sparse(collect(1:NT),first_id,1)
 
@@ -1089,22 +1093,40 @@ function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
     end
 
     return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, obs_id = obs_id, β = β, Dalpha = Dalpha, Fpsi = Fpsi, Pii = Pii, Bii_first = Bii_first,
-            Bii_second = Bii_second, Bii_cov = Bii_cov, X=X, yvec = y)
+            Bii_second = Bii_second, Bii_cov = Bii_cov, yvec = y, first_id = first_id , second_id = second_id)
 end
 
 
-function lincom_KSS(df,y,X, β, regressors,Lambda_P, obs_id; fixed_effects=1, joint_test_regressors =false, nsim = 10000, settings = settings)
+function lincom_KSS(df,y,X, β, regressors,Pii, obs_id; fixed_effects=1, joint_test =false, joint_test_regressors = nothing, nsim = 10000, settings = settings)
     #regressors is a vector of strings
     labels = regressors
 
     symbols = []
     for zindex=1:length(regressors)
-        push!(symbols, regressors[zindex])
+        push!(symbols, Symbol(regressors[zindex]))
     end
 
+    if joint_test_regressors != nothing 
+        positionvec = indexin(joint_test_regressors, labels) .+ 1
+    end
+
+
     # SET DIMENSIONS
-    n=size(X,1)
-    K=size(X,2)
+    n = size(y,1)
+    N = maximum(first_id)
+    J = maximum(second_id)
+    #first (worker) Dummies
+    D = sparse(collect(1:n),first_id,1)
+
+    #second (firm) Dummies
+    F = sparse(collect(1:n),second_id,1)
+
+    # N+J x N+J-1 restriction matrix
+    S= sparse(1.0I, J-1, J-1)
+    S=vcat(S,sparse(-zeros(1,J-1)))
+
+    X = hcat(D, -F*S)
+    K= N+J-1
 
     # Constructing Z matrix of Regressors
     Z = Matrix(df[obs_id, symbols])
@@ -1114,17 +1136,17 @@ function lincom_KSS(df,y,X, β, regressors,Lambda_P, obs_id; fixed_effects=1, jo
     eta=y-X*β
 
     # PART 1B: VERIFY LEAVE OUT COMPUTATION
-    I_Lambda_P = I-Lambda_P
-    eta_h = I_Lambda_P\eta
+    eta_h = [eta./(1 .-Pii) ...]
 
     # PART 1C: Generating the Transform Matrix
-    NT = size(y, 1)
-    Fvar=hcat(spzeros(NT,N), X[:,N+1:N+J-1])
-    Dvar=hcat(X[:,1:N], spzeros(NT,J-1))
-    Transform = Fvar ? fixed_effects == 1 : Dvar
+    #Fvar=hcat(spzeros(NT,N), X[:,N+1:N+J-1])
+    #Dvar= hcat(X[:,1:N], spzeros(NT,J-1))
+    Transform = fixed_effects == 1 ? hcat(spzeros(n,N), X[:,N+1:N+J-1])  : hcat(X[:,1:N], spzeros(n,J-1))
 
     #PART 2: SET UP MATRIX FOR SANDWICH FORMULA
-    rows,columns, V = findnz(Lambda_P)
+    #rows,columns, V = findnz(Lambda_P)
+    rows = collect(1:n)
+    columns = collect(1:n)
 
     aux= 0.5*(y[rows].*eta_h[columns] + y[columns].*eta_h[rows])
     sigma_i=sparse(rows,columns,aux,n,n)
@@ -1144,6 +1166,9 @@ function lincom_KSS(df,y,X, β, regressors,Lambda_P, obs_id; fixed_effects=1, jo
     #PART 3: COMPUTE
     denominator=zeros(r,1)
     denominator_RES=zeros(r,1)
+
+    xx = X'*X 
+    compute_sol = approxcholSolver(xx;verbose = false)
 
     for q=1:r
         v=sparse([q],[1.0],[1.0],r,1)
@@ -1185,10 +1210,12 @@ function lincom_KSS(df,y,X, β, regressors,Lambda_P, obs_id; fixed_effects=1, jo
 
 
     # PART 5: Joint-test. Quadratic form beta'*A*beta
-    if joint_test_regressors == true
+    if joint_test == true | joint_test_regressors != nothing 
 
-        if restrict  == nothing
+        if joint_test_regressors  == nothing
             restrict=sparse(collect(1:r-1),collect(2:r),1.0,r-1,r)
+        elseif joint_test_regressors  != nothing
+            restrict = sparse( collect(1:length(positionvec)), positionvec, 1.0, length(positionvec), r)
         end
 
         v=restrict*(zz\(Z'*Transform))
