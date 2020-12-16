@@ -197,9 +197,9 @@ function real_main()
 
     if parsed_args["write_detailed_CSV"]
 
-        y_output = y[obs]
-        first_id_output = first_id[obs]
-        second_id_output = second_id[obs]
+        y_output = y
+        first_id_output = first_id
+        second_id_output = second_id
 
         max_length = length(obs)
 
