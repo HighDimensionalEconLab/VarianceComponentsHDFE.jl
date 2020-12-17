@@ -8,6 +8,7 @@ using SparseArrays, LightGraphs, DataFramesMeta
 using Distributions
 using LinearOperators, FastClosures, Krylov
 using ArgParse
+using Arpack
 
 #include("init.jl")
 include("leave_out_correction.jl")

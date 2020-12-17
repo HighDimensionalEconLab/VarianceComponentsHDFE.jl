@@ -1210,7 +1210,7 @@ function lincom_KSS(df,y,first_id, second_id, β, regressors,Pii, obs_id; fixed_
 
 
     # PART 5: Joint-test. Quadratic form beta'*A*beta
-    if joint_test ==false |  (joint_test_regressors != nothing )
+    if joint_test ==false &  (joint_test_regressors != nothing )
         println("Joint test will not be computed. You need to set the argument option joint_test to true.")
     end
 
