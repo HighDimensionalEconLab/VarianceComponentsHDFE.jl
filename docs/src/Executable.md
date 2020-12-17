@@ -27,7 +27,7 @@ Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into th
 3. In the powershell, install the latest version by running:
 
 ```
-wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.1/vchdfe-v0.1.5.1-ubuntu-latest.tar.gz -O vchdfe-windows-latest.tar.gz
+wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.3/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
 
 tar -xvf vchdfe-windows-latest.tar.gz
 ```
@@ -58,7 +58,7 @@ vchdfe vchdfe\bin\test.csv
 
 ```
 cd desired_installation_path
-wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.1/vchdfe-v0.1.5.1-macos-latest.tar.gz | tar -xzv
+wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.3/vchdfe-v0.1.5.3-macos-latest.tar.gz | tar -xzv
 ```
 
 And then close the terminal.
