@@ -204,17 +204,17 @@ function real_main()
         max_length = length(obs)
 
         #todo rename the DataFrame arguments
-        output = DataFrame(observation = obs,
-                           first_id = first_id_output,
-                           second_id = second_id_output,
-                           y = y_output,
+        output = DataFrame(observation = replace(obs, nothing => missing),
+                           first_id = replace(first_id_output, nothing => missing),
+                           second_id = replace(second_id_output, nothing => missing),
+                           y = replace(y_output, nothing => missing),
                         #    beta = vcat(β,missings(max(max_length-length(β),0))),
-                           D_alpha = Dalpha,
-                           F_psi = Fpsi,
-                           Pii = Pii,
-                           Bii_first = Bii_first,
-                           Bii_second = Bii_second,
-                           Bii_cov = Bii_cov,
+                           D_alpha = replace(Dalpha, nothing => missing),
+                           F_psi = replace(Fpsi, nothing => missing),
+                           Pii = replace(Pii, nothing => missing),
+                           Bii_first = replace(Bii_first, nothing => missing),
+                           Bii_second = replace(Bii_second, nothing => missing),
+                           Bii_cov = replace(Bii_cov, nothing => missing),
                         #    variance_comp_second_effects = [θ_second; missings(max_length-1)],
                         #    variance_comp_first_effects = [θ_first; missings(max_length-1)],
                         #    covariance_comp_effects = [θCOV; missings(max_length-1)]
