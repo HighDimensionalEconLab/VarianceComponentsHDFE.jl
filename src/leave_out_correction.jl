@@ -1097,7 +1097,7 @@ function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
 end
 
 
-function lincom_KSS(df,y,X, β, regressors,Pii, obs_id; fixed_effects=1, joint_test =false, joint_test_regressors = nothing, nsim = 10000, settings = settings)
+function lincom_KSS(df,y,first_id, second_id, β, regressors,Pii, obs_id; fixed_effects=1, joint_test =false, joint_test_regressors = nothing, nsim = 10000, settings = settings)
     #regressors is a vector of strings
     labels = regressors
 
