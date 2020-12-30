@@ -13,7 +13,7 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 
 ## Windows
 
-1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.3/vchdfe--windows-latest.tar.gz). Move this file to the desired installation path.
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.6/vchdfe--windows-latest.tar.gz). Move this file to the desired installation path.
 2. Open up a powershell terminal. We recommend to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator". 
 
 3. Change the current directory to where you want to install the executable by typing  in the powershell
@@ -28,8 +28,6 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 4. In the powershell, install the latest version by running:
 
     ```
-    wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.3/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
-
     tar -xvf vchdfe--windows-latest.tar.gz
     ```
 
@@ -48,10 +46,10 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
     vchdfe vchdfe\bin\test.csv
     ```
 
-7. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. For example, to set the number of threads to 4, you may run the following code in the command line:
+7. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. For example, to set the number of threads to 4, you may run the following code in the powershell:
 
     ```
-    set JULIA_NUM_THREADS=4
+    $env:JULIA_NUM_THREADS=4
     ```
     
 You can now proceed to close the terminal.
@@ -66,6 +64,7 @@ You can now proceed to close the terminal.
 
       ```
       cd desired_installation_path
+
       gunzip -c vchdfe-v0.1.5.3-macos-latest.tar.gz | tar xopft -
       ```
 
@@ -84,6 +83,7 @@ You can now proceed to close the terminal.
     ```
   
     where `desired_installation_path` is the folder where you installed the executable in the previous steps. Next we save the file we just modified and close it. Finally, to make sure that it will load those changes without rebooting the computer, run the following line in the terminal
+    
 
     ```
     source ~/.bash_profile
