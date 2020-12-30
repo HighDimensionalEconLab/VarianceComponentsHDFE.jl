@@ -57,8 +57,8 @@ The VCHDFESettings type is to pass information to methods regarding which algori
 * `first_id_display`: name of the first id (default = Person)
 * `second_id_display_small`: name of the second id in lower cases (default = firm)
 * `second_id_display`: name of the second id (default = Firm)
-* `observation_id_display_small`: name of the observation id in lower cases (default = wage)
-* `observation_id_display`: name of the observation id (default = Wage)
+* `outcome_id_display_small`: name of the observation id in lower cases (default = wage)
+* `outcome_id_display`: name of the observation id (default = Wage)
 
 """
 @with_kw struct VCHDFESettings{LeverageAlgorithm}
@@ -72,8 +72,8 @@ The VCHDFESettings type is to pass information to methods regarding which algori
     first_id_display::String = "Person"
     second_id_display_small::String = "firm"
     second_id_display::String = "Firm"
-    observation_id_display_small::String = "wage"
-    observation_id_display::String = "Wage"
+    outcome_id_display_small::String = "wage"
+    outcome_id_display::String = "Wage"
 end
 
 ## FUNCTIONS FROM THE VECTORIZEDROUTINE.JL PACKAGE
@@ -980,11 +980,11 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     println("\n","Plug-in Variance Components:")
 
     σ2_ψ_AKM = var(fe)
-    println("Plug-in Variance of second Effects: ", σ2_ψ_AKM )
+    println("Plug-in Variance of $(settings.second_id_display_small) Effects: ", σ2_ψ_AKM )
     σ2_α_AKM = var(pe)
-    println("Plug-in Variance of first Effects: ", σ2_α_AKM )
+    println("Plug-in Variance of $(settings.first_id_display_small) Effects: ", σ2_α_AKM )
     σ2_ψα_AKM = cov(pe,-fe)
-    println("Plug-in Covariance of second-first Effects: ", σ2_ψα_AKM, "\n")
+    println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM, "\n")
 
 
     #Part 2: Compute Pii, Bii
@@ -1009,6 +1009,11 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
     Bii_cov = settings.cov_effects == true ? diag(Lambda_B_cov) : nothing
 
+
+    println("Bias-Corrected Variance Components:")
+    println("Bias-Corrected variance of $(settings.second_id_display_small): ", θ_second)
+    println("Bias-Corrected variance of $(settings.first_id_display_small): ", θ_first)
+    println("Bias-Corrected covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) effects: ", θCOV)
 
     return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = pe, Fpsi = fe, Pii = Pii, Bii_first = Bii_first,
             Bii_second = Bii_second, Bii_cov = Bii_cov)

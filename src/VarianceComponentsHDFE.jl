@@ -46,10 +46,10 @@ function parse_commandline()
             default = 4
         "--no_first_id_effects"
             help = "No computing and showing of first_id effects"
-            action = :store_true
+            action = :store_false
         "--no_cov_effects"
             help = "No computing and showing of covariace effects"
-            action = :store_true
+            action = :store_false
         "--algorithm"
             help = "type of algorithm: Exact or JLA. It defaults to be Exact if the number of observations is less than 5000, and JLA otherwise."
             arg_type = String
@@ -119,7 +119,7 @@ end
 function real_main()
     parsed_args = parse_commandline()
 
-    println("present working directory is $(pwd())")
+    println("Present working directory is $(pwd())")
 
     path = parsed_args["path"]
     #TODO: not sure about the paths
@@ -230,8 +230,8 @@ function real_main()
     if parsed_args["write_results"]
         output_template = """
             Number of observations (Leave-out Sample): $(length(obs)) \n 
-            Number of $(first_id_display_small)s: $(length(first_id)) \n 
-            Number of $(second_id_display_small)s: $(length(second_id)) \n
+            Number of $(first_id_display_small)s: $(maximum(first_id)) \n 
+            Number of $(second_id_display_small)s: $(maximum(second_id)) \n
             Mean Outcome: $(mean(y)) \n
             Variance Outcome: $(var(y)) \n
             Max Pii: $(maximum(Pii)) \n
