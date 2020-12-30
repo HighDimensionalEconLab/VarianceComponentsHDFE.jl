@@ -57,7 +57,7 @@ You can now proceed to close the terminal.
 
 ## MacOS
 
-1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.3/vchdfe-v0.1.5.3-macos-latest.tar.gz). Move this file to the desired installation path.
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.6/vchdfe-v0.1.5.6-macos-latest.tar.gz). Move this file to the desired installation path.
 2. Open Terminal: Press COMMAND + SPACE to open spotlight search, and type terminal and hit RETURN.
 
 3. You may unpack the .tar.gz file automatically when you double-click the icon. Otherwise, you may run the following code:
@@ -83,7 +83,7 @@ You can now proceed to close the terminal.
     ```
   
     where `desired_installation_path` is the folder where you installed the executable in the previous steps. Next we save the file we just modified and close it. Finally, to make sure that it will load those changes without rebooting the computer, run the following line in the terminal
-    
+
 
     ```
     source ~/.bash_profile
