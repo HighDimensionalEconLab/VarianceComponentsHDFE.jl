@@ -18,40 +18,42 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 
 3. Change the current directory to where you want to install the executable by typing  in the powershell
 
-```
-cd "desired_installation_path"
-```
+    ```
+    cd "desired_installation_path"
+    ```
 
-Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
+    Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
 
 
 4. In the powershell, install the latest version by running:
 
-```
-wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.3/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
+    ```
+    wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.3/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
 
-tar -xvf vchdfe--windows-latest.tar.gz
-```
+    tar -xvf vchdfe--windows-latest.tar.gz
+    ```
 
 5. Add the installation directory to PATH. This will allow us to run the program everytime without specifying where the program is installed. To do so copy and paste the following line: 
 
-```
-setx PATH "$env:path;$pwd\vchdfe\bin" -m
-```
-Note: This change will be permanent only if you ran powershell as administrator. Otherwise, everytime you need to run the program you need to specify the installation folder : we would have to type  `"installation_path"\\vchdfe\\bin\\vchdfe` instead of `vchdfe` everytime we want to run the program. 
+    ```
+    setx PATH "$env:path;$pwd\vchdfe\bin" -m
+    ```
+
+    Note: This change will be permanent only if you ran powershell as administrator. Otherwise, everytime you need to run the program you need to specify the installation folder : we would have to type  `"installation_path"\\vchdfe\\bin\\vchdfe` instead of `vchdfe` everytime we want to run the program. 
 
 
 6. (OPTIONAL) You can test the program using the sample test file provided with the executable:
 
-```
-vchdfe vchdfe\bin\test.csv
-```
+    ```
+    vchdfe vchdfe\bin\test.csv
+    ```
 
 7. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. For example, to set the number of threads to 4, you may run the following code in the command line:
 
-```
-set JULIA_NUM_THREADS=4
-```
+    ```
+    set JULIA_NUM_THREADS=4
+    ```
+    
 You can now proceed to close the terminal.
 
 
@@ -62,40 +64,41 @@ You can now proceed to close the terminal.
 
 3. You may unpack the .tar.gz file automatically when you double-click the icon. Otherwise, you may run the following code:
 
-```
-cd desired_installation_path
-gunzip -c vchdfe-v0.1.5.3-macos-latest.tar.gz | tar xopft -
-```
+      ```
+      cd desired_installation_path
+      gunzip -c vchdfe-v0.1.5.3-macos-latest.tar.gz | tar xopft -
+      ```
 
-And then close the terminal.
+    And then close the terminal.
 
 4. Add the installation directory to PATH. To do so you must open again a terminal window as in Step 1. Run 
 
-```
-touch ~/.bash_profile; open ~/.bash_profile
-```
+      ```
+      touch ~/.bash_profile; open ~/.bash_profile
+      ```
 
-This will open a file known as `.bash_profile`, where you can copy and paste the following line  
+    This will open a file known as `.bash_profile`, where you can copy and paste the following line  
 
-```
-export PATH="desired_installation_path/vchdfe/bin:$PATH"
-```
-where `desired_installation_path` is the folder where you installed the executable in the previous steps. Next we save the file we just modified and close it. Finally, to make sure that it will load those changes without rebooting the computer, run the following line in the terminal
+    ```
+    export PATH="desired_installation_path/vchdfe/bin:$PATH"
+    ```
+  
+    where `desired_installation_path` is the folder where you installed the executable in the previous steps. Next we save the file we just modified and close it. Finally, to make sure that it will load those changes without rebooting the computer, run the following line in the terminal
 
-```
-source ~/.bash_profile
-```
+    ```
+    source ~/.bash_profile
+    ```
 
 5. (OPTIONAL) You can test the program using the sample test file provided with the executable:
 
-```
-vchdfe vchdfe\bin\test.csv
-```
+    ```
+    vchdfe vchdfe\bin\test.csv
+    ```
 6. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. For example, to set the number of threads to 4, you may run the following code in the command line:
 
-```
-set JULIA_NUM_THREADS=4
-```
+      ```
+      set JULIA_NUM_THREADS=4
+      ```
 
 You can now proceed to close the terminal.
 
