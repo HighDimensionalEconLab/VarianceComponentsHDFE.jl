@@ -13,9 +13,10 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 
 ## Windows
 
-1. Open up a powershell terminal. We recommend to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator". 
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.3/vchdfe--windows-latest.tar.gz). Move this file to the desired installation path.
+2. Open up a powershell terminal. We recommend to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator". 
 
-2. Change the current directory to where you want to install the executable by typing  in the powershell
+3. Change the current directory to where you want to install the executable by typing  in the powershell
 
 ```
 cd "desired_installation_path"
@@ -24,19 +25,15 @@ cd "desired_installation_path"
 Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
 
 
-3. In the powershell, install the latest version by running:
+4. In the powershell, install the latest version by running:
 
 ```
 wget https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.3/vchdfe--windows-latest.tar.gz -O vchdfe-windows-latest.tar.gz
 
-tar -xvf vchdfe-windows-latest.tar.gz
+tar -xvf vchdfe--windows-latest.tar.gz
 ```
 
-Note that to be able to use wget on Windows you must have launched Internet Explorer at least once before. 
-
-
-
-4. Add the installation directory to PATH. This will allow us to run the program everytime without specifying where the program is installed. To do so copy and paste the following line: 
+5. Add the installation directory to PATH. This will allow us to run the program everytime without specifying where the program is installed. To do so copy and paste the following line: 
 
 ```
 setx PATH "$env:path;$pwd\vchdfe\bin" -m
@@ -44,26 +41,35 @@ setx PATH "$env:path;$pwd\vchdfe\bin" -m
 Note: This change will be permanent only if you ran powershell as administrator. Otherwise, everytime you need to run the program you need to specify the installation folder : we would have to type  `"installation_path"\\vchdfe\\bin\\vchdfe` instead of `vchdfe` everytime we want to run the program. 
 
 
-5. (OPTIONAL) You can test the program using the sample test file provided with the executable:
+6. (OPTIONAL) You can test the program using the sample test file provided with the executable:
 
 ```
 vchdfe vchdfe\bin\test.csv
 ```
 
+7. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. For example, to set the number of threads to 4, you may run the following code in the command line:
+
+```
+set JULIA_NUM_THREADS=4
+```
+You can now proceed to close the terminal.
+
+
 ## MacOS
 
-1. Open Terminal: Press COMMAND + SPACE to open spotlight search, and type terminal and hit RETURN.
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.3/vchdfe-v0.1.5.3-macos-latest.tar.gz). Move this file to the desired installation path.
+2. Open Terminal: Press COMMAND + SPACE to open spotlight search, and type terminal and hit RETURN.
 
-2. To download the compressed file in some desired installation directory, run the following code:
+3. You may unpack the .tar.gz file automatically when you double-click the icon. Otherwise, you may run the following code:
 
 ```
 cd desired_installation_path
-wget -qO- https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.3/vchdfe-v0.1.5.3-macos-latest.tar.gz | tar -xzv
+gunzip -c vchdfe-v0.1.5.3-macos-latest.tar.gz | tar xopft -
 ```
 
 And then close the terminal.
 
-3. Add the installation directory to PATH. To do so you must open again a terminal window as in Step 1. Run 
+4. Add the installation directory to PATH. To do so you must open again a terminal window as in Step 1. Run 
 
 ```
 touch ~/.bash_profile; open ~/.bash_profile
@@ -80,11 +86,17 @@ where `desired_installation_path` is the folder where you installed the executab
 source ~/.bash_profile
 ```
 
-4. (OPTIONAL) You can test the program using the sample test file provided with the executable:
+5. (OPTIONAL) You can test the program using the sample test file provided with the executable:
 
 ```
 vchdfe vchdfe\bin\test.csv
 ```
+6. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. For example, to set the number of threads to 4, you may run the following code in the command line:
+
+```
+set JULIA_NUM_THREADS=4
+```
+
 You can now proceed to close the terminal.
 
 # Executable guide
@@ -120,8 +132,8 @@ to see a complete list of available arguments:
                             Use the less granular type (e.g. Firm in the 
                             AKM example)
                             (type: Int64, default: 2)
-      --observation_id OBSERVATION_ID
-                            column index in CSV file for observation (e.g.
+      --outcome_id OUTCOME_ID
+                            column index in CSV file for outcome (e.g.
                             Wage). (type: Int64, default: 4)
       --no_first_id_effects No computing and showing of first_id effects
       --no_cov_effects      No computing and showing of covariance effects
@@ -141,8 +153,8 @@ to see a complete list of available arguments:
       --second_id_display SECOND_ID_DISPLAY
                             The display text associated with second_id
                             (e.g. Firm) (default: "Firm")
-      --observation_id_display OBSERVATION_ID_DISPLAY
-                            The display text associated with observable_id
+      --outcome_id_display OUTCOME_ID_DISPLAY
+                            The display text associated with outcome_id
                             (e.g. Wage) (default: "Wage")
       --detailed_output_path DETAILED_OUTPUT_PATH
                             path to the CSV for the detailed output for
