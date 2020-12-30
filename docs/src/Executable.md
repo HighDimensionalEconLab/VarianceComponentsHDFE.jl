@@ -62,25 +62,26 @@ You can now proceed to close the terminal.
 
 3. You may unpack the .tar.gz file automatically when you double-click the icon. Otherwise, you may run the following code:
 
-      ```
-      cd desired_installation_path
+    ```
+    cd desired_installation_path
 
-      gunzip -c vchdfe-v0.1.5.3-macos-latest.tar.gz | tar xopft -
-      ```
+    gunzip -c vchdfe-v0.1.5.3-macos-latest.tar.gz | tar xopft -
+    ```
 
     And then close the terminal.
 
 4. Add the installation directory to PATH. To do so you must open again a terminal window as in Step 1. Run 
 
-      ```
-      touch ~/.bash_profile; open ~/.bash_profile
-      ```
+    ```
+    touch ~/.bash_profile; open ~/.bash_profile
+    ```
 
     This will open a file known as `.bash_profile`, where you can copy and paste the following line  
 
     ```
     export PATH="desired_installation_path/vchdfe/bin:$PATH"
     ```
+  
   
     where `desired_installation_path` is the folder where you installed the executable in the previous steps. Next we save the file we just modified and close it. Finally, to make sure that it will load those changes without rebooting the computer, run the following line in the terminal
 
