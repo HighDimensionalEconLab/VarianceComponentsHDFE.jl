@@ -40,8 +40,8 @@ function parse_commandline()
             help = "column index in CSV file for the second ID (e.g. Firm).  Use the less granular type."
             arg_type = Int
             default = 2
-        "--observation_id"
-            help = "column index in CSV file for observation (e.g. Wage)."
+        "--outcome_id"
+            help = "column index in CSV file for outcome (e.g. Wage)."
             arg_type = Int
             default = 4
         "--no_first_id_effects"
@@ -69,8 +69,8 @@ function parse_commandline()
             help = "The display text associated with second_id (e.g. Firm)"
             arg_type = String
             default = "Firm"
-        "--observation_id_display"
-            help = "The display text associated with observable_id (e.g. Wage)"
+        "--outcome_id_display"
+            help = "The display text associated with outcome_id (e.g. Wage)"
             arg_type = String
             default = "Wage"
         # "--write_CSV"
@@ -129,14 +129,14 @@ function real_main()
     header = parsed_args["header"]
     first_idx = parsed_args["first_id"]
     second_idx = parsed_args["second_id"]
-    observation_idx = parsed_args["observation_id"]
+    outcome_idx = parsed_args["outcome_id"]
     algorithm = parsed_args["algorithm"]
     first_id_effects = parsed_args["no_first_id_effects"] == 1 ? 0 : 1
     cov_effects = parsed_args["no_cov_effects"] == 1 ? 0 : 1
     simulations = parsed_args["simulations"]
     first_id_display = parsed_args["first_id_display"]
     second_id_display = parsed_args["second_id_display"]
-    observation_id_display = parsed_args["observation_id_display"]
+    outcome_id_display = parsed_args["outcome_id_display"]
     print_level = parsed_args["print_level"]
 
     first_id_display_small = lowercase(first_id_display)
@@ -170,8 +170,8 @@ function real_main()
             first_id_display_small = lowercase(first_id_display),
             second_id_display = second_id_display,
             second_id_display_small = lowercase(second_id_display),
-            observation_id_display= observation_id_display,
-            observation_id_display_small = lowercase(observation_id_display),
+            outcome_id_display= outcome_id_display,
+            outcome_id_display_small = lowercase(outcome_id_display),
             print_level = print_level
         )
     else
@@ -182,8 +182,8 @@ function real_main()
             first_id_display_small = lowercase(first_id_display),
             second_id_display = second_id_display,
             second_id_display_small = lowercase(second_id_display),
-            observation_id_display= observation_id_display,
-            observation_id_display_small = lowercase(observation_id_display),
+            outcome_id_display= outcome_id_display,
+            outcome_id_display_small = lowercase(outcome_id_display),
             print_level = print_level
         )
     end
