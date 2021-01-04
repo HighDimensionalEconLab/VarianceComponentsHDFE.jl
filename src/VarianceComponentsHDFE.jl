@@ -46,10 +46,10 @@ function parse_commandline()
             default = 4
         "--no_first_id_effects"
             help = "No computing and showing of first_id effects"
-            action = :store_false
+            action = :store_true
         "--no_cov_effects"
             help = "No computing and showing of covariace effects"
-            action = :store_false
+            action = :store_true
         "--algorithm"
             help = "type of algorithm: Exact or JLA. It defaults to be Exact if the number of observations is less than 5000, and JLA otherwise."
             arg_type = String
