@@ -17,14 +17,14 @@ end
 
 
 # Compute a solver for a grounded system (SDDM matrix) with a PreallocatedLinearOperator, and an adjacency matrix
-function approxcholSolver(P::PreallocatedLinearOperator, la::AbstractArray; tol::Real=1e-6, maxits=300, verbose=false)
+function approxcholSolver(P::PreallocatedLinearOperator, la::AbstractArray; tol::Real=1e-6, maxits=300, verbose=0)
 
     tol_=tol
     maxits_=maxits
     verbose_=verbose
 
     f = function(b;tol=tol_, maxits=maxits_, verbose=verbose_)
-        xaug = Krylov.cg(la,[b; -sum(b)] .- mean([b; -sum(b)]), M=P, rtol = tol, itmax=maxits, verbose=false)[1]
+        xaug = Krylov.cg(la,[b; -sum(b)] .- mean([b; -sum(b)]), M=P, rtol = tol, itmax=maxits, verbose=0)[1]
         xaug .= xaug .- xaug[end]
         return xaug[1:end-1]
     end
@@ -34,7 +34,7 @@ function approxcholSolver(P::PreallocatedLinearOperator, la::AbstractArray; tol:
 end
 
 # Compute a solver for a grounded system (SDDM matrix) with a LDLinv object, and an adjacency matrix
-function approxcholSolver(ldli::LDLinv, la::AbstractArray; tol::Real=1e-6, maxits=300, verbose=false)
+function approxcholSolver(ldli::LDLinv, la::AbstractArray; tol::Real=1e-6, maxits=300, verbose=0)
 
     buff = zeros(length(ldli.d))
     P = approxcholOperator(ldli,buff)
@@ -44,7 +44,7 @@ function approxcholSolver(ldli::LDLinv, la::AbstractArray; tol::Real=1e-6, maxit
     verbose_=verbose
 
     f = function(b;tol=tol_, maxits=maxits_, verbose=verbose_)
-        xaug = Krylov.cg(la,[b; -sum(b)] .- mean([b; -sum(b)]), M=P, rtol = tol, itmax=maxits, verbose=false)[1]
+        xaug = Krylov.cg(la,[b; -sum(b)] .- mean([b; -sum(b)]), M=P, rtol = tol, itmax=maxits, verbose=0)[1]
         xaug .= xaug .- xaug[end]
         return xaug[1:end-1]
     end
@@ -54,7 +54,7 @@ function approxcholSolver(ldli::LDLinv, la::AbstractArray; tol::Real=1e-6, maxit
 end
 
 # Compute a solver for a grounded system (SDDM matrix)
-function approxcholSolver(sddm::AbstractArray; tol::Real=1e-6, maxits=300, verbose=false)
+function approxcholSolver(sddm::AbstractArray; tol::Real=1e-6, maxits=300, verbose=0)
 
     # Compute LDLinv object and adjacency matrix
     ldli,la = computeLDLinv(sddm)
@@ -68,7 +68,7 @@ function approxcholSolver(sddm::AbstractArray; tol::Real=1e-6, maxits=300, verbo
     verbose_=verbose
 
     f = function(b;tol=tol_, maxits=maxits_, verbose=verbose_)
-        xaug = Krylov.cg(la,[b; -sum(b)] .- mean([b; -sum(b)]), M=P, rtol = tol, itmax=maxits, verbose=false)[1]
+        xaug = Krylov.cg(la,[b; -sum(b)] .- mean([b; -sum(b)]), M=P, rtol = tol, itmax=maxits, verbose=0)[1]
         xaug .= xaug .- xaug[end]
         return xaug[1:end-1]
     end
