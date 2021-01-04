@@ -148,7 +148,7 @@ function real_main()
     first_id = data[:,first_idx]
     second_id = data[:,second_idx]
     #todo rename y to observations
-    y = data[:,observation_idx]
+    y = data[:,outcome_idx]
 
     controls = nothing
 
