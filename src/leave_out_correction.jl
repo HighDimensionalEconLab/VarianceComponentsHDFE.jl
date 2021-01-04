@@ -1009,11 +1009,13 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
     Bii_cov = settings.cov_effects == true ? diag(Lambda_B_cov) : nothing
 
-
-    println("Bias-Corrected Variance Components:")
-    println("Bias-Corrected variance of $(settings.second_id_display_small): ", θ_second)
-    println("Bias-Corrected variance of $(settings.first_id_display_small): ", θ_first)
-    println("Bias-Corrected covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) effects: ", θCOV)
+    #TODO print estimates
+    if settings.print_level > 0
+        println("Bias-Corrected Variance Components:")
+        println("Bias-Corrected variance of $(settings.second_id_display_small): ", θ_second)
+        (settings.first_id_effects > 0) && println("Bias-Corrected variance of $(settings.first_id_display_small): ", θ_first)
+        (settings.cov_effects > 0) && println("Bias-Corrected covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) effects: ", θCOV)
+    end
 
     return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = pe, Fpsi = fe, Pii = Pii, Bii_first = Bii_first,
             Bii_second = Bii_second, Bii_cov = Bii_cov)
