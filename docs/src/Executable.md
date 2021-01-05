@@ -64,7 +64,9 @@ You can now proceed to close the terminal.
 
     ```
     cd desired_installation_path
-
+    ```
+    
+    ```
     gunzip -c vchdfe-v0.1.5.3-macos-latest.tar.gz | tar xopft -
     ```
 
@@ -81,10 +83,8 @@ You can now proceed to close the terminal.
     ```
     export PATH="desired_installation_path/vchdfe/bin:$PATH"
     ```
-  
-  
-    where `desired_installation_path` is the folder where you installed the executable in the previous steps. Next we save the file we just modified and close it. Finally, to make sure that it will load those changes without rebooting the computer, run the following line in the terminal
 
+    where `desired_installation_path` is the folder where you installed the executable in the previous steps. Next we save the file we just modified and close it. Finally, to make sure that it will load those changes without rebooting the computer, run the following line in the terminal
 
     ```
     source ~/.bash_profile
@@ -97,9 +97,9 @@ You can now proceed to close the terminal.
     ```
 6. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. For example, to set the number of threads to 4, you may run the following code in the command line:
 
-      ```
-      set JULIA_NUM_THREADS=4
-      ```
+    ```
+    set JULIA_NUM_THREADS=4
+    ```
 
 You can now proceed to close the terminal.
 
