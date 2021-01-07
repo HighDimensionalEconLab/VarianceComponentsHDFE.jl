@@ -30,7 +30,7 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
     tar -xvf vchdfe--windows-latest.tar.gz
     ```
 
-5. (RECOMMENDED) Add the installation directory to [PATH](#path-in-windows). This will allow us to run the program everytime without specifying where the program is installed. 
+5. (RECOMMENDED) Add the installation directory to [PATH](#PATH-in-Windows). This will allow us to run the program everytime without specifying where the program is installed. 
 
 
 6. (OPTIONAL) You can test the program using the sample test file provided with the executable. If you ran the previous step you may run:
@@ -44,7 +44,8 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
    ```
    .\vchdfe .\vchdfe\bin\test.csv
    ```
-
+   
+   or you could test with some other file you store at the bin folder.
 
 7. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. This might be very important if you intend to run bias-correction for very large datasets. Before running the program you may set the number of threads to, say 4, by entering the following line in the Powershell:
 
@@ -60,9 +61,9 @@ The PATH is an important concept when working on the command line. It's a list o
 
 You can take a look at your current `PATH` by running the following line in the Powershell:
 
-   ```
-   $env:path
-   ```
+```
+$env:path
+```
 
 We will describe two ways to add our program to `PATH`.
 
@@ -99,7 +100,7 @@ We will describe two ways to add our program to `PATH`.
 
     And then close the terminal.
 
-4.  (RECOMMENDED) Add the installation directory to [PATH](#path-in-macos). This will allow us to run the program everytime without specifying where the program is installed. 
+4.  (RECOMMENDED) Add the installation directory to [PATH](#PATH-in-MacOS). This will allow us to run the program everytime without specifying where the program is installed. 
 
 
 5. (OPTIONAL) You can test the program using the sample test file provided with the executable. If you ran the previous step you may run:
@@ -113,6 +114,9 @@ We will describe two ways to add our program to `PATH`.
    ```
    ./vchdfe ./vchdfe/bin/test.csv
    ```   
+
+   or you can test with some other file you store at the bin folder. 
+
 6. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. This might be very important if you intend to run bias-correction for very large datasets. Before running the program you may set the number of threads to, say 4, by entering the following line in the Powershell:
 
     ```
