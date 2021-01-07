@@ -149,10 +149,10 @@ uuid = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 version = "0.13.6"
 
 [[HDF5_jll]]
-deps = ["Libdl", "Pkg", "Zlib_jll"]
-git-tree-sha1 = "3dbc683172cb53428907485a4bb98a29d3874083"
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Zlib_jll"]
+git-tree-sha1 = "bc9c3d43ffd4d8988bfa372b86d4bdbd26860e95"
 uuid = "0234f1f7-429e-5d53-9886-15a909be8d59"
-version = "1.10.5+6"
+version = "1.10.5+7"
 
 [[Inflate]]
 git-tree-sha1 = "f5fc07d4e706b84f72d54eedcc1c13d92fb0871c"
@@ -442,7 +442,7 @@ version = "1.0.2"
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[VarianceComponentsHDFE]]
-deps = ["ArgParse", "ArtifactUtils", "CSV", "DataFrames", "DataFramesMeta", "Distributions", "FastClosures", "JLD", "Krylov", "LightGraphs", "LinearAlgebra", "LinearOperators", "PackageCompiler", "Parameters", "Random", "SparseArrays", "Statistics"]
+deps = ["ArgParse", "ArtifactUtils", "CSV", "DataFrames", "DataFramesMeta", "Distributions", "DocStringExtensions", "Documenter", "FastClosures", "JLD", "Krylov", "LightGraphs", "LinearAlgebra", "LinearOperators", "PackageCompiler", "Parameters", "Random", "SparseArrays", "Statistics"]
 path = ".."
 uuid = "5389702d-ae4e-415f-842d-5a4249ce0a1e"
 version = "0.1.0"
