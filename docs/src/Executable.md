@@ -132,22 +132,21 @@ The PATH is an important concept when working on the command line. It's a list o
 
 Add the installation directory to PATH. To do so you must open again a terminal window as in Step 1. Run 
 
-   ```
-   touch ~/.bash_profile; open ~/.bash_profile
-   ```
+```
+touch ~/.bash_profile; open ~/.bash_profile
+```
 
-   This will open a file known as `.bash_profile`, where you can copy and paste the following line  
+This will open a file known as `.bash_profile`, where you can copy and paste the following line  
 
-   ```
-   export PATH="$PATH:desired_installation_path/vchdfe/bin"
-   ```
+```
+export PATH="$PATH:desired_installation_path/vchdfe/bin"
+```
 
-   where `desired_installation_path` is the folder where you installed the executable in the previous steps. Next we save the file we just modified and close it. Finally, to make sure that it will load those changes without rebooting the computer, run the following line in the terminal
+where `desired_installation_path` is the folder where you installed the executable in the previous steps. Next we save the file we just modified and close it. Finally, to make sure that it will load those changes without rebooting the computer, run the following line in the terminal
 
-   ```
-   source ~/.bash_profile
-   ```
-
+```
+source ~/.bash_profile
+```
 
 
 # Syntax of the program
