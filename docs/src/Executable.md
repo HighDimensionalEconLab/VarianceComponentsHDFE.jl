@@ -13,17 +13,16 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 
 ## Windows
 
-1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.6/vchdfe--windows-latest.tar.gz). Move this file to the desired installation path.
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.9/vchdfe--windows-latest.tar.gz). Move this file to `desired_installation_path`.
 2. Open up a powershell terminal. We recommend to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator". 
 
-3. Change the current directory to where you want to install the executable by typing  in the powershell
+3. Change the current directory to where you want to the desired installation path by typing  in the powershell
 
     ```
     cd "desired_installation_path"
     ```
 
-    Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
-
+   Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
 
 4. In the powershell, install the latest version by running:
 
@@ -31,33 +30,60 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
     tar -xvf vchdfe--windows-latest.tar.gz
     ```
 
-5. Add the installation directory to PATH. This will allow us to run the program everytime without specifying where the program is installed. To do so copy and paste the following line: 
-
-    ```
-    setx PATH "$env:path;$pwd\vchdfe\bin" -m
-    ```
-
-    Note: This change will be permanent only if you ran powershell as administrator. Otherwise, everytime you need to run the program you need to specify the installation folder : we would have to type  `"installation_path"\\vchdfe\\bin\\vchdfe` instead of `vchdfe` everytime we want to run the program. 
+5. (RECOMMENDED) Add the installation directory to [PATH](#path-in-windows). This will allow us to run the program everytime without specifying where the program is installed. 
 
 
-6. (OPTIONAL) You can test the program using the sample test file provided with the executable:
+6. (OPTIONAL) You can test the program using the sample test file provided with the executable. If you ran the previous step you may run:
 
-    ```
-    vchdfe vchdfe\bin\test.csv
-    ```
+   ```
+   vchdfe vchdfe\bin\test.csv
+   ```
 
-7. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. For example, to set the number of threads to 4, you may run the following code in the powershell:
+   Otherwise, you will have to run
+
+   ```
+   .\vchdfe .\vchdfe\bin\test.csv
+   ```
+
+
+7. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. This might be very important if you intend to run bias-correction for very large datasets. Before running the program you may set the number of threads to, say 4, by entering the following line in the Powershell:
 
     ```
     $env:JULIA_NUM_THREADS=4
     ```
     
-You can now proceed to close the terminal.
+   Typically, you want to set that number to the number of cores in your computer. You can now proceed to close the terminal.
 
+## PATH in Windows
+
+The PATH is an important concept when working on the command line. It's a list of directories that tell your operating system where to look for programs, so that you can just write `program` instead of `some_folders\program`. But different operating systems have different ways to add a new directory to it. 
+
+You can take a look at your current `PATH` by running the following line in the Powershell:
+   ```
+   $env:path
+   ```
+
+We will describe two ways to add our program to `PATH`.
+
+1. The first way consists on running  this line from the installation folder
+   
+
+   ```
+   setx PATH "$env:path;$pwd\vchdfe\bin" -m
+   ```
+
+   Note: This change will be permanent only if you ran powershell as administrator. You may need to restart the powershell for this action to take place. You can confirm the change by running `$env:path` again, and checking whether the last part of this string contains `vchdfe\bin`.
+
+2. If the previous step didn't work for you, we can still modify the `PATH` variable manually. To do so you can press (`Windows Key` + `R`) to open the Run Dialog, then type
+
+   ```
+   rundll32.exe sysdm.cpl,EditEnvironmentVariables
+   ``` 
+   and press the `Enter Key`. Find the `PATH` variable, select it, and click `Edit`. Then you can click `New` to add a new program path to the `PATH` list. You will write the path `desired_installation_path\vchdfe\bin`, where `desired_installation_path` is the folder where you installed the program. 
 
 ## MacOS
 
-1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.6/vchdfe-v0.1.5.6-macos-latest.tar.gz). Move this file to the desired installation path.
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.9/vchdfe-v0.1.5.9-macos-latest.tar.gz). Move this file to the desired installation path.
 2. Open Terminal: Press COMMAND + SPACE to open spotlight search, and type terminal and hit RETURN.
 
 3. You may unpack the .tar.gz file automatically when you double-click the icon. Otherwise, you may run the following code:
@@ -72,38 +98,54 @@ You can now proceed to close the terminal.
 
     And then close the terminal.
 
-4. Add the installation directory to PATH. To do so you must open again a terminal window as in Step 1. Run 
+4.  (RECOMMENDED) Add the installation directory to [PATH](#path-in-macos). This will allow us to run the program everytime without specifying where the program is installed. 
 
-    ```
-    touch ~/.bash_profile; open ~/.bash_profile
-    ```
 
-    This will open a file known as `.bash_profile`, where you can copy and paste the following line  
+5. (OPTIONAL) You can test the program using the sample test file provided with the executable. If you ran the previous step you may run:
 
-    ```
-    export PATH="desired_installation_path/vchdfe/bin:$PATH"
-    ```
+   ```
+   vchdfe vchdfe/bin/test.csv
+   ```
 
-    where `desired_installation_path` is the folder where you installed the executable in the previous steps. Next we save the file we just modified and close it. Finally, to make sure that it will load those changes without rebooting the computer, run the following line in the terminal
+   Otherwise, you will have to run
 
-    ```
-    source ~/.bash_profile
-    ```
-
-5. (OPTIONAL) You can test the program using the sample test file provided with the executable:
-
-    ```
-    vchdfe vchdfe\bin\test.csv
-    ```
-6. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. For example, to set the number of threads to 4, you may run the following code in the command line:
+   ```
+   ./vchdfe ./vchdfe/bin/test.csv
+   ```   
+6. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. This might be very important if you intend to run bias-correction for very large datasets. Before running the program you may set the number of threads to, say 4, by entering the following line in the Powershell:
 
     ```
     set JULIA_NUM_THREADS=4
     ```
+    
+   Typically, you want to set that number to the number of cores in your computer. You can now proceed to close the terminal.
 
-You can now proceed to close the terminal.
 
-# Executable guide
+## PATH in MacOS
+
+The PATH is an important concept when working on the command line. It's a list of directories that tell your operating system where to look for programs, so that you can just write `program` instead of `some_folders\program`. But different operating systems have different ways to add a new directory to it. 
+
+Add the installation directory to PATH. To do so you must open again a terminal window as in Step 1. Run 
+
+   ```
+   touch ~/.bash_profile; open ~/.bash_profile
+   ```
+
+   This will open a file known as `.bash_profile`, where you can copy and paste the following line  
+
+   ```
+   export PATH="$PATH:desired_installation_path/vchdfe/bin"
+   ```
+
+   where `desired_installation_path` is the folder where you installed the executable in the previous steps. Next we save the file we just modified and close it. Finally, to make sure that it will load those changes without rebooting the computer, run the following line in the terminal
+
+   ```
+   source ~/.bash_profile
+   ```
+
+
+
+# Syntax of the program
 
 Before this, make sure you've completed the installation steps shown above. To use the executable you only need to open the terminal. Windows users can press the keys Windows + R, then type "powershell" and press Enter. MacOS users can press COMMAND + SPACE to open spotlight search, and type terminal and hit RETURN. 
 
@@ -201,34 +243,108 @@ The detailed output file includes:
 - `Bii_second`: The Bii for the variance of `second_id` effects corresponding to each observation in `obs`.
 - `Bii_cov`: The Bii for the co-variance of `first_id` and `second_id` effects corresponding to each observation in `obs`.
 
-# Examples 
+# Typical Executable Workflow (Windows)
+
+You begin by opening the Powershell (as administrator), and typing 
+
+   ```
+    cd "path_to_dataset"
+   ```    
+
+Then, if you completed all instalation steps you may run
+   ```
+    vchdfe my_data.csv --OPTIONS
+   ```
+
+where `OPTIONS` depend on the structure of your data. 
+
+If you didn't complete step 5 of the installation, you will have to run instead 
+
+   ```
+    installation_folder\vchdfe\bin\vchdfe my_data.csv --OPTIONS
+   ```
+
+## Detailed examples
 
 Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The structure of the data is such that the fifth column corresponds to the worker identifier and the third column corresponds to the firm identifier. Moreover, we want to store a summary of the results in this location `"project_path/summary.txt"`, and the detailed output (Pii and Bii matrices, stored fixed effects, etc.) here  `"project_path/output.csv"`. 
 
 
 1. To obtain all three bias-corrected components (variance of worker effects, variance of firm effects, and covariance of worker-firm effects), we only need to type in the terminal 
 
-```
-cd project_path
-vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt
-```
+   ```
+   cd project_path
+   
+   vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt
+   ```
 
 2. To run the same thing while specifying 1000 simulations for the JLA algorithm that estimates (Pii,Bii) described in the computational appendix of KSS, we type in the terminal 
 
-```
-cd project_path
-vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt --algorithm JLA --simulations 1000
-```
+   ```
+   cd project_path
+
+   vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt --algorithm JLA --simulations 1000
+   ```
 
 3. To only obtain the bias-correction for the variance of firm effects, we type in the powershell 
 
-```
-cd project_path
-vchdfe my_data.csv --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  --algorithm JLA --simulations 1000
-```
+   ```
+   cd project_path
 
+   vchdfe my_data.csv --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  --algorithm JLA --simulations 1000
+   ```
+
+
+# Typical Executable Workflow (MacOS)
+
+You begin by opening the Command Line (COMMAND + SPACE), and typing 
+
+   ```
+    cd path_to_dataset
+   ```    
+
+Then, if you completed all instalation steps you may run
+   ```
+    vchdfe my_data.csv --OPTIONS
+   ```
+
+where `OPTIONS` depend on the structure of your data. 
+
+If you didn't complete step 4 of the installation, you will have to run instead 
+
+   ```
+    installation_folder/vchdfe/bin/vchdfe my_data.csv --OPTIONS
+   ```
+
+## Detailed examples
+
+Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The structure of the data is such that the fifth column corresponds to the worker identifier and the third column corresponds to the firm identifier. Moreover, we want to store a summary of the results in this location `"project_path/summary.txt"`, and the detailed output (Pii and Bii matrices, stored fixed effects, etc.) here  `"project_path/output.csv"`. 
+
+
+1. To obtain all three bias-corrected components (variance of worker effects, variance of firm effects, and covariance of worker-firm effects), we only need to type in the terminal 
+
+   ```
+   cd project_path
+   
+   vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt
+   ```
+
+2. To run the same thing while specifying 1000 simulations for the JLA algorithm that estimates (Pii,Bii) described in the computational appendix of KSS, we type in the terminal 
+
+   ```
+   cd project_path
+
+   vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt --algorithm JLA --simulations 1000
+   ```
+
+3. To only obtain the bias-correction for the variance of firm effects, we type in the powershell 
+
+   ```
+   cd project_path
+
+   vchdfe my_data.csv --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  --algorithm JLA --simulations 1000
+   ```
+   
 # About the current version
-
 
 - The bias-correction currently only runs on a two-way fixed effects model without controls.
 
