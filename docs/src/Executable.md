@@ -59,6 +59,7 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 The PATH is an important concept when working on the command line. It's a list of directories that tell your operating system where to look for programs, so that you can just write `program` instead of `some_folders\program`. But different operating systems have different ways to add a new directory to it. 
 
 You can take a look at your current `PATH` by running the following line in the Powershell:
+
    ```
    $env:path
    ```
@@ -247,22 +248,23 @@ The detailed output file includes:
 
 You begin by opening the Powershell (as administrator), and typing 
 
-   ```
-    cd "path_to_dataset"
-   ```    
+```
+cd "path_to_dataset"
+```    
 
 Then, if you completed all instalation steps you may run
-   ```
-    vchdfe my_data.csv --OPTIONS
-   ```
+
+```
+vchdfe my_data.csv --OPTIONS
+```
 
 where `OPTIONS` depend on the structure of your data. 
 
 If you didn't complete step 5 of the installation, you will have to run instead 
 
-   ```
-    installation_folder\vchdfe\bin\vchdfe my_data.csv --OPTIONS
-   ```
+```
+installation_folder\vchdfe\bin\vchdfe my_data.csv --OPTIONS
+```
 
 ## Detailed examples
 
@@ -298,22 +300,23 @@ Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The 
 
 You begin by opening the Command Line (COMMAND + SPACE), and typing 
 
-   ```
-    cd path_to_dataset
-   ```    
+```
+cd path_to_dataset
+```    
 
 Then, if you completed all instalation steps you may run
-   ```
-    vchdfe my_data.csv --OPTIONS
-   ```
+
+```
+vchdfe my_data.csv --OPTIONS
+```
 
 where `OPTIONS` depend on the structure of your data. 
 
 If you didn't complete step 4 of the installation, you will have to run instead 
 
-   ```
-    installation_folder/vchdfe/bin/vchdfe my_data.csv --OPTIONS
-   ```
+```
+installation_folder/vchdfe/bin/vchdfe my_data.csv --OPTIONS
+```
 
 ## Detailed examples
 
@@ -343,7 +346,7 @@ Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The 
 
    vchdfe my_data.csv --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  --algorithm JLA --simulations 1000
    ```
-   
+
 # About the current version
 
 - The bias-correction currently only runs on a two-way fixed effects model without controls.
