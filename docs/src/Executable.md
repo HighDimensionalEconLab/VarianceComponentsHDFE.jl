@@ -75,7 +75,7 @@ We will describe two ways to add our program to `PATH`.
 
    Note: This change will be permanent only if you ran powershell as administrator. You may need to restart the powershell for this action to take place. You can confirm the change by running `$env:path` again, and checking whether the last part of this string contains `vchdfe\bin`.
 
-2. If the previous step didn't work for you, we can still modify the `PATH` variable manually. To do so you can press (`Windows Key` + `R`) to open the Run Dialog, then type
+2. If the previous step didn't work for you, you can still modify the `PATH` variable manually. To do so you can press (`Windows Key` + `R`) to open the Run Dialog, then type
 
    ```
    rundll32.exe sysdm.cpl,EditEnvironmentVariables
