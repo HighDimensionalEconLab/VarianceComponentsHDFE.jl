@@ -251,7 +251,7 @@ You begin by opening the Powershell (as administrator), and typing
 cd "path_to_dataset"
 ```    
 
-At this point we recommend to exploit parallelization of the underlying code by changing an environment variable to be equal to the number of cores in your computer. Let `num_cores' be the number of cores. You can run the following line
+At this point we recommend to exploit parallelization of the underlying code by changing an environment variable to be equal to the number of cores in your computer. Let `num_cores` be the number of cores. You can run the following line
 
 ```
 $env:JULIA_NUM_THREADS=4
@@ -309,7 +309,7 @@ You begin by opening the Command Line (COMMAND + SPACE), and typing
 cd path_to_dataset
 ``` 
 
-At this point we recommend to exploit parallelization of the underlying code by changing an environment variable to be equal to the number of cores in your computer. Let `num_cores' be the number of cores. You can run the following line
+At this point we recommend to exploit parallelization of the underlying code by changing an environment variable to be equal to the number of cores in your computer. Let `num_cores` be the number of cores. You can run the following line
 
 ```
 set JULIA_NUM_THREADS=4
