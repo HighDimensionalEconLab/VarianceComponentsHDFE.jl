@@ -31,8 +31,6 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
     ```
 
 5. (RECOMMENDED) Add the installation directory to [PATH](#PATH-in-Windows). This will allow us to run the program everytime without specifying where the program is installed. 
-
-
 6. (OPTIONAL) You can test the program using the sample test file provided with the executable. If you ran the previous step you may run:
 
    ```
@@ -101,8 +99,6 @@ We will describe two ways to add our program to `PATH`.
     And then close the terminal.
 
 4.  (RECOMMENDED) Add the installation directory to [PATH](#PATH-in-MacOS). This will allow us to run the program everytime without specifying where the program is installed. 
-
-
 5. (OPTIONAL) You can test the program using the sample test file provided with the executable. If you ran the previous step you may run:
 
    ```
@@ -209,10 +205,10 @@ to see a complete list of available arguments:
       --detailed_output_path DETAILED_OUTPUT_PATH
                             path to the CSV for the detailed output for
                             each observable (default:
-                            "C:\\Users\\owner\\Desktop\\vchdfe\\variance_components.csv")
+                            "current_directory/variance_components.csv")
       --results_path RESULTS_PATH
                             path to the results of the output (default:
-                            "C:\\Users\\owner\\Desktop\\vchdfe\\results.txt")
+                            "current_directory/results.txt")
       --write_detailed_CSV  write the detailed output to a CSV
       --write_results       write the results to a file
       --print_level PRINT_LEVEL
@@ -254,6 +250,12 @@ You begin by opening the Powershell (as administrator), and typing
 ```
 cd "path_to_dataset"
 ```    
+
+At this point we recommend to exploit parallelization of the underlying code by changing an environment variable to be equal to the number of cores in your computer. Let `num_cores' be the number of cores. You can run the following line
+
+```
+$env:JULIA_NUM_THREADS=4
+```
 
 Then, if you completed all instalation steps you may run
 
@@ -305,7 +307,13 @@ You begin by opening the Command Line (COMMAND + SPACE), and typing
 
 ```
 cd path_to_dataset
-```    
+``` 
+
+At this point we recommend to exploit parallelization of the underlying code by changing an environment variable to be equal to the number of cores in your computer. Let `num_cores' be the number of cores. You can run the following line
+
+```
+set JULIA_NUM_THREADS=4
+```
 
 Then, if you completed all instalation steps you may run
 
