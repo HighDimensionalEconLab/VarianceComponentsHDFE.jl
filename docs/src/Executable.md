@@ -16,19 +16,19 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.9/vchdfe--windows-latest.tar.gz). Move this file to `desired_installation_path`.
 2. Open up a powershell terminal. We recommend to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator". 
 
-3. Change the current directory to where you want to the desired installation path by typing  in the powershell
+3. Change the current directory to to the desired installation path by typing  in the powershell
 
-    ```
-    cd "desired_installation_path"
-    ```
+   ```
+   cd "desired_installation_path"
+   ```
 
    Hint : To copy-paste into the terminal use the standard Ctrl+C and paste into the powershell by using right click.
 
 4. In the powershell, install the latest version by running:
 
-    ```
-    tar -xvf vchdfe--windows-latest.tar.gz
-    ```
+   ```
+   tar -xvf vchdfe--windows-latest.tar.gz
+   ```
 
 5. (RECOMMENDED) Add the installation directory to [PATH](#PATH-in-Windows). This will allow us to run the program everytime without specifying where the program is installed. 
 6. (OPTIONAL) You can test the program using the sample test file provided with the executable. If you ran the previous step you may run:
@@ -47,9 +47,9 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 
 7. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. This might be very important if you intend to run bias-correction for very large datasets. Before running the program you may set the number of threads to, say 4, by entering the following line in the Powershell:
 
-    ```
-    $env:JULIA_NUM_THREADS=4
-    ```
+   ```
+   $env:JULIA_NUM_THREADS=4
+   ```
     
    Typically, you want to set that number to the number of cores in your computer. You can now proceed to close the terminal.
 
@@ -88,13 +88,11 @@ We will describe two ways to add our program to `PATH`.
 
 3. You may unpack the .tar.gz file automatically when you double-click the icon. Otherwise, you may run the following code:
 
-    ```
-    cd desired_installation_path
-    ```
-    
-    ```
-    gunzip -c vchdfe-v0.1.5.3-macos-latest.tar.gz | tar xopft -
-    ```
+   ```
+   cd desired_installation_path
+
+   gunzip -c vchdfe-v0.1.5.3-macos-latest.tar.gz | tar xopft -
+   ```
 
     And then close the terminal.
 
@@ -115,9 +113,9 @@ We will describe two ways to add our program to `PATH`.
 
 6. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. This might be very important if you intend to run bias-correction for very large datasets. Before running the program you may set the number of threads to, say 4, by entering the following line in the Powershell:
 
-    ```
-    set JULIA_NUM_THREADS=4
-    ```
+   ```
+   set JULIA_NUM_THREADS=4
+   ```
     
    Typically, you want to set that number to the number of cores in your computer. You can now proceed to close the terminal.
 
@@ -235,13 +233,13 @@ The detailed output file includes:
                            
 - `observation` : observation identifier in the original dataset that belong to the Leave-out connected set. For instance, if the number 3 appears in this vector, it means that the third observation in the original dataset belongs to the leave-out connected set. 
 - `first_id`: the first identifier corresponding to each observation in `obs` (e.g. worked ids in the leave-out connected set).
-- `second_id`: the second identifier corresponding to each observation in `obs` (e.g. firm ids in the leave-out connected set).
+- `second_id`: the second identifier corresponding to each observation in `observation` (e.g. firm ids in the leave-out connected set).
 - `D_alpha`: the fixed effect for the first identifier corresponding to each observation. 
 - `F_psi`: the fixed effect for the second identifier corresponding to each observation. 
-- `Pii`: statistical leverage corresponding to each observation in `obs`.
-- `Bii_first`: The Bii for the variance of `first_id` effects corresponding to each observation in `obs`.
-- `Bii_second`: The Bii for the variance of `second_id` effects corresponding to each observation in `obs`.
-- `Bii_cov`: The Bii for the co-variance of `first_id` and `second_id` effects corresponding to each observation in `obs`.
+- `Pii`: statistical leverage corresponding to each observation in `observation`.
+- `Bii_first`: The Bii for the variance of `first_id` effects corresponding to each observation in `observation`.
+- `Bii_second`: The Bii for the variance of `second_id` effects corresponding to each observation in `observation`.
+- `Bii_cov`: The Bii for the co-variance of `first_id` and `second_id` effects corresponding to each observation in `observation`.
 
 # Typical Executable Workflow (Windows)
 
