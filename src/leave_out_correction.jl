@@ -1065,7 +1065,7 @@ function sigma_for_stayers(y,first_id, second_id, weight, b)
 
     #Compute Pii for Stayers = inverse of # of obs 
     T = accumarray(id, 1)
-    Pii = 1./T
+    Pii = 1 ./T
     Mii = 1 - Pii 
 
     #Compute OLS residual 
@@ -1173,8 +1173,8 @@ function leave_out_estimation2(y,first_id,second_id,controls,settings)
         S=vcat(S,sparse(-zeros(1,J-1)))
 
         X = hcat(D, -F*S)   
-        Dvar = hcat( sparse(collect(1:length(match_id)),first_id_weighted,1)) , spzeros(NT,nparameters-N))
-        Fvar = hcat(spzeros(NT,N), -1*sparse(collect(1:length(match_id)), second_id_weighted,1  )*S, spzeros(NT,nparameters-N-J) )
+        Dvar = hcat( sparse(collect(1:length(match_id)),first_id_weighted,1) , spzeros(NT,J-1))
+        Fvar = hcat(spzeros(NT,N), -1*sparse(collect(1:length(match_id)), second_id_weighted,1  )*S )
             
         #Weighting
         weight_mat = sparse(collect(1:NT), collect(1:NT), weight.^(0.5) , NT, NT )
@@ -1193,8 +1193,8 @@ function leave_out_estimation2(y,first_id,second_id,controls,settings)
         S=vcat(S,sparse(-zeros(1,J-1)))
 
         X = hcat(D, -F*S)
-        Dvar = hcat(  D, spzeros(NT,nparameters-N) )
-        Fvar = hcat(spzeros(NT,N), -F*S, spzeros(NT,nparameters-N-J) )
+        Dvar = hcat(  D, spzeros(NT,J-1) )
+        Fvar = hcat(spzeros(NT,N), -F*S )
 
     end
 
@@ -1210,8 +1210,8 @@ function leave_out_estimation2(y,first_id,second_id,controls,settings)
     beta = compute_sol([xy...];verbose=false)
     eta=y-X*beta
 
-    eta_h = eta./Mii
-    sigma_i = ( ( y - mean(y) ) .* eta_h ) .* correction_JLA
+    eta_h = eta ./ Mii
+    sigma_i = ( ( y .- mean(y) ) .* eta_h ) .* correction_JLA
 
     if settings.leave_out_level == "match"
         T = accumarray(id,1)
@@ -1284,7 +1284,7 @@ function leverages(::ExactAlgorithm, X,Dvar,Fvar, settings)
 
         #Compute Bii 
         COV = cov(Fvar*zexact,Fvar*zexact)
-        Bii_second_movers[i] = COV[1]*(size(Fvar,1)-1)
+        Bii_second[i] = COV[1]*(size(Fvar,1)-1)
 
         if Bii_first != nothing
             COV = cov(Fvar*zexact,Dvar*zexact)
@@ -1302,7 +1302,7 @@ function leverages(::ExactAlgorithm, X,Dvar,Fvar, settings)
     Pii[ findall(Pii.>=0.99)] .= 0.99
 
     correction_JLA = 1 
-    Mii = 1-Pii
+    Mii = 1 .- Pii
 
     return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov)
 end
@@ -1311,9 +1311,10 @@ end
 
 function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
 
-    M = size(X,1)
+    NT = size(X,1)
+    FE = size(X,2)
 
-    p = lev.num_simulations == 0 ? ceil(log(N+J)/0.01) : lev.num_simulations
+    p = lev.num_simulations == 0 ? ceil(log(FE)/0.01) : lev.num_simulations
 
     #Define solver
     S_xx = X'*X
@@ -1327,62 +1328,69 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
         push!(compute_sol,approxcholSolver(P,la))
     end
 
-    #Pre-allocate solution vectors
-    Z = zeros(N+J-1,Threads.nthreads())
+    #Clear that memory
+    ldli = nothing 
+    la = nothing 
+    buffs = nothing
+    S_xx = nothing
 
-    #Pre-allocate Rademacher Vectors
-    rademach = zeros(Threads.nthreads(), NT)
+    #Pre-allocate Rademacher Seeds
+    mts = MersenneTwister.(1:Threads.nthreads())
     
     #Initialize output
-    Pii=zeros(M)
-    Bii_second=zeros(M)
-    Bii_cov= settings.cov_effects ==true ? zeros(M) : nothing
-    Bii_first= settings.first_id_effects == true ? zeros(M) : nothing
+    Pii=zeros(NT)
+    Bii_second=zeros(NT)
+    Bii_cov= settings.cov_effects ==true ? zeros(NT) : nothing
+    Bii_first= settings.first_id_effects == true ? zeros(NT) : nothing
+
+    Pii_sq = zeros(NT)
+    Mii_sq = zeros(NT)
+    Pii_Mii = zeros(NT)
 
     Threads.@threads for i=1:p
 
-        rademach[Threads.threadid(),:] =  rand(1,NT) .> 0.5
-        rademach[Threads.threadid(),:]  = rademach[Threads.threadid(),:]  .- (rademach[Threads.threadid(),:]  .== 0)
-        rademach[Threads.threadid(),:]  = rademach[Threads.threadid(),:]  ./sqrt(p)
+        rademach =  rand(mts[Threads.threadid()],1,NT) .> 0.5
+        rademach  = rademach  .- (rademach .== 0)
+        rademach  = rademach / sqrt(p)
 
-        Z[:,Threads.threadid()]  .= compute_sol[Threads.threadid()]( [rademach[Threads.threadid(),:]'*X...] ; verbose=false)
-        ZJLA = X*Z[:,Threads.threadid()]
+        Z= compute_sol[Threads.threadid()]( [rademach*X...] ; verbose=false)
+        Z = X*Z
 
         #Auxiliaries for Non-linear Correction
 
-        aux = ZJLA.^2 / p 
+        aux = Z.^2 / p 
         Pii = Pii .+ aux 
 
-        aux = ZJLA.^4 / p 
+        aux = Z.^4 / p 
         Pii_sq = Pii_sq .+ aux 
 
-        aux			= ((rademach[Threads.threadid(),:]' .- ZJLA).^2)/p
+        aux			= ((rademach .- Z).^2)/p
 		Mii			= Mii .+ aux    
-		aux			= ((rademach[Threads.threadid(),:]' .- ZJLA).^4)/p
+		aux			= ((rademach .- Z).^4)/p
 		Mii_sq		= Mii_sq .+ aux
 		
-        Pii_Mii		= Pii_Mii .+ ((ZJLA.^2).*((rademach[Threads.threadid(),:]' .- ZJLA).^2)/p ;
+        Pii_Mii		= Pii_Mii .+ ((Z.^2).*((rademach .- Z).^2) )/p 
         
         #Demeaned Rademacher
-        rademach[Threads.threadid(),:] =  rand(1,size(Fvar,1)) .> 0.5
-        rademach[Threads.threadid(),:]  = rademach[Threads.threadid(),:]  .- (rademach[Threads.threadid(),:]  .== 0)
-        rademach[Threads.threadid(),:]  = rademach[Threads.threadid(),:]  ./sqrt(p)
-        rademach[Threads.threadid(),:] = rademach[Threads.threadid(),:] .- mean(rademach[Threads.threadid(),:])
+        rademach =  rand(mts[Threads.threadid()],1,size(Fvar,1)) .> 0.5
+        rademach  = rademach  .- (rademach .== 0)
+        rademach  = rademach /sqrt(p)
+        rademach = rademach .- mean(rademach)
 
-        Z[:,Threads.threadid()] .= compute_sol[Threads.threadid()]( [rademach[Threads.threadid(),:]'*Fvar...] ; verbose=false)
-        ZJLA_fe = X*Z ;
-        Bii_second = Bii_second .+ (ZJLA_fe.*ZJLA_fe) ;
+        Z .= compute_sol[Threads.threadid()]( [rademach*Fvar...] ; verbose=false)
+        Z = X*Z
+        Bii_second = Bii_second .+ (Z.*Z) 
 
         if settings.first_id_effects == true | settings.cov_effects == true
-            Z[:,Threads.threadid()] .= compute_sol[Threads.threadid()]( [rademach[Threads.threadid(),:]'*Dvar...] ; verbose=false)
-            ZJLA_pe = X*Z
+            Z_pe .= compute_sol[Threads.threadid()]( [rademach*Dvar...] ; verbose=false)
+            Z_pe = X*Z_pe
 
             if settings.first_id_effects == true 
-                Bii_first = Bii_first .+ (ZJLA_pe.*ZJLA_pe)
+                Bii_first = Bii_first .+ (Z_pe.*Z_pe)
             end
 
             if settings.cov_effects == true 
-                Bii_cov = Bii_cov .+ (ZJLA_pe.*ZJLA_fe)
+                Bii_cov = Bii_cov .+ (Z_pe.*Z)
             end
 
         end    
@@ -1392,8 +1400,8 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
     Pii[ findall(Pii.>=0.99)] .= 0.99
 
     #Account for Non-linear Bias
-    Pii = Pii./(Pii .+ Mii)
-    Mii = 1 - Pii 
+    Pii = Pii ./ (Pii .+ Mii)
+    Mii = 1 .- Pii 
     Vi = (1/p)*((Mii.^2).*Pii_sq+(Pii.^2).*Mii_sq-2*Mii.*Pii.*Pii_Mii)
     Bi = (1/p)*(Mii.*Pii_sq-Pii.*Mii_sq+2*(Mii-Pii).*Pii_Mii)
     correction_JLA = (1-Vi./(Mii.^2)+Bi./Mii)       
