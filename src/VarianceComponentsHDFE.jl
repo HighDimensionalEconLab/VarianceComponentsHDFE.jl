@@ -2,9 +2,9 @@ module VarianceComponentsHDFE
 
 # using DataDeps
 using CSV
-using DataFrames, DataFramesMeta, Parameters
+using DataFrames, Parameters
 using LinearAlgebra, SparseArrays, Random, Statistics
-using SparseArrays, LightGraphs, DataFramesMeta
+using SparseArrays, LightGraphs
 using Distributions
 using LinearOperators, FastClosures, Krylov
 using ArgParse
@@ -17,11 +17,11 @@ include("laplacians/Laplacians.jl")
 using .Laplacians
 include("solvers.jl")
 
-export find_connected_set,prunning_connected_set,drop_single_obs, index_constr
-export compute_movers, check_clustering, eff_res, accumarray
-export do_Pii, lincom_KSS, compute_matchid, leave_out_estimation, get_leave_one_out_set
+export find_connected_set,prunning_connected_set,drop_single_obs
+export compute_movers, accumarray
+export lincom_KSS, compute_matchid, leave_out_estimation, get_leave_one_out_set
 export VCHDFESettings, JLAAlgorithm, ExactAlgorithm, AbstractLeverageAlgorithm
-export leave_out_KSS, leave_out_estimation2, leverages, kss_quadratic_form, sigma_for_stayers
+export leave_out_KSS, leverages, kss_quadratic_form, sigma_for_stayers
 
 # Exporting these functions for ease of benchmarking/testing
 export computeLDLinv, approxcholOperator, approxcholSolver
