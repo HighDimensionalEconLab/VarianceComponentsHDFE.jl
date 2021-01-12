@@ -298,46 +298,6 @@ function drop_single_obs(yvec, first_idvar, second_idvar,obs_id)
     return (obs_id = obs_id , y = yvec , first_id = first_id, second_id = second_id )
 end
 
-#4) Finds the observations connected for every cluster
-function index_constr(clustering_var, id, match_id )
-    NT = length(clustering_var)
-    counter = ones(size(clustering_var,1));
-
-    #Indexing obs number per worked/id
-    gcs = Int.(@transform(groupby(DataFrame(counter = counter, id = id), :id), gcs = cumsum(:counter)).gcs);
-    maxD = maximum(gcs);
-
-    index = collect(1:NT);
-
-    #This will be the output, and we will append observations to it in the loop
-    list_final=DataFrame(row = Int64[],col = Int64[], match_id = Int64[], id_cluster = Int64[]);
-
-
-    for t=1:maxD
-    rowsel =  findall(x->x==true,gcs.==t);
-    list_base = DataFrame( id_cluster= [clustering_var[x] for x in rowsel], row =
-    [index[x] for x in rowsel] , match_id = [match_id[x] for x in rowsel]  );
-
-        for tt=t:maxD
-            colsel =  findall(x->x==true,gcs.==tt);
-            list_sel =  DataFrame( id_cluster= [clustering_var[x] for x in colsel], col =
-            [index[x] for x in colsel] );
-
-            merge = outerjoin(list_base, list_sel, on = :id_cluster)
-            merge = dropmissing(merge)
-            merge = merge[:,[:row, :col, :match_id, :id_cluster]]
-
-            append!(list_final, merge)
-
-        end
-    end
-
-    sort!(list_final, (:row));
-
-    return Matrix(list_final)
-
-end
-
 #5) Compute Movers
 """
 $(SIGNATURES)
@@ -377,541 +337,6 @@ function compute_movers(first_id,second_id)
 end
 
 
-#6) Eff res : Compute Effective Resistance - Lambda Matrices
-"""
-$(SIGNATURES)
-
-This function computes the diagonal matrices containing Pii and Bii under the Exact Algorithm. See appendix in KSS for more information.
-
-### Arguments
-* `X`: the design matrix in the linear model.
-* `first_id`: first identifier (e.g. worker id)
-* `second_id`: second identifier (e.g. firm id)
-* `match_id`: match identifier between first and second identifier.For example, match can be the identifier of every worker-firm combination.
-* `K`: number of covariates in addition to the fixed effects. Currently only 0 is supported.
-* `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
-"""
-function eff_res(::ExactAlgorithm, X,first_id,second_id,match_id, K, settings)
-
-    #Indexing Observations
-    elist = index_constr(collect(1:length(first_id)), first_id, match_id )
-
-    #Dimensions
-    NT = size(X,1)
-    M = size(elist,1)
-    J = maximum(second_id)
-    N = maximum(first_id)
-
-    #Define solver
-    S_xx = X'*X
-
-    # Create the solvers
-    ldli, la = computeLDLinv(S_xx)
-    buffs = zeros(size(la)[1],Threads.nthreads())
-    compute_sol = []
-    for i in 1:Threads.nthreads()
-        P = approxcholOperator(ldli,buffs[:,i])
-        push!(compute_sol,approxcholSolver(P,la))
-    end
-
-    #Initialize output
-    Pii = zeros(M)
-    Bii_second = zeros(M)
-    Bii_cov= settings.cov_effects ==true ? zeros(M) : nothing
-    Bii_first= settings.first_id_effects == true ? zeros(M) : nothing
-
-    #No controls case: We compute Pii,Bii for stayers manually
-    if K == 0
-
-        #Compute Auxiliaries
-        movers , T = compute_movers(first_id, second_id)
-
-        Nmatches = maximum(match_id)
-        match_id_movers = [match_id[x] for x in findall(x->x==true, movers)]
-        second_id_movers = [second_id[x] for x in findall(x->x==true, movers)]
-        first_id_movers = [first_id[x] for x in findall(x->x==true, movers)]
-
-        sel = unique(z -> match_id_movers[z], 1:length(match_id_movers))
-        match_id_movers = match_id_movers[sel]
-        second_id_movers = second_id_movers[sel]
-        first_id_movers = first_id_movers[sel]
-
-        maxT = maximum([T[x] for x in findall(x->x == false, movers)])
-
-        counter = ones(Int,NT)
-        #not sure if I can change id to first_id (in the arguments)
-        gcs = Int.(@transform(groupby(DataFrame(counter = counter, first_id = first_id), :first_id), gcs = cumsum(:counter)).gcs)
-        sel_stayers = (gcs.==1).*(movers.==false)
-        stayers_matches_sel = [match_id[z] for z in findall(x->x == true , sel_stayers)]
-        Tinv = 1 ./T
-        elist_JLL = [first_id_movers N.+second_id_movers first_id_movers N.+second_id_movers]
-
-        M = size(elist_JLL,1)
-        Pii_movers = zeros(M)
-        Bii_second_movers = zeros(M)
-        Bii_cov_movers= settings.cov_effects ==true ? zeros(M) : nothing
-        Bii_first_movers= settings.first_id_effects == true ? zeros(M) : nothing
-
-        #Initializing dependent variables for solver
-        Xright = sparse(collect(1:M),elist_JLL[:,1],1.0,M,N+J)
-        Xright = Xright .+ sparse(collect(1:M),elist_JLL[:,2],-1.0,M,N+J)
-        # N+J x N+J-1 restriction matrix
-        S= sparse(1.0I, J-1, J-1)
-        S=vcat(S,sparse(-zeros(1,J-1)))
-
-        Xright = hcat(Xright[:,1:N], Xright[:,N+1:end]*S)
-
-        Threads.@threads for i=1:M
-
-            #Only one inversion needed for exact alg
-            zexact = compute_sol[Threads.threadid()]( [Xright[i,:]...] ; verbose=false)
-
-            #Compute Pii
-            Pii_movers[i] = Xright[i,:]'*zexact
-
-            #Compute Bii for seconds
-            aux_right = zexact[N+1:N+J-1]
-            aux_left = zexact[N+1:N+J-1]
-
-            COV = cov(X[:,N+1:N+J-1]*aux_left,X[:,N+1:N+J-1]*aux_right)
-            Bii_second_movers[i] = COV[1]*(NT-1)
-
-            if Bii_first != nothing
-                aux_right = zexact[1:N]
-                aux_left = zexact[1:N]
-                COV = cov(X[:,1:N]*aux_left,X[:,1:N]*aux_right)
-                Bii_first_movers[i] = COV[1]*(NT-1)
-            end
-
-            if Bii_cov != nothing
-                aux_right = zexact[N+1:N+J-1]
-                aux_left = zexact[1:N]
-                COV = cov(X[:,1:N]*aux_left,X[:,N+1:N+J-1]*aux_right)
-                Bii_cov_movers[i] = COV[1]*(NT-1)
-            end
-
-        end
-
-        (settings.print_level > 1) && println("Pii and Bii have been computed for movers.")
-        #Assign Step
-        Pii_movers = sparse(match_id_movers,ones(Int,length(match_id_movers)),Pii_movers[:,1],Nmatches,1)
-        Pii_stayers = sparse(stayers_matches_sel,ones(Int,length(stayers_matches_sel)),[Tinv[x] for x in findall(x->x==true,sel_stayers)],Nmatches,1)
-        Pii = Pii_movers.+Pii_stayers
-
-        Bii_second = sparse(match_id_movers,ones(Int,length(match_id_movers)),Bii_second_movers[:,1],Nmatches,1)
-
-        if settings.cov_effects == true
-            Bii_cov = sparse(match_id_movers,ones(Int,length(match_id_movers)),Bii_cov_movers[:,1],Nmatches,1)
-        end
-
-        if settings.first_id_effects == true
-            Bii_first = sparse(match_id_movers,ones(Int,length(match_id_movers)),Bii_first_movers[:,1],Nmatches,1)
-            stayers = .!movers
-
-            Threads.@threads for t=2:maxT #T=1 have Pii=1 so need to be dropped.
-
-                sel = (gcs.==true).*stayers.*(T.==t)
-                N_sel = sum(sel)
-
-                if N_sel > 0
-                    index_sel = findall(x->x==true,sel)
-                    match_sel_aux = Int.([match_id[z] for z in index_sel])
-                    first = index_sel[1]
-                    Xuse = X[first,:]
-
-                    ztilde = compute_sol[Threads.threadid()]([Xuse...] ;verbose=false)
-
-                    aux_right = ztilde[1:N]
-                    aux_left = ztilde[1:N]
-
-                    COV = cov(X[:,1:N]*aux_left,X[:,1:N]*aux_right)
-                    Bii_first_stayers = COV[1]*(NT-1)
-
-                    Bii_first_stayers = sparse(match_sel_aux,ones(Int,length(match_sel_aux)),Bii_first_stayers,Nmatches,1)
-                    Bii_first = Bii_first.+Bii_first_stayers
-                end
-            end
-        end
-
-
-    #Controls case
-    elseif K> 0
-        #AUX = initialize_auxiliary_variables(settings.lls_algorithm, X, elist, M,NT, N, J, K, settings)
-        nparameters = N + J + K
-
-        D=sparse(collect(1:NT),first_id,1)
-        F=sparse(collect(1:NT),second_id,1)
-        S= sparse(1.0I, J-1, J-1)
-        S=vcat(S,sparse(-zeros(1,J-1)))
-
-        Dvar = hcat(  D, spzeros(NT,nparameters-N) )
-        Fvar = hcat(spzeros(NT,N), -F*S, spzeros(NT,nparameters-N-J) )
-        #Wvar = hcat(spzeros(NT,N+J), controls )
-        Xleft = X[elist[:,1],:]
-        Xright = X[elist[:,2],:]
-
-        Threads.@threads for i=1:M
-
-                #Again, one inversion needed
-                zexact = compute_sol[Threads.threadid()]([Xright[i,:]...];verbose=false)
-
-                #Compute Pii
-                Pii[i] = Xleft[i,:]'*zexact
-
-                #Compute Bii for seconds
-                aux_right = zexact[N+1:N+J-1,:]
-                aux_left = zexact[N+1:N+J-1,:]
-
-                COV = cov(X[:,N+1:N+J-1]*aux_left,X[:,N+1:N+J-1]*aux_right)
-                Bii_second[i] = COV[1]*(NT-1)
-
-                if Bii_first != nothing
-                    aux_right = zexact[1:N]
-                    aux_left = zexact[1:N]
-                    COV = cov(X[:,1:N]*aux_left,X[:,1:N]*aux_right)
-                    Bii_first[i] = COV[1]*(NT-1)
-                end
-
-                if Bii_cov != nothing
-                    aux_right = zexact[N+1:N+J-1]
-                    aux_left = zexact[1:N]
-                    COV = cov(X[:,1:N]*aux_left,X[:,N+1:N+J-1]*aux_right)
-                    Bii_cov[i] = COV[1]*(NT-1)
-                end
-
-        end
-
-    end
-
-    #Create matrices
-    rows = elist[:,1]
-    cols = elist[:,2]
-    index_cluster = match_id
-
-    #Censor
-    Pii[ findall(Pii.>=0.99)] .= 0.99
-
-    if K==0
-        Pii = [Pii[x] for x in index_cluster]
-        Bii_second = [Bii_second[x] for x in index_cluster]
-
-        if settings.cov_effects == true
-            Bii_cov = [Bii_cov[x] for x in index_cluster]
-        end
-
-        if settings.first_id_effects == true
-            Bii_first = [Bii_first[x] for x in index_cluster]
-        end
-
-    end
-
-
-    #Lambda P
-    Lambda_P=sparse(rows,cols,Pii,NT,NT)
-    Lambda_P=Lambda_P+triu(Lambda_P,1)'
-
-    #Lambda B var(fe)
-    Lambda_B_second=sparse(rows,cols,Bii_second,NT,NT)
-    Lambda_B_second=Lambda_B_second+triu(Lambda_B_second,1)'
-
-    Lambda_B_cov = nothing
-    #Lambda B cov(fe,pe)
-    if settings.cov_effects == true
-        Lambda_B_cov=sparse(rows,cols,Bii_cov,NT,NT)
-        Lambda_B_cov=Lambda_B_cov+triu(Lambda_B_cov,1)'
-    end
-    
-    Lambda_B_first = nothing
-    #Lambda B, var(pe)
-    if settings.first_id_effects == true
-        Lambda_B_first=sparse(rows,cols,Bii_first,NT,NT)
-        Lambda_B_first=Lambda_B_first+triu(Lambda_B_first,1)'
-    end
-
-
-    #TODO: maybe we can make the function to be inplace with those Lambdas
-    # if settings.first_id_effects == false & settings.cov_effects == false
-    #     return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second)
-    # elseif settings.first_id_effects == true & settings.cov_effects == false
-    #     return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first)
-    # elseif settings.first_id_effects == true  & settings.cov_effects == true
-    #     return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first, Lambda_B_cov=Lambda_B_cov)
-    # end
-    return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first, Lambda_B_cov=Lambda_B_cov)
-end
-
-
-"""
-$(SIGNATURES)
-
-This function computes the diagonal matrices containing Pii and Bii under Johnson-Linderstrauss Algorithm. See appendix in KSS for more information.
-
-### Arguments
-* `X`: the design matrix in the linear model.
-* `first_id`: first identifier (e.g. worker id)
-* `second_id`: second identifier (e.g. firm id)
-* `match_id`: match identifier between first and second identifier.For example, match can be the identifier of every worker-firm combination.
-* `K`: number of covariates in addition to the fixed effects. Currently only 0 is supported.
-* `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
-"""
-function eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
-
-    #Indexing Observations
-    elist = index_constr(collect(1:length(first_id)), first_id, match_id )
-
-    #Dimensions
-    NT=size(X,1)
-    M=size(elist,1)
-    J = maximum(second_id)
-    N = maximum(first_id)
-    p = lev.num_simulations == 0 ? ceil(log(N+J)/0.01) : lev.num_simulations
-
-    #Define solver
-    S_xx = X'*X
-    ldli, la = computeLDLinv(S_xx)
-    buffs = zeros(size(la)[1],Threads.nthreads())
-    compute_sol = []
-    for i in 1:Threads.nthreads()
-        P = approxcholOperator(ldli,buffs[:,i])
-        push!(compute_sol,approxcholSolver(P,la;tol=1e-12))
-    end
-
-    #Pre-allocate solution vectors
-    Z = zeros(N+J,Threads.nthreads())
-    ZB = zeros(N+J,Threads.nthreads())
-    ZB_first = settings.cov_effects ==true ? zeros(N+J,Threads.nthreads()) : nothing 
-
-    #Pre-allocate Rademacher Vectors
-    rademach = zeros(Threads.nthreads(), NT)
-    
-    #Initialize output
-    Pii=zeros(M)
-    Bii_second=zeros(M)
-    Bii_cov= settings.cov_effects ==true ? zeros(M) : nothing
-    Bii_first= settings.first_id_effects == true ? zeros(M) : nothing
-
-    #No controls case
-    if K == 0
-
-        #Compute Auxiliaries
-        movers , T = compute_movers(first_id, second_id)
-
-        Nmatches = maximum(match_id)
-        match_id_movers = [match_id[x] for x in findall(x->x==true, movers)]
-        second_id_movers = [second_id[x] for x in findall(x->x==true, movers)]
-        first_id_movers = [first_id[x] for x in findall(x->x==true, movers)]
-
-        sel = unique(z -> match_id_movers[z], 1:length(match_id_movers))
-        match_id_movers=match_id_movers[sel]
-        second_id_movers=second_id_movers[sel]
-        first_id_movers=first_id_movers[sel]
-
-        maxT = maximum([T[x] for x in findall(x->x == false, movers)])
-
-        counter = ones(Int,NT)
-        #again, not sure about renaming the vars
-        gcs = Int.(@transform(groupby(DataFrame(counter = counter, first_id = first_id), :first_id), gcs = cumsum(:counter)).gcs)
-        sel_stayers=(gcs.==1).*(movers.==false)
-        stayers_matches_sel=[match_id[z] for z in findall(x->x == true , sel_stayers)]
-        Tinv=1 ./T
-        elist_JLL=[first_id_movers N.+second_id_movers]
-
-        M=size(elist_JLL,1)
-        Pii_movers=zeros(M)
-        Bii_second_movers=zeros(M)
-        Bii_cov_movers= settings.cov_effects ==true ? zeros(M) : nothing
-        Bii_first_movers= settings.first_id_effects == true ? zeros(M) : nothing
-
-        #Initializing dependent variables for LSS
-        Fvar= hcat(spzeros(NT,N), X[:,N+1:N+J-1])
-        Dvar=hcat(X[:,1:N], spzeros(NT,J-1))
-
-        (settings.print_level > 0) && println("Running JLA with ",p," simulations.")
-
-        Threads.@threads for i=1:p
-            #Draw Rademacher entry
-            rademach[Threads.threadid(),:] =  rand(1,NT) .> 0.5
-            rademach[Threads.threadid(),:]  = rademach[Threads.threadid(),:]  .- (rademach[Threads.threadid(),:]  .== 0)
-            rademach[Threads.threadid(),:]  = rademach[Threads.threadid(),:]  ./sqrt(p)
-
-            Z[1:end-1,Threads.threadid()]  .= compute_sol[Threads.threadid()]( [rademach[Threads.threadid(),:]'*X...] ; verbose=false)
-
-            rademach[Threads.threadid(),:] = rademach[Threads.threadid(),:] .- mean(rademach[Threads.threadid(),:])
-            ZB[1:end-1,Threads.threadid()] .= compute_sol[Threads.threadid()]( [rademach[Threads.threadid(),:]'*Fvar...] ; verbose=false)
-
-            if settings.first_id_effects == true | settings.cov_effects == true
-                ZB_first[1:end-1,Threads.threadid()] .= compute_sol[Threads.threadid()]( [rademach[Threads.threadid(),:]'*Dvar...] ; verbose=false)
-            end
-
-            #Z[:,Threads.threadid()] = [Z[:,Threads.threadid()];0.0]
-            #ZB[:,Threads.threadid()] = [ZB[:,Threads.threadid()];0.0]
-            #ZB_first[:,Threads.threadid()] = [ZB_first[:,Threads.threadid()];0.0]
-
-            #Computing
-            Pii_movers = Pii_movers .+ ( [Z[j,Threads.threadid()]  for j in elist_JLL[:,1] ]  .- [Z[j,Threads.threadid()]  for j in elist_JLL[:,2] ] ) .* ( [Z[j,Threads.threadid()]  for j in elist_JLL[:,1] ]  .- [Z[j,Threads.threadid()]  for j in elist_JLL[:,2] ] )
-            Bii_second_movers = Bii_second_movers .+ ( [ZB[j,Threads.threadid()]  for j in elist_JLL[:,1] ]  .- [ZB[j,Threads.threadid()]  for j in elist_JLL[:,2] ] ) .* ( [ZB[j,Threads.threadid()]  for j in elist_JLL[:,1] ]  .- [ZB[j,Threads.threadid()]  for j in elist_JLL[:,2] ] )
-
-            if settings.first_id_effects == true
-                Bii_first_movers = Bii_first_movers .+  ( [ZB_first[j,Threads.threadid()] for j in elist_JLL[:,1] ]  .- [ZB_first[j,Threads.threadid()]  for j in elist_JLL[:,2] ] ) .* ( [ZB_first[j,Threads.threadid()]  for j in elist_JLL[:,1] ]  .- [ZB_first[j,Threads.threadid()] for j in elist_JLL[:,2] ] )
-            end
-
-            if settings.cov_effects == true
-                Bii_cov_movers = Bii_cov_movers .+ ( [ZB[j,Threads.threadid()]   for j in elist_JLL[:,1] ]  .- [ZB[j,Threads.threadid()]  for j in elist_JLL[:,2] ] ) .* ( [ZB_first[j,Threads.threadid()]  for j in elist_JLL[:,1] ]  .- [ZB_first[j,Threads.threadid()]  for j in elist_JLL[:,2] ] )
-            end
-
-        end
-
-        (settings.print_level > 1) && println("Pii and Bii have been computed for movers.")
-        #Assign Step
-        Pii_movers=sparse(match_id_movers,ones(Int,length(match_id_movers)),Pii_movers[:,1],Nmatches,1)
-        Pii_stayers=sparse(stayers_matches_sel,ones(Int,length(stayers_matches_sel)),[Tinv[x] for x in findall(x->x==true,sel_stayers)],Nmatches,1)
-        Pii=Pii_movers.+Pii_stayers
-
-        Bii_second=sparse(match_id_movers,ones(Int,length(match_id_movers)),Bii_second_movers[:,1],Nmatches,1)
-
-        if settings.cov_effects == true
-            Bii_cov=sparse(match_id_movers,ones(Int,length(match_id_movers)),Bii_cov_movers[:,1],Nmatches,1)
-        end
-
-        if settings.first_id_effects == true
-            Bii_first=sparse(match_id_movers,ones(Int,length(match_id_movers)),Bii_first_movers[:,1],Nmatches,1)
-            stayers = .!movers
-
-            Threads.@threads for t=2:maxT #T=1 have Pii=1 so need to be dropped.
-                sel=(gcs.==true).*stayers.*(T.==t)
-                N_sel=sum(sel)
-                if N_sel > 0
-                    index_sel=findall(x->x==true,sel)
-                    match_sel_aux=Int.([match_id[z] for z in index_sel])
-                    first=index_sel[1]
-                    Xuse=X[first,:]
-
-                    ztilde = compute_sol[Threads.threadid()]([X[first,:]...] ; verbose=false)
-
-                    aux_right=ztilde[1:N]
-                    aux_left=ztilde[1:N]
-
-                    COV=cov(X[:,1:N]*aux_left,X[:,1:N]*aux_right)
-                    Bii_first_stayers=COV[1]*(NT-1)
-
-                    Bii_first_stayers=sparse(match_sel_aux,ones(Int,length(match_sel_aux)),Bii_first_stayers,Nmatches,1)
-                    Bii_first=Bii_first.+Bii_first_stayers
-                end
-            end
-        end
-
-
-
-    elseif K> 0
-        #AUX = initialize_auxiliary_variables(settings.lls_algorithm, X, elist, M,NT, N, J, K, settings)
-        nparameters = N + J + K
-
-        D=sparse(collect(1:NT),first_id,1)
-        F=sparse(collect(1:NT),second_id,1)
-        Dvar = hcat(  D, spzeros(NT,nparameters-N) )
-        Fvar = hcat(spzeros(NT,N), F, spzeros(NT,nparameters-N-J) )
-        #Wvar = hcat(spzeros(NT,N+J), controls )
-        Xleft = X[elist[:,1],:]
-        Xright = X[elist[:,2],:]
-
-        Threads.@threads for i=1:p
-
-            #Rademacher Entries
-            rademach = rand(1,NT) .> 0.5
-            rademach = rademach - (rademach .== 0)
-            rademach = rademach ./sqrt(p)
-
-
-            Zleft = compute_sol[Threads.threadid()]( [rademach*Xleft...] ; verbose=false)
-            #Zright = lss(settings.lls_algorithm, X, rademach*Xright, settings)
-
-            Pii = Pii .+ (X*Zleft).^2
-
-            rademach = rademach .- mean(rademach)
-
-            aux = compute_sol[Threads.threadid()]( [rademach*Fvar...] ;verbose=false)
-            ZF = X*aux
-
-            Bii_second = Bii_second .+ ZF.^2 ./NT
-
-            if settings.first_id_effects == true |    settings.cov_effects == true
-                aux = compute_sol[Threads.threadid()]( [rademach*Dvar...] ;verbose=false)
-                ZD = X*aux
-            end
-
-            if settings.first_id_effects==true
-                Bii_first = Bii_first .+ (ZD).^2 ./ NT
-            end
-
-            if settings.cov_effects==true
-                Bii_cov = Bii_cov .+ (ZD .* ZF ) ./ NT
-            end
-
-        end
-
-
-    end
-
-    #Create matrices
-    rows = elist[:,1]
-    cols = elist[:,2]
-    index_cluster = elist[:,3]
-
-    #Censor
-    Pii[ findall(Pii.>=0.99)] .= 0.99
-
-    if K==0
-        Pii = [Pii[x] for x in index_cluster]
-        Bii_second = [Bii_second[x] for x in index_cluster]
-
-        if settings.cov_effects == true
-            Bii_cov = [Bii_cov[x] for x in index_cluster]
-        end
-
-        if settings.first_id_effects == true
-            Bii_first = [Bii_first[x] for x in index_cluster]
-        end
-
-    end
-
-
-    #Lambda P
-    Lambda_P=sparse(rows,cols,Pii,NT,NT)
-    Lambda_P=Lambda_P+triu(Lambda_P,1)'
-
-    #Lambda B var(second effects)
-    Lambda_B_second=sparse(rows,cols,Bii_second,NT,NT)
-    Lambda_B_second=Lambda_B_second+triu(Lambda_B_second,1)'
-
-    Lambda_B_cov = nothing
-    #Lambda B cov(fe,pe)
-    if settings.cov_effects == true
-        Lambda_B_cov=sparse(rows,cols,Bii_cov,NT,NT)
-        Lambda_B_cov=Lambda_B_cov+triu(Lambda_B_cov,1)'
-    end
-
-    #Lambda B, var(pe)
-    Lambda_B_first = nothing
-    if settings.first_id_effects == true
-        Lambda_B_first=sparse(rows,cols,Bii_first,NT,NT)
-        Lambda_B_first=Lambda_B_first+triu(Lambda_B_first,1)'
-    end
-
-
-    # if settings.first_id_effects == false & settings.cov_effects == false
-    #     return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second)
-    # elseif settings.first_id_effects == true & settings.cov_effects == false
-    #     return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first)
-    # elseif settings.first_id_effects == true  & settings.cov_effects == true
-    #     return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first, Lambda_B_cov=Lambda_B_cov)
-    # end
-
-    return (Lambda_P = Lambda_P, Lambda_B_second=Lambda_B_second, Lambda_B_first=Lambda_B_first, Lambda_B_cov=Lambda_B_cov)
-
-end
-
-
-
 #9) Creates match first_id using second_id id
 """
 $(SIGNATURES)
@@ -927,99 +352,6 @@ function compute_matchid(second_id,first_id)
     match_id2 = indexin(match_id2, unique(match_id2))
 
     return match_id2
-end
-
-"""
-$(SIGNATURES)
-
-Returns the bias-corrected components, the vector of coefficients, the corresponding fixed effects for every observation, and the diagonal matrices containing the Pii and Biis. 
-
-### Arguments
-* `y`: outcome vector
-* `first_id`: first identifier (e.g. worker id)
-* `second_id`: second identifier (e.g. firm id)
-* `settings`: settings based on `VCHDFESettings`
-* `controls`: at this version only `controls=nothing` is supported.
-"""
-function leave_out_estimation(y,first_id,second_id,controls,settings)
-
-    #Create matrices for computations
-    NT = size(y,1)
-    J = maximum(second_id)
-    N = maximum(first_id)
-    K = controls ==nothing ? 0 : size(controls,2)
-    nparameters = N + J + K
-
-    match = compute_matchid(first_id, second_id)
-
-    #first (worker) Dummies
-    D = sparse(collect(1:NT),first_id,1)
-
-    #second (firm) Dummies
-    F = sparse(collect(1:NT),second_id,1)
-
-    # N+J x N+J-1 restriction matrix
-    S= sparse(1.0I, J-1, J-1)
-    S=vcat(S,sparse(-zeros(1,J-1)))
-
-    X = hcat(D, -F*S)
-
-    #SET DIMENSIONS
-    n=size(X,1)
-
-    # PART 1: ESTIMATE HIGH DIMENSIONAL MODEL
-    xx=X'*X
-    xy=X'*y
-    compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
-    beta = compute_sol([xy...];verbose=false)
-    eta=y-X*beta
-
-    pe=D * beta[1:N]
-    fe=F*S * beta[N+1:N+J-1]
-
-    println("\n","Plug-in Variance Components:")
-
-    σ2_ψ_AKM = var(fe)
-    println("Plug-in Variance of $(settings.second_id_display_small) Effects: ", σ2_ψ_AKM )
-    σ2_α_AKM = var(pe)
-    println("Plug-in Variance of $(settings.first_id_display_small) Effects: ", σ2_α_AKM )
-    σ2_ψα_AKM = cov(pe,-fe)
-    println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM, "\n")
-
-
-    #Part 2: Compute Pii, Bii
-    @unpack Lambda_P, Lambda_B_second,Lambda_B_first, Lambda_B_cov = eff_res(settings.leverage_algorithm, X,first_id,second_id,match, K, settings)
-
-    #Compute Leaveo-out residual
-    I_Lambda_P = I-Lambda_P
-    eta_h = I_Lambda_P\eta
-
-    #Compute bias corrected variance comp of second (Firm) Effects
-    θ_second = σ2_ψ_AKM -(1/NT)*y'*Lambda_B_second*eta_h
-
-    θ_first = settings.first_id_effects==true  ? σ2_α_AKM -(1/NT)*y'*Lambda_B_first*eta_h : nothing
-
-    θCOV = settings.cov_effects==true ? σ2_ψα_AKM -(1/NT)*y'*Lambda_B_cov*eta_h : nothing
-
-    Pii = diag(Lambda_P)
-
-    Bii_second = diag(Lambda_B_second)
-
-    Bii_first = settings.first_id_effects == true ? diag(Lambda_B_first) : nothing
-
-    Bii_cov = settings.cov_effects == true ? diag(Lambda_B_cov) : nothing
-
-    #TODO print estimates
-    if settings.print_level > 0
-        println("Bias-Corrected Variance Components:")
-        println("Bias-Corrected variance of $(settings.second_id_display_small): ", θ_second)
-        (settings.first_id_effects > 0) && println("Bias-Corrected variance of $(settings.first_id_display_small): ", θ_first)
-        (settings.cov_effects > 0) && println("Bias-Corrected covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) effects: ", θCOV)
-    end
-
-    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = pe, Fpsi = fe, Pii = Pii, Bii_first = Bii_first,
-            Bii_second = Bii_second, Bii_cov = Bii_cov)
-
 end
 
 
@@ -1058,6 +390,18 @@ function leave_out_KSS(y,first_id,second_id,controls,settings)
 end
 
 
+"""
+$(SIGNATURES)
+
+Computes variance of errors for stayers when leaving out a match. 
+
+### Arguments
+* `y`: outcome variable
+* `first_id`: first identifier (e.g. worker id)
+* `second_id`: second identifier (e.g. firm id)
+* `weight`: spell length of every match.
+* `b`: fixed effects coefficients vector
+"""
 function sigma_for_stayers(y,first_id, second_id, weight, b)
     #Go back to person-year space 
     first_id_weighted = vcat(fill.(first_id, weight)...)
@@ -1088,7 +432,18 @@ function sigma_for_stayers(y,first_id, second_id, weight, b)
     return sigma_stayers
 end
 
+"""
+$(SIGNATURES)
 
+Computes a KSS quadratic form to correct bias.
+
+### Arguments
+* `sigma_i`: individual variance estimator 
+* `A_1`: left matrix of quadratic form
+* `A_2`: right matrix of quadratic form
+* `beta`: fixed effects coefficients vector
+* `Bii`: Bii correction elements.
+"""
 function kss_quadratic_form(sigma_i, A_1, A_2, beta, Bii)
     right                               = A_2*beta
     left                                = A_1*beta
@@ -1098,7 +453,20 @@ function kss_quadratic_form(sigma_i, A_1, A_2, beta, Bii)
     theta_KSS                           = theta-(1/dof)*sum(Bii.*sigma_i)
 end
 
-function leave_out_estimation2(y,first_id,second_id,controls,settings)
+
+"""
+$(SIGNATURES)
+
+Returns the bias-corrected components, the vector of coefficients, the corresponding fixed effects for every observation, and the diagonal matrices containing the Pii and Biis. 
+
+### Arguments
+* `y`: outcome vector
+* `first_id`: first identifier (e.g. worker id)
+* `second_id`: second identifier (e.g. firm id)
+* `settings`: settings based on `VCHDFESettings`
+* `controls`: at this version only `controls=nothing` is supported.
+"""
+function leave_out_estimation(y,first_id,second_id,controls,settings)
 
     #Create matrices for computations
     NT = size(y,1)
@@ -1252,7 +620,19 @@ end
 
 
 
-function leverages(::ExactAlgorithm, X,Dvar,Fvar, settings)
+"""
+$(SIGNATURES)
+
+This function computes the diagonal matrices containing Pii and Bii under Exact Algorithm. See appendix in KSS for more information.
+
+### Arguments
+* `lev`: an instance of Exact algorithm structure.
+* `X`: the design matrix in the linear model.
+* `Dvar`: matrix with incidence information of first_id 
+* `Fvar`: matrix with incidence information of second_id
+* `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
+"""
+function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, settings)
 
     M = size(X,1)
 
@@ -1309,12 +689,24 @@ end
 
 
 
+"""
+$(SIGNATURES)
+
+This function computes the diagonal matrices containing Pii and Bii under Johnson-Linderstrauss Algorithm. See appendix in KSS for more information.
+
+### Arguments
+* `lev`: an instance of JLA algorithm structure.
+* `X`: the design matrix in the linear model.
+* `Dvar`: matrix with incidence information of first_id 
+* `Fvar`: matrix with incidence information of second_id
+* `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
+"""
 function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
 
     NT = size(X,1)
     FE = size(X,2)
 
-    p = lev.num_simulations == 0 ? ceil(log(FE)/0.01) : lev.num_simulations
+    p = lev.num_simulations == 0 ? 200 : lev.num_simulations
 
     #Define solver
     S_xx = X'*X
