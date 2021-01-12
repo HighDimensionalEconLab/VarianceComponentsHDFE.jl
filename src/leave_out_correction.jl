@@ -1342,7 +1342,8 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
     Bii_second=zeros(NT)
     Bii_cov= settings.cov_effects ==true ? zeros(NT) : nothing
     Bii_first= settings.first_id_effects == true ? zeros(NT) : nothing
-
+    
+    Mii = zeros(NT)
     Pii_sq = zeros(NT)
     Mii_sq = zeros(NT)
     Pii_Mii = zeros(NT)
@@ -1364,12 +1365,12 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
         aux = Z.^4 / p 
         Pii_sq = Pii_sq .+ aux 
 
-        aux			= ((rademach .- Z).^2)/p
+        aux			= ((rademach' - Z).^2)/p
 		Mii			= Mii .+ aux    
-		aux			= ((rademach .- Z).^4)/p
+		aux			= ((rademach' - Z).^4)/p
 		Mii_sq		= Mii_sq .+ aux
 		
-        Pii_Mii		= Pii_Mii .+ ((Z.^2).*((rademach .- Z).^2) )/p 
+        Pii_Mii		= Pii_Mii .+ ((Z.^2).*((rademach' - Z).^2) )/p 
         
         #Demeaned Rademacher
         rademach =  rand(mts[Threads.threadid()],1,size(Fvar,1)) .> 0.5
@@ -1377,12 +1378,12 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
         rademach  = rademach /sqrt(p)
         rademach = rademach .- mean(rademach)
 
-        Z .= compute_sol[Threads.threadid()]( [rademach*Fvar...] ; verbose=false)
+        Z = compute_sol[Threads.threadid()]( [rademach*Fvar...] ; verbose=false)
         Z = X*Z
         Bii_second = Bii_second .+ (Z.*Z) 
 
         if settings.first_id_effects == true | settings.cov_effects == true
-            Z_pe .= compute_sol[Threads.threadid()]( [rademach*Dvar...] ; verbose=false)
+            Z_pe = compute_sol[Threads.threadid()]( [rademach*Dvar...] ; verbose=false)
             Z_pe = X*Z_pe
 
             if settings.first_id_effects == true 
@@ -1400,11 +1401,11 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
     Pii[ findall(Pii.>=0.99)] .= 0.99
 
     #Account for Non-linear Bias
-    Pii = Pii ./ (Pii .+ Mii)
+    Pii = Pii ./ (Pii + Mii)
     Mii = 1 .- Pii 
     Vi = (1/p)*((Mii.^2).*Pii_sq+(Pii.^2).*Mii_sq-2*Mii.*Pii.*Pii_Mii)
     Bi = (1/p)*(Mii.*Pii_sq-Pii.*Mii_sq+2*(Mii-Pii).*Pii_Mii)
-    correction_JLA = (1-Vi./(Mii.^2)+Bi./Mii)       
+    correction_JLA = (1 .- Vi./(Mii.^2)+Bi./Mii)       
 
     return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov)
 end
