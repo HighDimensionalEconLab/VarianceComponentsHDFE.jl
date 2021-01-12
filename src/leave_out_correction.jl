@@ -64,7 +64,7 @@ The VCHDFESettings type is to pass information to methods regarding which algori
 @with_kw struct VCHDFESettings{LeverageAlgorithm}
     cg_maxiter::Int64 = 300
     leverage_algorithm::LeverageAlgorithm = ExactAlgorithm()
-    #clustering_level::String = "obs"
+    leave_out_level::String = "obs"
     first_id_effects::Bool = true
     cov_effects::Bool = true
     print_level::Int64 = 1
@@ -1049,40 +1049,354 @@ function get_leave_one_out_set(y, first_id, second_id, settings, controls)
     return (obs = obs_id, y = y, first_id = first_id, second_id = second_id, controls = controls)
 end
 
-# Do everything naively with no inplace operations, just to get the desired result
-# function compute_whole(y,first_id,second_id,controls,settings::VCHDFESettings)
+function leave_out_KSS(y,first_id,second_id,controls,settings)
 
-#     @assert settings.first_id_effects == true && settings.cov_effects == true
+    @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y, first_id, second_id, settings, nothing)
 
-#     # compute y, id firmid, controls, settings
-#     # compute y, first_id second_id, controls, settings
-#     (settings.print_level > 0) && println("Finding the leave-one-out connected set")
-#     @unpack obs_id,  y  , first_id , second_id  = find_connected_set(y,first_id,second_id;settings)
-#     @unpack obs_id,  y  , first_id , second_id  = prunning_connected_set(y,first_id,second_id, obs_id;settings)
-#     @unpack obs_id,  y  , first_id , second_id  = drop_single_obs(y,first_id,second_id, obs_id)
-#     controls == nothing ? nothing : controls = controls[obs_id,:]
+    @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation2(y,first_id,second_id,controls,settings)
 
-#     if settings.print_level > 0
-#         # compute the number of movers
-#         num_movers = length(unique(compute_movers(first_id,second_id).movers .* first_id)) - 1 
+end
 
-#         println("\n","Summary statistics of the leave-one-out connected set:")
-#         println("Number of observations: ", length(obs_id))
-#         println("Number of $(settings.first_id_display_small)s: ", length(unique(first_id)))
-#         println("Number of movers: ", num_movers)
-#         println("Mean $(settings.observation_id_display_small): ", mean(y))
-#         println("Variance of $(settings.observation_id_display_small): ", var(y))
-#     end
 
-#     @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings)
+function sigma_for_stayers(y,first_id, second_id, weight, b)
+    #Go back to person-year space 
+    first_id_weighted = vcat(fill.(first_id, weight)...)
+    second_id_weighted = vcat(fill.(second_id, weight)...)
 
-#     if settings.print_level > 0
-#         println("Bias-Corrected Variance Components:")
-#         println("Bias-Corrected variance of $(settings.first_id_display_small): $θ_first")
-#         println("Bias-Corrected variance of $(settings.second_id_display_small): $θ_second")
-#         println("Bias-Corrected covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) effects: $θCOV")
-#     end
+    #Compute Pii for Stayers = inverse of # of obs 
+    T = accumarray(id, 1)
+    Pii = 1./T
+    Mii = 1 - Pii 
 
-#     return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, obs = obs_id, β = β, Dalpha = Dalpha, Fpsi = Fpsi, Pii = Pii, Bii_first = Bii_first,
-#             Bii_second = Bii_second, Bii_cov = Bii_cov)
-# end
+    #Compute OLS residual 
+    NT = size(y,1)
+    D = sparse(collect(1:NT),first_id_weighted, 1)
+    F = sparse(collect(1:NT),second_id_weighted, 1)
+    J = size(F,2)
+    S= sparse(1.0I, J-1, J-1)
+    S=vcat(S,sparse(-zeros(1,J-1)))
+    X = hcat(D, -F*S)
+
+    eta = y - X*b 
+    eta_h = eta./Mii 
+    sigma_stayers = (y - mean(y)).*eta_h
+
+    #Collapse to match
+    match_id = compute_matchid(second_id_weighted,first_id_weighted)
+    sigma_stayers = (combine(groupby(DataFrame(sigma = sigma_stayers , match_id = match_id), :match_id), :sigma => mean).sigma_mean)
+    
+    return sigma_stayers
+end
+
+
+function kss_quadratic_form(sigma_i, A_1, A_2, beta, Bii)
+    right                               = A_2*beta
+    left                                = A_1*beta
+    theta                               = cov(left,right)
+    theta                               = theta[1]
+    dof                                 = size(left,1)-1
+    theta_KSS                           = theta-(1/dof)*sum(Bii.*sigma_i)
+end
+
+function leave_out_estimation2(y,first_id,second_id,controls,settings)
+
+    #Create matrices for computations
+    NT = size(y,1)
+    J = maximum(second_id)
+    N = maximum(first_id)
+    K = controls ==nothing ? 0 : size(controls,2)
+    nparameters = N + J + K
+
+    match_id = compute_matchid(first_id, second_id)
+
+    #first (worker) Dummies
+    D = sparse(collect(1:NT),first_id,1)
+
+    #second (firm) Dummies
+    F = sparse(collect(1:NT),second_id,1)
+
+    # N+J x N+J-1 restriction matrix
+    S= sparse(1.0I, J-1, J-1)
+    S=vcat(S,sparse(-zeros(1,J-1)))
+
+    X = hcat(D, -F*S)
+
+    #SET DIMENSIONS
+    n=size(X,1)
+
+    # PART 1: ESTIMATE HIGH DIMENSIONAL MODEL
+    xx=X'*X
+    xy=X'*y
+    compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
+    beta = compute_sol([xy...];verbose=false)
+    eta=y-X*beta
+
+    pe=D * beta[1:N]
+    fe=F*S * beta[N+1:N+J-1]
+
+    println("\n","Plug-in Variance Components:")
+
+    σ2_ψ_AKM = var(fe)
+    println("Plug-in Variance of $(settings.second_id_display_small) Effects: ", σ2_ψ_AKM )
+    σ2_α_AKM = var(pe)
+    println("Plug-in Variance of $(settings.first_id_display_small) Effects: ", σ2_α_AKM )
+    σ2_ψα_AKM = cov(pe,-fe)
+    println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM, "\n")
+
+    #Part 2: Collapse & Reweight (if needed)
+    weight = ones(NT,1) 
+    y_py = y
+    if settings.leave_out_level == "match"
+        #Compute Weights 
+        weight = accumarray(match_id, 1)
+
+        first_id_weighted = Int.(transform(groupby(DataFrame(first_id = id, match_id = match_id), :match_id), :first_id => mean  => :first_id_weighted).first_id_weighted)
+        second_id_weighted = Int.(transform(groupby(DataFrame(first_id = id, match_id = match_id), :match_id), :first_id => mean  => :first_id_weighted).first_id_weighted)
+
+        #Collapse at match level averages
+        first_id = Int.(combine(groupby(DataFrame(first_id = first_id, match_id = match_id), :match_id), :first_id => mean).first_id_mean)
+        second_id = Int.(combine(groupby(DataFrame(second_id = second_id, match_id = match_id), :match_id), :second_id => mean).second_id_mean)
+        y = (combine(groupby(DataFrame(y = y, match_id = match_id), :match_id), :y => mean).y_mean)
+
+        #At person-year level (like a Matlab's repelem)
+        first_id_weighted = vcat(fill.(first_id,weight)...)
+        second_id_weighted = vcat(fill.(second_id,weight)...)
+
+        #Build Design
+        NT = size(y,1)
+        J = maximum(second_id)
+        N = maximum(first_id)
+        nparameters = N + J + K
+        D = sparse(collect(1:NT),first_id,1)
+        F = sparse(collect(1:NT),second_id,1)
+        S= sparse(1.0I, J-1, J-1)
+        S=vcat(S,sparse(-zeros(1,J-1)))
+
+        X = hcat(D, -F*S)   
+        Dvar = hcat( sparse(collect(1:length(match_id)),first_id_weighted,1)) , spzeros(NT,nparameters-N))
+        Fvar = hcat(spzeros(NT,N), -1*sparse(collect(1:length(match_id)), second_id_weighted,1  )*S, spzeros(NT,nparameters-N-J) )
+            
+        #Weighting
+        weight_mat = sparse(collect(1:NT), collect(1:NT), weight.^(0.5) , NT, NT )
+        X = weight_mat * X 
+        y = weight_mat * y 
+
+    else 
+        #Build Design
+        NT = size(y,1)
+        J = maximum(second_id)
+        N = maximum(first_id)
+        nparameters = N + J + K
+        D = sparse(collect(1:NT),first_id,1)
+        F = sparse(collect(1:NT),second_id,1)
+        S= sparse(1.0I, J-1, J-1)
+        S=vcat(S,sparse(-zeros(1,J-1)))
+
+        X = hcat(D, -F*S)
+        Dvar = hcat(  D, spzeros(NT,nparameters-N) )
+        Fvar = hcat(spzeros(NT,N), -F*S, spzeros(NT,nparameters-N-J) )
+
+    end
+
+    #Part 3: Compute Pii, Bii
+    @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov = leverages(settings.leverage_algorithm, X, Dvar, Fvar, settings)
+
+    (settings.print_level > 1) && println("Pii and Bii have been computed.")
+
+    #Compute Leave-out residual
+    xx=X'*X
+    xy=X'*y
+    compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
+    beta = compute_sol([xy...];verbose=false)
+    eta=y-X*beta
+
+    eta_h = eta./Mii
+    sigma_i = ( ( y - mean(y) ) .* eta_h ) .* correction_JLA
+
+    if settings.leave_out_level == "match"
+        T = accumarray(id,1)
+        stayers = T.==1 
+        stayers = [stayers[j] for j in id]
+
+        sigma_stayers = sigma_for_stayers(y_py, first_id, second_id, weight, beta)
+        sigma[stayers] .= [sigma_stayers[j] for j in stayers]
+    end
+
+
+    #Compute bias corrected variance comp of second (Firm) Effects
+    θ_second = kss_quadratic_form(sigma_i, Fvar, Fvar, beta, Bii_second)
+
+    θ_first = settings.first_id_effects==true  ? kss_quadratic_form(sigma_i, Dvar, Dvar, beta, Bii_first) : nothing
+
+    θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
+
+    Pii = diag(Pii)
+
+    Bii_second = diag(Bii_second)
+
+    Bii_first = settings.first_id_effects == true ? diag(Bii_first) : nothing
+
+    Bii_cov = settings.cov_effects == true ? diag(Bii_cov) : nothing
+
+    #TODO print estimates
+    if settings.print_level > 0
+        println("Bias-Corrected Variance Components:")
+        println("Bias-Corrected variance of $(settings.second_id_display_small): ", θ_second)
+        (settings.first_id_effects > 0) && println("Bias-Corrected variance of $(settings.first_id_display_small): ", θ_first)
+        (settings.cov_effects > 0) && println("Bias-Corrected covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) effects: ", θCOV)
+    end
+
+    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = pe, Fpsi = fe, Pii = Pii, Bii_first = Bii_first,
+            Bii_second = Bii_second, Bii_cov = Bii_cov)
+end
+
+
+
+function leverages(::ExactAlgorithm, X,Dvar,Fvar, settings)
+
+    M = size(X,1)
+
+    #Define solver
+    S_xx = X'*X
+
+    # Create the solvers
+    ldli, la = computeLDLinv(S_xx)
+    buffs = zeros(size(la)[1],Threads.nthreads())
+    compute_sol = []
+    for i in 1:Threads.nthreads()
+        P = approxcholOperator(ldli,buffs[:,i])
+        push!(compute_sol,approxcholSolver(P,la))
+    end
+
+    #Initialize output
+    Pii = zeros(M)
+    Bii_second = zeros(M)
+    Bii_cov= settings.cov_effects ==true ? zeros(M) : nothing
+    Bii_first= settings.first_id_effects == true ? zeros(M) : nothing
+
+    Threads.@threads for i=1:M
+
+        #Only one inversion needed for exact alg
+        zexact = compute_sol[Threads.threadid()]( [X[i,:]...] ; verbose=false)
+
+        #Compute Pii
+        Pii[i] = X[i,:]'*zexact
+
+        #Compute Bii 
+        COV = cov(Fvar*zexact,Fvar*zexact)
+        Bii_second_movers[i] = COV[1]*(size(Fvar,1)-1)
+
+        if Bii_first != nothing
+            COV = cov(Fvar*zexact,Dvar*zexact)
+            Bii_first[i] = COV[1]*(size(Fvar,1)-1)
+        end
+
+        if Bii_cov != nothing
+            COV = cov(Dvar*zexact,Dvar*zexact)
+            Bii_cov[i] = COV[1]*(size(Dvar,1)-1)
+        end
+
+    end
+
+    #Censor
+    Pii[ findall(Pii.>=0.99)] .= 0.99
+
+    correction_JLA = 1 
+    Mii = 1-Pii
+
+    return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov)
+end
+
+
+
+function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
+
+    M = size(X,1)
+
+    p = lev.num_simulations == 0 ? ceil(log(N+J)/0.01) : lev.num_simulations
+
+    #Define solver
+    S_xx = X'*X
+
+    # Create the solvers
+    ldli, la = computeLDLinv(S_xx)
+    buffs = zeros(size(la)[1],Threads.nthreads())
+    compute_sol = []
+    for i in 1:Threads.nthreads()
+        P = approxcholOperator(ldli,buffs[:,i])
+        push!(compute_sol,approxcholSolver(P,la))
+    end
+
+    #Pre-allocate solution vectors
+    Z = zeros(N+J-1,Threads.nthreads())
+
+    #Pre-allocate Rademacher Vectors
+    rademach = zeros(Threads.nthreads(), NT)
+    
+    #Initialize output
+    Pii=zeros(M)
+    Bii_second=zeros(M)
+    Bii_cov= settings.cov_effects ==true ? zeros(M) : nothing
+    Bii_first= settings.first_id_effects == true ? zeros(M) : nothing
+
+    Threads.@threads for i=1:p
+
+        rademach[Threads.threadid(),:] =  rand(1,NT) .> 0.5
+        rademach[Threads.threadid(),:]  = rademach[Threads.threadid(),:]  .- (rademach[Threads.threadid(),:]  .== 0)
+        rademach[Threads.threadid(),:]  = rademach[Threads.threadid(),:]  ./sqrt(p)
+
+        Z[:,Threads.threadid()]  .= compute_sol[Threads.threadid()]( [rademach[Threads.threadid(),:]'*X...] ; verbose=false)
+        ZJLA = X*Z[:,Threads.threadid()]
+
+        #Auxiliaries for Non-linear Correction
+
+        aux = ZJLA.^2 / p 
+        Pii = Pii .+ aux 
+
+        aux = ZJLA.^4 / p 
+        Pii_sq = Pii_sq .+ aux 
+
+        aux			= ((rademach[Threads.threadid(),:]' .- ZJLA).^2)/p
+		Mii			= Mii .+ aux    
+		aux			= ((rademach[Threads.threadid(),:]' .- ZJLA).^4)/p
+		Mii_sq		= Mii_sq .+ aux
+		
+        Pii_Mii		= Pii_Mii .+ ((ZJLA.^2).*((rademach[Threads.threadid(),:]' .- ZJLA).^2)/p ;
+        
+        #Demeaned Rademacher
+        rademach[Threads.threadid(),:] =  rand(1,size(Fvar,1)) .> 0.5
+        rademach[Threads.threadid(),:]  = rademach[Threads.threadid(),:]  .- (rademach[Threads.threadid(),:]  .== 0)
+        rademach[Threads.threadid(),:]  = rademach[Threads.threadid(),:]  ./sqrt(p)
+        rademach[Threads.threadid(),:] = rademach[Threads.threadid(),:] .- mean(rademach[Threads.threadid(),:])
+
+        Z[:,Threads.threadid()] .= compute_sol[Threads.threadid()]( [rademach[Threads.threadid(),:]'*Fvar...] ; verbose=false)
+        ZJLA_fe = X*Z ;
+        Bii_second = Bii_second .+ (ZJLA_fe.*ZJLA_fe) ;
+
+        if settings.first_id_effects == true | settings.cov_effects == true
+            Z[:,Threads.threadid()] .= compute_sol[Threads.threadid()]( [rademach[Threads.threadid(),:]'*Dvar...] ; verbose=false)
+            ZJLA_pe = X*Z
+
+            if settings.first_id_effects == true 
+                Bii_first = Bii_first .+ (ZJLA_pe.*ZJLA_pe)
+            end
+
+            if settings.cov_effects == true 
+                Bii_cov = Bii_cov .+ (ZJLA_pe.*ZJLA_fe)
+            end
+
+        end    
+    end
+
+    #Censor
+    Pii[ findall(Pii.>=0.99)] .= 0.99
+
+    #Account for Non-linear Bias
+    Pii = Pii./(Pii .+ Mii)
+    Mii = 1 - Pii 
+    Vi = (1/p)*((Mii.^2).*Pii_sq+(Pii.^2).*Mii_sq-2*Mii.*Pii.*Pii_Mii)
+    Bi = (1/p)*(Mii.*Pii_sq-Pii.*Mii_sq+2*(Mii-Pii).*Pii_Mii)
+    correction_JLA = (1-Vi./(Mii.^2)+Bi./Mii)       
+
+    return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov)
+end
