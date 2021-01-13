@@ -373,7 +373,7 @@ function get_leave_one_out_set(y, first_id, second_id, settings, controls)
 
     # compute y, id firmid, controls, settings
     # compute y, first_id second_id, controls, settings
-    (settings.print_level > 0) && println("Finding the leave-one-out connected set")
+    (settings.print_level > 1) && println("\nFinding the leave-one-out connected set")
     @unpack obs_id,  y  , first_id , second_id  = find_connected_set(y,first_id,second_id,settings)
     @unpack obs_id,  y  , first_id , second_id  = prunning_connected_set(y,first_id,second_id, obs_id,settings)
     @unpack obs_id,  y  , first_id , second_id  = drop_single_obs(y,first_id,second_id, obs_id)
@@ -945,7 +945,7 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; labels = nothing)
     if labels == nothing
         for q=2:r
             if q <= r
-                println("\n Coefficient of Column ", q-1,": ", numerator[q] )
+                println("\nCoefficient of Column ", q-1,": ", numerator[q] )
                 println("Traditional HC Standard Error of Column ", q-1,": ", sqrt(denominator_naive[q]) )
                 println("KSS Standard Error of Column ", q-1,": ", sqrt(denominator[q]) )
                 println("T-statistic of Column ", q-1, ": ", test_statistic[q])
@@ -954,7 +954,7 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; labels = nothing)
     else
         for q=2:r
             tell_me = labels[q-1]
-            println("\n Coefficient on ", tell_me,": ", numerator[q] )
+            println("\nCoefficient on ", tell_me,": ", numerator[q] )
             println("Traditional HC Standard Error  on ", tell_me,": ", sqrt(denominator_naive[q]) )
             println("KSS Standard Error on ", tell_me,": ", sqrt(denominator[q]) )
             println("T-statistic on ", tell_me,": ", test_statistic[q])
