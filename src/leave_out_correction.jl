@@ -461,8 +461,8 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
         Z_lincom == Z_lincom[obs,:]
         F = sparse(collect(1:length(second_id)),second_id,1)
         J = size(F,2)
-        S= sparse(1.0I, J-1, J-1)
-        S=vcat(S,sparse(-zeros(1,J-1)))
+        S = sparse(1.0I, J-1, J-1)
+        S = vcat(S,sparse(-zeros(1,J-1)))
         Transform = hcat(spzeros(length(second_id),maximum(first_id)), -F*S )
 
         #Collapse and reweight to person-year observations 
@@ -509,8 +509,8 @@ function sigma_for_stayers(y,first_id, second_id, weight, b)
     D = sparse(collect(1:NT),first_id_weighted, 1)
     F = sparse(collect(1:NT),second_id_weighted, 1)
     J = size(F,2)
-    S= sparse(1.0I, J-1, J-1)
-    S=vcat(S,sparse(-zeros(1,J-1)))
+    S = sparse(1.0I, J-1, J-1)
+    S = vcat(S,sparse(-zeros(1,J-1)))
     X = hcat(D, -F*S)
 
     eta = y - X*b 
@@ -564,7 +564,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     NT = size(y,1)
     J = maximum(second_id)
     N = maximum(first_id)
-    K = controls ==nothing ? 0 : size(controls,2)
+    K = controls == nothing ? 0 : size(controls,2)
     nparameters = N + J + K
 
     match_id = compute_matchid(first_id, second_id)
@@ -576,8 +576,8 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     F = sparse(collect(1:NT),second_id,1)
 
     # N+J x N+J-1 restriction matrix
-    S= sparse(1.0I, J-1, J-1)
-    S=vcat(S,sparse(-zeros(1,J-1)))
+    S = sparse(1.0I, J-1, J-1)
+    S = vcat(S,sparse(-zeros(1,J-1)))
 
     X = hcat(D, -F*S)
 
@@ -629,12 +629,12 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         nparameters = N + J + K
         D = sparse(collect(1:NT),first_id,1)
         F = sparse(collect(1:NT),second_id,1)
-        S= sparse(1.0I, J-1, J-1)
-        S=vcat(S,sparse(-zeros(1,J-1)))
+        S = sparse(1.0I, J-1, J-1)
+        S = vcat(S,sparse(-zeros(1,J-1)))
 
         X = hcat(D, -F*S)   
-        Dvar = hcat( sparse(collect(1:length(match_id)),first_id_weighted,1) , spzeros(NT,J-1))
-        Fvar = hcat(spzeros(NT,N), -1*sparse(collect(1:length(match_id)), second_id_weighted,1  )*S )
+        Dvar = hcat( sparse(collect(1:length(match_id)),first_id_weighted,1) , spzeros(length(match_id),J-1))
+        Fvar = hcat(spzeros(length(match_id),N), -1*sparse(collect(1:length(match_id)), second_id_weighted,1  )*S )
             
         #Weighting
         weight_mat = sparse(collect(1:NT), collect(1:NT), weight.^(0.5) , NT, NT )
