@@ -51,12 +51,16 @@ function parse_commandline()
         "--no_cov_effects"
             help = "No computing and showing of covariace effects"
             action = :store_true
+        "--leave_out_level"
+        help = "leave out level: obs or match. It defaults to match."
+        arg_type = String
+        default = "match"
         "--algorithm"
             help = "type of algorithm: Exact or JLA. It defaults to be Exact if the number of observations is less than 5000, and JLA otherwise."
             arg_type = String
             default = "Default"
         "--simulations"
-            help = "number of simulations in the JLA algorithm. If 0, defaults to 100 * log(#total fixed effect)"
+            help = "number of simulations in the JLA algorithm. If 0, defaults to 200"
             arg_type = Int
             default = 0
         "--header"
@@ -74,15 +78,6 @@ function parse_commandline()
             help = "The display text associated with outcome_id (e.g. Wage)"
             arg_type = String
             default = "Wage"
-        # "--write_CSV"
-        #     help = "write output to a CSV"
-        #     action = :store_true
-        # "--output_path"
-        #     help = "path to output CSV"
-        #     arg_type = String
-        #     default = "VarianceComponents.csv"
-        
-        # in support of fixing up the output:
         "--detailed_output_path"
             help = "path to the CSV for the detailed output for each observable"
             arg_type = String
@@ -131,6 +126,7 @@ function real_main()
     first_idx = parsed_args["first_id"]
     second_idx = parsed_args["second_id"]
     outcome_idx = parsed_args["outcome_id"]
+    leave_out_level = parsed_args["leave_out_level"]
     algorithm = parsed_args["algorithm"]
     first_id_effects = parsed_args["no_first_id_effects"] == 1 ? 0 : 1
     cov_effects = parsed_args["no_cov_effects"] == 1 ? 0 : 1
@@ -140,6 +136,8 @@ function real_main()
     outcome_id_display = parsed_args["outcome_id_display"]
     print_level = parsed_args["print_level"]
 
+    algorithm = lowercase(algorithm)
+    leave_out_level = lowercase(leave_out_level)
     first_id_display_small = lowercase(first_id_display)
     second_id_display_small = lowercase(second_id_display)
 

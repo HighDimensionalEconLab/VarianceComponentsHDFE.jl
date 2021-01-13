@@ -49,7 +49,8 @@ The VCHDFESettings type is to pass information to methods regarding which algori
 ### Fields
 
 * `cg_maxiter`: maximum number of iterations (default = 300)
-* `leverage_algorithm`: which type of algorithm to use (default = ExactAlgorithm())
+* `leave_out_level`: leave-out level (default = match)
+* `leverage_algorithm`: which type of algorithm to use (default = JLAAlgorithm())
 * `first_id_effects`: includes first id effects. At this version it is required to include the first_id_effects. (default = true)
 * `cov_effects`: includes covariance of first-second id effects. At this version it is required to include the cov_effects. (default = true)
 * `print_level`: prints the state of the program in std output. If print_level = 0, the app prints nothing in the std output. (default = 1)
@@ -63,8 +64,8 @@ The VCHDFESettings type is to pass information to methods regarding which algori
 """
 @with_kw struct VCHDFESettings{LeverageAlgorithm}
     cg_maxiter::Int64 = 300
-    leverage_algorithm::LeverageAlgorithm = ExactAlgorithm()
-    leave_out_level::String = "obs"
+    leverage_algorithm::LeverageAlgorithm = JLAAlgorithm()
+    leave_out_level::String = "match"
     first_id_effects::Bool = true
     cov_effects::Bool = true
     print_level::Int64 = 1
@@ -298,7 +299,7 @@ function drop_single_obs(yvec, first_idvar, second_idvar,obs_id)
     return (obs_id = obs_id , y = yvec , first_id = first_id, second_id = second_id )
 end
 
-#5) Compute Movers
+#4) Compute Movers
 """
 $(SIGNATURES)
 
@@ -337,7 +338,7 @@ function compute_movers(first_id,second_id)
 end
 
 
-#9) Creates match first_id using second_id id
+#5) Creates match first_id using second_id id
 """
 $(SIGNATURES)
 
@@ -354,7 +355,7 @@ function compute_matchid(second_id,first_id)
     return match_id2
 end
 
-
+#6) Combines other functions to compute Leave-Out Connected Set
 """
 $(SIGNATURES)
 
@@ -381,11 +382,91 @@ function get_leave_one_out_set(y, first_id, second_id, settings, controls)
     return (obs = obs_id, y = y, first_id = first_id, second_id = second_id, controls = controls)
 end
 
-function leave_out_KSS(y,first_id,second_id,controls,settings)
+#Computes the whole leave out KSS correction 
+"""
+$(SIGNATURES)
 
-    @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y, first_id, second_id, settings, nothing)
+Returns a tuple with the observation number of the original dataset that belongs to the Leave-out connected set as described in Kline,Saggio, Solvesten. It also provides the corresponding outcome and identifiers in this connected set. 
 
-    @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation2(y,first_id,second_id,controls,settings)
+### Arguments
+* `y`: outcome vector
+* `first_id`: first identifier (e.g. worker id)
+* `second_id`: second identifier (e.g. firm id)
+* `settings`: settings based on `VCHDFESettings`
+* `controls`: at this version only `controls=nothing` is supported.
+"""
+function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = false, Z_lincom = nothing , lincom_labels = nothing, settings = VCHDFESettings())
+
+    algo = typeof(settings.leverage_algorithm) == JLAAlgorithm ? "JLA" : "Exact"
+    println("Running KSS correction with the following options")
+    println("Leave Out Strategy : $(settings.leave_out_level)")
+    if algo == "JLA"
+        simul = settings.leverage_algorithm.num_simulations == 0 ? 200 : settings.leverage_algorithm.num_simulations
+        println("Algorithm for Computation of Statistical Leverages : $(algo) with $(simul) simulations")
+    else
+        println("Algorithm for Computation of Statistical Leverages : $(algo) \n")
+    end
+
+    #Compute Leave Out Connected Set
+    @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y, first_id, second_id, settings, controls)
+
+
+    if settings.print_level>1
+        num_movers = length(unique(compute_movers(first_id,second_id).movers .* first_id)) - 1 
+
+        summary = """
+        Information on Leave Out Connected Sample \n
+        Number of observations: $(length(obs)) 
+        Number of $(settings.first_id_display_small)s: $(maximum(first_id)) 
+        Number of $(settings.second_id_display_small)s: $(maximum(second_id)) 
+        Number of Movers : $(num_movers)
+        Mean of $(settings.outcome_id_display): $(mean(y)) 
+        Variance of $(settings.outcome_id_display): $(var(y))
+        """ 
+        println(summary)
+    end
+
+    #Residualize outcome variable 
+    if controls != nothing  
+
+        NT = size(y,1)
+        J = maximum(second_id)
+        N = maximum(first_id)
+        K = size(controls,2)
+        nparameters = N + J + K
+
+        D = sparse(collect(1:NT),first_id,1)
+        F = sparse(collect(1:NT),second_id,1)
+        S= sparse(1.0I, J-1, J-1)
+        S=vcat(S,sparse(-zeros(1,J-1)))
+        X = hcat(D, -F*S)
+
+        #May not work for very large datasets: Maybe pcg with Incomplete Cholesky?
+        xxinv = opCholesky(X'*X)
+        xy=X'*y
+        
+        beta = xxinv*xy
+        y=y-X[:,N+J:end]*beta[N+J:end]
+        controls = nothing
+    end
+
+    @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings)
+
+    if do_lincom == true 
+        #Subset to the Leave Out Sample
+        Z_lincom == Z_lincom[obs,:]
+
+        #Collapse and reweight to person-year observations 
+        match_id = compute_matchid(second_id, first_id)
+        Z_lincom_col = ones(size(Z_lincom,1),1)
+        for i = 1:size(Z_lincom,2)
+            Z_lincom_col = vcat(Z_lincom_col,Int.(transform(groupby(DataFrame(z = Z_lincom[:,i], match_id = match_id), :match_id), :z => mean  => :z_py).z_py)) 
+        end
+
+        #do Lincom_KSS()
+
+    end
+
 
 end
 
@@ -408,9 +489,9 @@ function sigma_for_stayers(y,first_id, second_id, weight, b)
     second_id_weighted = vcat(fill.(second_id, weight)...)
 
     #Compute Pii for Stayers = inverse of # of obs 
-    T = accumarray(id, 1)
+    T = accumarray(first_id, 1)
     Pii = 1 ./T
-    Mii = 1 - Pii 
+    Mii = 1 .- Pii 
 
     #Compute OLS residual 
     NT = size(y,1)
@@ -423,7 +504,7 @@ function sigma_for_stayers(y,first_id, second_id, weight, b)
 
     eta = y - X*b 
     eta_h = eta./Mii 
-    sigma_stayers = (y - mean(y)).*eta_h
+    sigma_stayers = (y .- mean(y)).*eta_h
 
     #Collapse to match
     match_id = compute_matchid(second_id_weighted,first_id_weighted)
@@ -518,8 +599,8 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         #Compute Weights 
         weight = accumarray(match_id, 1)
 
-        first_id_weighted = Int.(transform(groupby(DataFrame(first_id = id, match_id = match_id), :match_id), :first_id => mean  => :first_id_weighted).first_id_weighted)
-        second_id_weighted = Int.(transform(groupby(DataFrame(first_id = id, match_id = match_id), :match_id), :first_id => mean  => :first_id_weighted).first_id_weighted)
+        first_id_weighted = first_id
+        second_id_weighted = second_id
 
         #Collapse at match level averages
         first_id = Int.(combine(groupby(DataFrame(first_id = first_id, match_id = match_id), :match_id), :first_id => mean).first_id_mean)
@@ -587,7 +668,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         stayers = [stayers[j] for j in id]
 
         sigma_stayers = sigma_for_stayers(y_py, first_id, second_id, weight, beta)
-        sigma[stayers] .= [sigma_stayers[j] for j in stayers]
+        sigma_i[stayers] .= [sigma_stayers[j] for j in stayers]
     end
 
 
