@@ -489,9 +489,9 @@ function sigma_for_stayers(y,first_id, second_id, weight, b)
     second_id_weighted = vcat(fill.(second_id, weight)...)
 
     #Compute Pii for Stayers = inverse of # of obs 
-    T = accumarray(first_id, 1)
+    T = accumarray(first_id_weighted, 1)
     Pii = 1 ./T
-    Mii = 1 .- Pii 
+    Mii = 1 .- Pii[first_id_weighted]
 
     #Compute OLS residual 
     NT = size(y,1)
@@ -663,12 +663,12 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     sigma_i = ( ( y .- mean(y) ) .* eta_h ) .* correction_JLA
 
     if settings.leave_out_level == "match"
-        T = accumarray(id,1)
+        T = accumarray(first_id,1)
         stayers = T.==1 
-        stayers = [stayers[j] for j in id]
+        stayers = [stayers[j] for j in first_id]
 
         sigma_stayers = sigma_for_stayers(y_py, first_id, second_id, weight, beta)
-        sigma_i[stayers] .= [sigma_stayers[j] for j in stayers]
+        sigma_i[stayers] .= [sigma_stayers[j] for j in findall(x->x==true,stayers )]
     end
 
 
