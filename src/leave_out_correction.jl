@@ -916,7 +916,7 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
     wy = Transform*beta 
     zz = Z'*Z 
     numerator=Z\wy
-    sigma_i  = sparse(collect(1:n),1:n,sigma_i,n,n)
+    sigma_i  = sparse(collect(1:n),collect(1:n),sigma_i,n,n)
     sigma_i_naive = sparse(collect(1:n),collect(1:n),[(y-X*beta).^2 ...],n,n)
 
     #PART 3: COMPUTE STATS
