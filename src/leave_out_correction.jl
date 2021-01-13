@@ -446,10 +446,11 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
         X = hcat(D, -F*S)
 
         #May not work for very large datasets: Maybe pcg with Incomplete Cholesky?
-        xxinv = opCholesky(X'*X)
+        xx = X'*X
+        Lchol = opCholesky(xx)
         xy=X'*y
+        beta = Krylov.cg(xx, [xy...] ; M = Lchol)
         
-        beta = xxinv*xy
         y=y-X[:,N+J:end]*beta[N+J:end]
         controls = nothing
     end
