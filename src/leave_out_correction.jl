@@ -882,3 +882,138 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
 
     return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov)
 end
+
+
+
+function lincom_KSS(y,X, Z, Transform, sigma_i, labels)
+    #lincom_KSS(y,X, Z, Transform, sigma_i, labels; joint_test =false, joint_test_regressors = nothing, nsim = 10000)
+    #regressors is a vector of strings
+    #if joint_test_regressors != nothing 
+    #    positionvec = indexin(joint_test_regressors, labels) .+ 1
+    #end
+
+
+    #PART 1: COMPUTE FE 
+    n = size(y,1)
+    r = size(Z,2)
+    
+    xx=X'*X
+    xy=X'*y
+    compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
+    beta = compute_sol([xy...];verbose=false)
+
+    #PART 2: SET UP MATRIX FOR SANDWICH FORMULA
+    wy = Transform*beta 
+    zz = Z'*Z 
+    numerator=Z\wy
+    sigma_i  = sparse(collect(1:n),1:n,sigma_i,n,n)
+    sigma_i_naive = sparse(collect(1:n),collect(1:n),[(y-X*beta).^2 ...],n,n)
+
+    #PART 3: COMPUTE STATS
+    denominator  = zeros(r,1)
+    denominator_naive   = zeros(r,1)
+
+    for q=1:r
+        v=sparse([q],[1.0],[1.0],r,1)
+        v=zz\[v...]
+        v=Z*v
+        v=Transform'*v
+
+        right = compute_sol(v;verbose=false)
+
+        left=right'
+
+        denominator[q]=left*(X'*sigma_i*X)*right
+        denominator_naive[q]=left*(X'*sigma_i_naive*X)*right
+    end
+    test_statistic=numerator./(sqrt.(denominator))
+
+
+    #PART 4: REPORT
+    println("Inference on Linear Combinations:")
+    if labels == nothing
+        for q=2:r
+            if q <= r
+                println("Linear Combination - Column Number ", q-1," of Z: ", numerator[q] )
+                println("Standard Error of the Linear Combination - Column Number ", q-1," of Z: ", sqrt(denominator[q]) )
+                println("T-statistic - Column Number ", q-1, " of Z: ", test_statistic[q])
+            end
+        end
+    else
+        for q=2:r
+            tell_me = labels[q-1]
+            println("Linear Combination associated with ", tell_me,": ", numerator[q] )
+            println("Standard Error  associated with ", tell_me,": ", sqrt(denominator[q]) )
+            println("T-statistic  associated with ", tell_me,": ", test_statistic[q])
+        end
+    end
+
+    test_statistic = test_statistic[2:end]
+    linear_combination = numerator[2:end]
+    SE_linear_combination_KSS = sqrt(denominator[2:end])
+
+#    # PART 5: Joint-test. Quadratic form beta'*A*beta  MAYBE FOR FUTURE VERSION!
+#    if joint_test ==false &  (joint_test_regressors != nothing )
+#        println("Joint test will not be computed. You need to set the argument option joint_test to true.")
+#    end
+#
+#    if joint_test == true 
+#
+#        if joint_test_regressors  == nothing
+#            restrict=sparse(collect(1:r-1),collect(2:r),1.0,r-1,r)
+#        elseif joint_test_regressors  != nothing
+#            restrict = sparse( collect(1:length(positionvec)), positionvec, 1.0, length(positionvec), r)
+#        end
+#
+#        v=restrict*(zz\(Z'*Transform))
+#        v=v'
+#        #v=sparse(v) #ldiv doesn't work for sparse RHS
+#        r=size(v,2)
+#
+#        #Auxiliary
+#        aux=xx\v[:,:]
+#        opt_weight=v'*aux
+#        opt_weight=opt_weight^(-1)
+#        opt_weight=(1/r)*(opt_weight+opt_weight')/2
+#
+#        #Eigenvalues, eigenvectors, and relevant components
+#        lambda , Qtilde = eigs( v*opt_weight*v', xx; nev=r,ritzvec=true)
+#        lambda = Real.(lambda)
+#        Qtilde = Real.(Qtilde)
+#        #lambdaS, QtildeS = eigs(v*opt_weight*v', xx; nev=1,which=:SM,ritzvec=true)
+#        #lambdaS = [lambdaL; lambdaS]
+#        #Qtilde = hcat(QtildeL,QtildeS)
+#
+#        W=X*Qtilde
+#        V_b=W'*sigma_i*W
+#        V_b = (1/2)*(V_b + V_b')
+#
+#        #Now focus on obtaining matrix Lambda_B with the A test associated with a joint hypothesis testing.
+#        Bii=opt_weight^(0.5)*aux';
+#        Bii=Bii*X'
+#        Bii=Bii'
+#        Bii = 0.5*(Bii[rows,:].*Bii[columns,:] + Bii[columns,:].*Bii[rows,:])
+#        Bii = sum(Bii,dims=2)[:]
+#        Lambda_B=sparse(rows,columns,Bii,n,n)
+#
+#        #Leave Out Joint-Statistic
+#        stat=(v'*β)'*opt_weight*(v'*β)-y'*Lambda_B*eta_h
+#
+#        #Now simulate critical values under the null.
+#        mu=zeros(r)
+#        sigma = V_b
+#        b_sim = MvNormal(mu,sigma)
+#        b_sim = rand(b_sim, nsim)
+#
+#        #theta_star_sim=sum(lambda'.*(b_sim.^2 - diag(V_b)'),2)
+#        theta_star_sim = sum(lambda.*b_sim.^2 .- lambda.* diag(V_b),dims=1)
+#        pvalue=mean(theta_star_sim.>stat)
+#
+#        #Report
+#        println("Joint-Test Statistic: ", stat)
+#        println("p-value: ", pvalue)
+#
+#    end
+
+    return (test_statistic = test_statistic , linear_combination = linear_combination, SE_linear_combination_KSS = SE_linear_combination_KSS)
+end
