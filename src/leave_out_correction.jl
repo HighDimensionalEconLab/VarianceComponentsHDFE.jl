@@ -895,7 +895,7 @@ end
 
 
 
-function lincom_KSS(y,X, Z, Transform, sigma_i; labels = nothing)
+function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
     #lincom_KSS(y,X, Z, Transform, sigma_i, labels; joint_test =false, joint_test_regressors = nothing, nsim = 10000)
     #regressors is a vector of strings
     #if joint_test_regressors != nothing 
@@ -941,7 +941,7 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; labels = nothing)
 
     #PART 4: REPORT
     println("Inference on Linear Combinations:")
-    if labels == nothing
+    if lincom_labels == nothing
         for q=2:r
             if q <= r
                 println("\nCoefficient of Column ", q-1,": ", numerator[q] )
