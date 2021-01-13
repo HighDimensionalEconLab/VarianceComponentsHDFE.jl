@@ -467,7 +467,7 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
 
     end
 
-
+    return (θ_first = θ_first, θ_second = θ_second , θCOV = θCOV)
 end
 
 
