@@ -399,7 +399,7 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
 
     algo = typeof(settings.leverage_algorithm) == JLAAlgorithm ? "JLA" : "Exact"
     println("Running KSS correction with the following options")
-    println("Leave Out Strategy : $(settings.leave_out_level)")
+    println("Leave Out Strategy : Leave $(settings.leave_out_level) out")
     if algo == "JLA"
         simul = settings.leverage_algorithm.num_simulations == 0 ? 200 : settings.leverage_algorithm.num_simulations
         println("Algorithm for Computation of Statistical Leverages : $(algo) with $(simul) simulations")
