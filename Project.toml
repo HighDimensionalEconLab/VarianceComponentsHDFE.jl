@@ -4,6 +4,7 @@ authors = ["Various Collaborators"]
 version = "0.1.0"
 
 [deps]
+AlgebraicMultigrid = "2169fc97-5a83-5252-b627-83903c6c433c"
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 ArtifactUtils = "8b73e784-e7d8-4ea5-973d-377fed4e3bce"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
