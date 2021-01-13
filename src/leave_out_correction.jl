@@ -909,7 +909,7 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
     
     xx=X'*X
     xy=X'*y
-    compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
+    compute_sol = approxcholSolver(xx;verbose = false)
     beta = compute_sol([xy...];verbose=false)
 
     #PART 2: SET UP MATRIX FOR SANDWICH FORMULA
