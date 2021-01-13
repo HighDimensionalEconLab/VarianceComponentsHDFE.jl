@@ -458,7 +458,7 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
 
     if do_lincom == true 
         #Subset to the Leave Out Sample
-        Z_lincom == Z_lincom[obs,:]
+        Z_lincom = Z_lincom[obs,:]
         F = sparse(collect(1:length(second_id)),second_id,1)
         J = size(F,2)
         S = sparse(1.0I, J-1, J-1)
@@ -469,13 +469,12 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
         match_id = compute_matchid(second_id, first_id)
         Z_lincom_col = ones(size(Z_lincom,1),1)
         for i = 1:size(Z_lincom,2)
-            Z_lincom_col = vcat(Z_lincom_col,Int.(transform(groupby(DataFrame(z = Z_lincom[:,i], match_id = match_id), :match_id), :z => mean  => :z_py).z_py)) 
+            Z_lincom_col = hcat(Z_lincom_col,(transform(groupby(DataFrame(z = Z_lincom[:,i], match_id = match_id), :match_id), :z => mean  => :z_py).z_py)) 
         end
 
         #Run Inference 
         println("Regressing the $(settings.second_id_display_small) effects on observables Z.")
         @unpack test_statistic, linear_combination , SE_linear_combination_KSS = lincom_KSS(y,X,Z_lincom_col, Transform, sigma_i, lincom_labels)
-
     end
 
     return (θ_first = θ_first, θ_second = θ_second , θCOV = θCOV)
