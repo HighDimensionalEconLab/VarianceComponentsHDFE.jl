@@ -355,7 +355,7 @@ function compute_matchid(second_id,first_id)
     return match_id2
 end
 
-#6) Combines other functions to compute Leave-Out Connected Set
+#6) Compute Leave-Out Connected Set : No worker is an articulation vertex and no single observations
 """
 $(SIGNATURES)
 
@@ -382,7 +382,7 @@ function get_leave_one_out_set(y, first_id, second_id, settings, controls)
     return (obs = obs_id, y = y, first_id = first_id, second_id = second_id, controls = controls)
 end
 
-#Computes the whole leave out KSS correction 
+#7) Main Routine Function : Performs Leave Out Estimation and Inference
 """
 $(SIGNATURES)
 
@@ -406,6 +406,10 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
     else
         println("Algorithm for Computation of Statistical Leverages : $(algo) \n")
     end
+
+    first_id_old = first_id 
+    second_id_old = second_id
+    y_untransformed = y
 
     #Compute Leave Out Connected Set
     @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y, first_id, second_id, settings, controls)
@@ -450,11 +454,16 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
         controls = nothing
     end
 
-    @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings)
+    @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = leave_out_estimation(y,first_id,second_id,controls,settings)
 
     if do_lincom == true 
         #Subset to the Leave Out Sample
         Z_lincom == Z_lincom[obs,:]
+        F = sparse(collect(1:length(second_id)),second_id,1)
+        J = size(F,2)
+        S= sparse(1.0I, J-1, J-1)
+        S=vcat(S,sparse(-zeros(1,J-1)))
+        Transform = hcat(spzeros(length(second_id),maximum(first_id)), -F*S )
 
         #Collapse and reweight to person-year observations 
         match_id = compute_matchid(second_id, first_id)
@@ -463,7 +472,9 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
             Z_lincom_col = vcat(Z_lincom_col,Int.(transform(groupby(DataFrame(z = Z_lincom[:,i], match_id = match_id), :match_id), :z => mean  => :z_py).z_py)) 
         end
 
-        #do Lincom_KSS()
+        #Run Inference 
+        println("Regressing the $(settings.second_id_display_small) effects on observables Z.")
+        @unpack test_statistic, linear_combination , SE_linear_combination_KSS = lincom_KSS(y,X,Z_lincom_col, Transform, sigma_i, lincom_labels)
 
     end
 
@@ -545,7 +556,7 @@ Returns the bias-corrected components, the vector of coefficients, the correspon
 * `first_id`: first identifier (e.g. worker id)
 * `second_id`: second identifier (e.g. firm id)
 * `settings`: settings based on `VCHDFESettings`
-* `controls`: at this version only `controls=nothing` is supported.
+* `controls`: matrix of control variables. At this version it doesn't work properly for very large datasets.
 """
 function leave_out_estimation(y,first_id,second_id,controls,settings)
 
@@ -696,7 +707,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     end
 
     return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = pe, Fpsi = fe, Pii = Pii, Bii_first = Bii_first,
-            Bii_second = Bii_second, Bii_cov = Bii_cov)
+            Bii_second = Bii_second, Bii_cov = Bii_cov, y = y , X = X, sigma_i = sigma_i )
 end
 
 
@@ -885,7 +896,7 @@ end
 
 
 
-function lincom_KSS(y,X, Z, Transform, sigma_i, labels)
+function lincom_KSS(y,X, Z, Transform, sigma_i; labels = nothing)
     #lincom_KSS(y,X, Z, Transform, sigma_i, labels; joint_test =false, joint_test_regressors = nothing, nsim = 10000)
     #regressors is a vector of strings
     #if joint_test_regressors != nothing 
@@ -934,23 +945,27 @@ function lincom_KSS(y,X, Z, Transform, sigma_i, labels)
     if labels == nothing
         for q=2:r
             if q <= r
-                println("Linear Combination - Column Number ", q-1," of Z: ", numerator[q] )
-                println("Standard Error of the Linear Combination - Column Number ", q-1," of Z: ", sqrt(denominator[q]) )
-                println("T-statistic - Column Number ", q-1, " of Z: ", test_statistic[q])
+                println("\n Coefficient of Column ", q-1,": ", numerator[q] )
+                println("Traditional HC Standard Error of Column ", q-1,": ", sqrt(denominator_naive[q]) )
+                println("KSS Standard Error of Column ", q-1,": ", sqrt(denominator[q]) )
+                println("T-statistic of Column ", q-1, ": ", test_statistic[q])
             end
         end
     else
         for q=2:r
             tell_me = labels[q-1]
-            println("Linear Combination associated with ", tell_me,": ", numerator[q] )
-            println("Standard Error  associated with ", tell_me,": ", sqrt(denominator[q]) )
-            println("T-statistic  associated with ", tell_me,": ", test_statistic[q])
+            println("\n Coefficient on ", tell_me,": ", numerator[q] )
+            println("Traditional HC Standard Error  on ", tell_me,": ", sqrt(denominator_naive[q]) )
+            println("KSS Standard Error on ", tell_me,": ", sqrt(denominator[q]) )
+            println("T-statistic on ", tell_me,": ", test_statistic[q])
         end
     end
 
     test_statistic = test_statistic[2:end]
     linear_combination = numerator[2:end]
     SE_linear_combination_KSS = sqrt(denominator[2:end])
+    return (test_statistic = test_statistic , linear_combination = linear_combination, SE_linear_combination_KSS = SE_linear_combination_KSS)
+end
 
 #    # PART 5: Joint-test. Quadratic form beta'*A*beta  MAYBE FOR FUTURE VERSION!
 #    if joint_test ==false &  (joint_test_regressors != nothing )
@@ -1015,5 +1030,3 @@ function lincom_KSS(y,X, Z, Transform, sigma_i, labels)
 #
 #    end
 
-    return (test_statistic = test_statistic , linear_combination = linear_combination, SE_linear_combination_KSS = SE_linear_combination_KSS)
-end
