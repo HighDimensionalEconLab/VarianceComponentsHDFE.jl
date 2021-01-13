@@ -962,7 +962,7 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
 
     test_statistic = test_statistic[2:end]
     linear_combination = numerator[2:end]
-    SE_linear_combination_KSS = sqrt(denominator[2:end])
+    SE_linear_combination_KSS = sqrt.(denominator[2:end])
     return (test_statistic = test_statistic , linear_combination = linear_combination, SE_linear_combination_KSS = SE_linear_combination_KSS)
 end
 
