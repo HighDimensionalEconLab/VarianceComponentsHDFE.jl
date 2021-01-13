@@ -690,13 +690,13 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
     θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
 
-    Pii = diag(Pii)
+    #Pii = diag(Pii)
 
-    Bii_second = diag(Bii_second)
+    #Bii_second = diag(Bii_second)
 
-    Bii_first = settings.first_id_effects == true ? diag(Bii_first) : nothing
+    #Bii_first = settings.first_id_effects == true ? diag(Bii_first) : nothing
 
-    Bii_cov = settings.cov_effects == true ? diag(Bii_cov) : nothing
+    #Bii_cov = settings.cov_effects == true ? diag(Bii_cov) : nothing
 
     #TODO print estimates
     if settings.print_level > 0
@@ -771,7 +771,7 @@ function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, settings)
     end
 
     #Censor
-    Pii[ findall(Pii.>=0.99)] .= 0.99
+    #Pii[ findall(Pii.>=0.99)] .= 0.99
 
     correction_JLA = 1 
     Mii = 1 .- Pii
@@ -882,7 +882,7 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
     end
 
     #Censor
-    Pii[ findall(Pii.>=0.99)] .= 0.99
+    #Pii[ findall(Pii.>=0.99)] .= 0.99
 
     #Account for Non-linear Bias
     Pii = Pii ./ (Pii + Mii)
