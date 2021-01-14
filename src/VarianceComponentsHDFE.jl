@@ -53,9 +53,9 @@ function parse_commandline()
             help = "No computing and showing of covariace effects"
             action = :store_true
         "--leave_out_level"
-        help = "leave out level: obs or match. It defaults to match."
-        arg_type = String
-        default = "match"
+            help = "leave out level: obs or match. It defaults to match."
+            arg_type = String
+            default = "match"
         "--algorithm"
             help = "type of algorithm: Exact or JLA. It defaults to be Exact if the number of observations is less than 5000, and JLA otherwise."
             arg_type = String
@@ -98,6 +98,19 @@ function parse_commandline()
             help = "Level of verbosity of output."
             arg_type = Int
             default = 1
+        "--do_lincom"
+            help = "perform linear combination based on observables Z"
+            action = :store_true
+        #Select the number of columns or put labels
+        "--covariates"
+            help = "Covariates. You can set column numbers or String name."
+            nargs = '*'  
+            default = nothing
+        #Select the number of columns or put labels
+        "--lincom_covariates" 
+            help = "Lincom covariates. You can set column numbers or String name."
+            nargs = '*'  
+            default = nothing
     end
 
     return parse_args(argparsesettings_obj)
@@ -136,6 +149,8 @@ function real_main()
     second_id_display = parsed_args["second_id_display"]
     outcome_id_display = parsed_args["outcome_id_display"]
     print_level = parsed_args["print_level"]
+    covariates = parsed_args["covariates"]
+    lincom_covariates = parsed_args["lincom_covariates"]
 
     algorithm = lowercase(algorithm)
     leave_out_level = lowercase(leave_out_level)
@@ -147,21 +162,44 @@ function real_main()
     data  = DataFrame!(CSV.File(path; header=header))
     first_id = data[:,first_idx]
     second_id = data[:,second_idx]
-    #todo rename y to observations
     y = data[:,outcome_idx]
 
-    controls = nothing
+    if covariates == nothing 
+        controls = nothing
+    else
+        if typeof(covariates[1]) == String 
+            #Build controls matrix 
+            controls = data[:,covariates[1]]
+            if length(covariates)>=2
+                for k=2:length(covariates)
+                    hcat(controls, data[:,covariates[k]])
+                end
+            end
+        elseif typeof(covariates[1]) <:Number
+            #Create symbols first 
+            symbols = []
+            for covindex=1:length(covariates)
+                push!(symbols, Symbol(covariates[covindex]))
+            end
+
+            #Build controls matrix
+            controls = Matrix(data[:,symbols])       
+        else
+            println("WARNING: Elements of covariates are neither numbers or strings. No partialling out will be performed.")
+            controls = nothing 
+        end
+    end
 
     if algorithm == "Default"
         if length(y) > 5000
-            algorithm = "JLA"
+            algorithm = "jla"
         else
-            algorithm = "Exact"
+            algorithm = "exact"
         end
     end
     
 
-    if algorithm == "Exact"
+    if algorithm == "exact"
         #todo work with settings arguments
         settings = VCHDFESettings(leverage_algorithm =  ExactAlgorithm(),
             first_id_effects =first_id_effects,
@@ -172,6 +210,7 @@ function real_main()
             second_id_display_small = lowercase(second_id_display),
             outcome_id_display= outcome_id_display,
             outcome_id_display_small = lowercase(outcome_id_display),
+            leave_out_level = leave_out_level,
             print_level = print_level
         )
     else
@@ -184,16 +223,106 @@ function real_main()
             second_id_display_small = lowercase(second_id_display),
             outcome_id_display= outcome_id_display,
             outcome_id_display_small = lowercase(outcome_id_display),
+            leave_out_level = leave_out_level,
             print_level = print_level
         )
     end
 
-    # @assert settings.first_id_effects == true && settings.cov_effects == true
+    println("Running KSS correction with the following options")
+    println("Leave Out Strategy : Leave $(settings.leave_out_level) out")
+    if algorithm == "jla"
+        algo = "JLA"
+        simul = settings.leverage_algorithm.num_simulations == 0 ? 200 : settings.leverage_algorithm.num_simulations
+        println("Algorithm for Computation of Statistical Leverages : $(algo) with $(simul) simulations")
+    else
+        algo = "Exact"
+        println("Algorithm for Computation of Statistical Leverages : $(algo) \n")
+    end
 
-    @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y, first_id, second_id, settings, nothing)
+    first_id_old = first_id 
+    second_id_old = second_id
+    y_untransformed = y
+
+    @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y, first_id, second_id, settings, controls)
+
+    #Residualize outcome variable 
+    if controls != nothing  
+        println("\nPartialling out controls from $(settings.outcome_id_display)...")
+        NT = size(y,1)
+        J = maximum(second_id)
+        N = maximum(first_id)
+        K = size(controls,2)
+        nparameters = N + J + K
+
+        D = sparse(collect(1:NT),first_id,1)
+        F = sparse(collect(1:NT),second_id,1)
+        S= sparse(1.0I, J-1, J-1)
+        S=vcat(S,sparse(-zeros(1,J-1)))
+        X = hcat(D, -F*S, controls)
+
+        #My best shot is to wrap AMG as LinearOperator
+        buff = zeros(size(X,2))  
+        xx = X'*X       
+        P = AmgOperator(ruge_stuben(xx),buff)
+        xy=X'*y
+        beta, stats = Krylov.cg(xx,[xy...]; M = P , rtol = 1e-6, itmax = 300)
+
+        y=y-X[:,N+J:end]*beta[N+J:end]
+        controls = nothing
+        println("Partialling out completed.\n")
+    end
 
     # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y,first_id,second_id,controls,settings)
-    @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,first_id,second_id,controls,settings)
+    @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = leave_out_estimation(y,first_id,second_id,controls,settings)
+
+    Z_lincom = nothing 
+    if  parsed_args["do_lincom"]
+        #Construct Transform 
+        F = sparse(collect(1:length(second_id)),second_id,1)
+        J = size(F,2)
+        S = sparse(1.0I, J-1, J-1)
+        S = vcat(S,sparse(-zeros(1,J-1)))
+        Transform = hcat(spzeros(length(second_id),maximum(first_id)), -F*S )
+
+        #Construct Z_lincom 
+        if lincom_covariates == nothing 
+            println("\n User asked for lincom but no covariates were specified. This step will not be performed.")
+        else
+            if typeof(lincom_covariates[1]) == String 
+                #Build lincom controls matrix 
+                lincom_labels = lincom_covariates
+                Z_lincom = data[obs,lincom_covariates[1]]
+                if length(covariates)>=2
+                    for k=2:length(covariates)
+                        hcat(Z_lincom, data[obs,lincom_covariates[k]])
+                    end
+                end
+            elseif typeof(covariates[1]) <:Number
+                lincom_labels = nothing
+                #Create symbols first 
+                symbols = []
+                for covindex=1:length(covariates)
+                    push!(symbols, Symbol(covariates[covindex]))
+                end
+    
+                #Build controls matrix
+                Z_lincom = Matrix(data[obs,symbols])       
+            else
+                println("WARNING: Elements of lincom covariates are neither numbers or strings. No inference will be performed.")
+            end
+        end 
+    end
+
+    if Z_lincom != nothing     
+        #Collapse and reweight to person-year observations 
+        match_id = compute_matchid(second_id, first_id)
+        Z_lincom_col = ones(size(Z_lincom,1),1)
+        for i = 1:size(Z_lincom,2)
+            Z_lincom_col = hcat(Z_lincom_col,(transform(groupby(DataFrame(z = Z_lincom[:,i], match_id = match_id), :match_id), :z => mean  => :z_py).z_py)) 
+        end
+
+        @unpack test_statistic, linear_combination , SE_linear_combination_KSS = lincom_KSS(y,X, Z_lincom_col, Transform, sigma_i; lincom_labels)
+    end 
 
     if parsed_args["write_detailed_CSV"]
 
@@ -204,20 +333,12 @@ function real_main()
         max_length = length(obs)
 
         #todo rename the DataFrame arguments
-        output = DataFrame(observation = obs === nothing ? missings(max_length) : replace(obs, nothing => missing),
-                           first_id = first_id_output === nothing ? missings(max_length) : replace(first_id_output, nothing => missing),
-                           second_id = second_id_output === nothing ? missings(max_length) :  replace(second_id_output, nothing => missing),
-                           y = y_output === nothing ? missings(max_length) :  replace(y_output, nothing => missing),
-                        #    beta = vcat(β,missings(max(max_length-length(β),0))),
-                           D_alpha = Dalpha === nothing ? missings(max_length) :  replace(Dalpha, nothing => missing),
-                           F_psi = Fpsi === nothing ? missings(max_length) :  replace(Fpsi, nothing => missing),
-                           Pii = Pii === nothing ? missings(max_length) :  replace(Pii, nothing => missing),
-                           Bii_first = Bii_first === nothing ? missings(max_length) :  replace(Bii_first, nothing => missing),
-                           Bii_second = Bii_second === nothing ? missings(max_length) :  replace(Bii_second, nothing => missing),
-                           Bii_cov = Bii_cov === nothing ? missings(max_length) :  replace(Bii_cov, nothing => missing),
-                        #    variance_comp_second_effects = [θ_second; missings(max_length-1)],
-                        #    variance_comp_first_effects = [θ_first; missings(max_length-1)],
-                        #    covariance_comp_effects = [θCOV; missings(max_length-1)]
+        output = DataFrame(observation = obs === obs, first_id_old = first_id_old, first_id = first_id_output ,
+                           second_id_old = second_id_old, second_id = second_id_output, y = y_untransformed[obs],
+                           D_alpha = Dalpha , F_psi = Fpsi, Pii = Pii, 
+                           Bii_first = Bii_first === nothing ? missings(max_length) : Bii_first,
+                           Bii_second = Bii_second === nothing ? missings(max_length) :  Bii_second,
+                           Bii_cov = Bii_cov === nothing ? missings(max_length) : Bii_cov
                         )
         output_path = parsed_args["detailed_output_path"]
         #TODO not sure about the paths
@@ -228,16 +349,21 @@ function real_main()
     end
 
     if parsed_args["write_results"]
+        y_py = y_untransformed[obs]
+        movers , T = compute_movers(first_id, second_id)
+        num_movers = length(unique(movers .* first_id)) - 1 
+
         output_template = """
             Number of observations (Leave-out Sample): $(length(obs)) \n 
             Number of $(first_id_display_small)s: $(maximum(first_id)) \n 
             Number of $(second_id_display_small)s: $(maximum(second_id)) \n
-            Mean Outcome: $(mean(y)) \n
-            Variance Outcome: $(var(y)) \n
+            Number of movers: $(num_movers) \n
+            Mean Outcome: $(mean(y_py)) \n
+            Variance Outcome: $(var(y_py)) \n
             Max Pii: $(maximum(Pii)) \n
             Variance of $(second_id_display) Effects: $θ_second \n
             Covariance of  $(first_id_display)-$(second_id_display) Effects: $θCOV \n
-            Variance of  $(first_id_display) Effects:  $θ_first 
+            Variance of  $(first_id_display) Effects:  $θ_first \n
         """ 
 
         if parsed_args["write_results"]
@@ -248,6 +374,36 @@ function real_main()
                 end
                 open(output_path, "w") do io
                    write(io, output_template)
+                    if Z_lincom != nothing 
+                       #Write the output of inference 
+                       r = size(Z_lincom,2)
+                       write(io,"Inference on Linear Combinations:\n")
+                       if lincom_labels == nothing 
+                            for q=2:r
+                                if q <= r
+                                    ncol = q-1 
+                                    output_inference = """
+                                        Coefficient of Column $(ncol): $(numerator[q]) \n
+                                        Traditional HC Standard Error of Column $(ncol): $(sqrt(denominator_naive[q])) \n 
+                                        KSS Standard Error of Column $(ncol): $(sqrt(denominator[q])) \n 
+                                        T-Statistic of Column $(ncol): $(test_statistic[q]) \n
+                                    """
+                                    write(io,output_inference)
+                                end
+                            end
+                        else
+                            for q=2:r
+                                tell_me = lincom_labels[q-1]
+                                output_inference = """
+                                    Coefficient of Column $(tell_me): $(numerator[q]) \n
+                                    Traditional HC Standard Error of Column $(tell_me): $(sqrt(denominator_naive[q])) \n 
+                                    KSS Standard Error of Column $(tell_me): $(sqrt(denominator[q])) \n 
+                                    T-Statistic of Column $(tell_me): $(test_statistic[q]) \n
+                                """
+                                write(io,output_inference)  
+                            end
+                        end
+                    end
                  end
             catch e
                 println("Error writing output to $(output_path)")
