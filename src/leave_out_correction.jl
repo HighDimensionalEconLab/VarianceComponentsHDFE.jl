@@ -432,7 +432,7 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
 
     #Residualize outcome variable 
     if controls != nothing  
-
+        println("\nPartialling out controls from $(settings.outcome_id_display)...")
         NT = size(y,1)
         J = maximum(second_id)
         N = maximum(first_id)
@@ -443,15 +443,18 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
         F = sparse(collect(1:NT),second_id,1)
         S= sparse(1.0I, J-1, J-1)
         S=vcat(S,sparse(-zeros(1,J-1)))
-        X = hcat(D, -F*S)
+        X = hcat(D, -F*S, controls)
 
-        #May not work for very large datasets: Maybe pcg with Incomplete Cholesky?
-        xxinv = opCholesky(X'*X)
+        #My best shot is to wrap AMG as LinearOperator
+        buff = zeros(size(X,2))  
+        xx = X'*X       
+        P = AmgOperator(ruge_stuben(xx),buff)
         xy=X'*y
-        beta = xxinv*xy
-        
+        beta, stats = Krylov.cg(xx,[xy...]; M = P , rtol = 1e-6, itmax = 300)
+
         y=y-X[:,N+J:end]*beta[N+J:end]
         controls = nothing
+        println("Partialling out completed.\n")
     end
 
     @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = leave_out_estimation(y,first_id,second_id,controls,settings)

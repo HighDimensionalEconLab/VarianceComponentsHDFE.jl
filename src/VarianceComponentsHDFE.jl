@@ -8,6 +8,7 @@ using SparseArrays, LightGraphs
 using Distributions
 using LinearOperators, FastClosures, Krylov
 using ArgParse
+using AlgebraicMultigrid
 
 #include("init.jl")
 include("leave_out_correction.jl")
