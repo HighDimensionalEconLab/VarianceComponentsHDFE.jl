@@ -105,12 +105,12 @@ function parse_commandline()
         "--covariates"
             help = "Covariates. You can set column numbers or String name."
             nargs = '*'  
-            default = nothing
+            default = []
         #Select the number of columns or put labels
         "--lincom_covariates" 
             help = "Lincom covariates. You can set column numbers or String name."
             nargs = '*'  
-            default = nothing
+            default = []
     end
 
     return parse_args(argparsesettings_obj)
@@ -164,7 +164,7 @@ function real_main()
     second_id = data[:,second_idx]
     y = data[:,outcome_idx]
 
-    if covariates == nothing 
+    if covariates == []
         controls = nothing
     else
         if typeof(covariates[1]) == String 
@@ -285,7 +285,7 @@ function real_main()
         Transform = hcat(spzeros(length(second_id),maximum(first_id)), -F*S )
 
         #Construct Z_lincom 
-        if lincom_covariates == nothing 
+        if lincom_covariates == [] 
             println("\n User asked for lincom but no covariates were specified. This step will not be performed.")
         else
             if typeof(lincom_covariates[1]) == String 
@@ -333,8 +333,8 @@ function real_main()
         max_length = length(obs)
 
         #todo rename the DataFrame arguments
-        output = DataFrame(observation = obs === obs, first_id_old = first_id_old, first_id = first_id_output ,
-                           second_id_old = second_id_old, second_id = second_id_output, y = y_untransformed[obs],
+        output = DataFrame(observation = obs === obs, first_id_old = first_id_old[obs], first_id = first_id_output ,
+                           second_id_old = second_id_old[obs], second_id = second_id_output, y = y_untransformed[obs],
                            D_alpha = Dalpha , F_psi = Fpsi, Pii = Pii, 
                            Bii_first = Bii_first === nothing ? missings(max_length) : Bii_first,
                            Bii_second = Bii_second === nothing ? missings(max_length) :  Bii_second,
