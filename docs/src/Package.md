@@ -57,29 +57,37 @@ Depth = 3
 using VarianceComponentsHDFE, DataFrames, CSV
 
 #Load dataset
-data = DataFrame!(CSV.File("dataset.csv"; header=false))
+data = DataFrame!(CSV.File("test.csv"; header=false))
 
 #Extract vectors of outcome, workerid, firmid
 id = data[:,1]
 firmid = data[:,2]
 y = data[:,3]
 
-#Define the settings using our structure: JLA Algorithm
-settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(), first_id_effects=true, cov_effects=true)
+#You can define the settings using our structures
+JL = JLAAlgorithm(num.simulations = 300)
+mysettings = VCHDFESettings(leverage_algorithm = JL, first_id_effects=true, cov_effects=true)
 
-#Define the settings using our structure: Exact Algorithm
-settings_Exact = VCHDFESettings(leverage_algorithm = ExactAlgorithm(), first_id_effects=true, cov_effects=true)
+#Run KSS with no controls 
+θ_first, θ_second, θCOV = leave_out_KSS(y,id,firmid)
 
-#Compute Leave-Out Connected Set
-obs,  y , id , firmid, controls = get_leave_one_out_set(y, id, firmid, settings_JLA, nothing)
+#Create some controls and run the routine where we partial out them
+controls = indexin(year,unique(sort(year)))
+controls = sparse(collect(1:size(y,1)), controls, 1, size(y,1), maximum(controls))
+controls = controls[:,1:end-1]
 
-#Run Leave-Out Correction in the Leave-Out Set
-θ_worker, θ_firms, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = leave_out_estimation(y,id,firmid,nothing,settings_JLA)
+θ_first, θ_second, θCOV = leave_out_KSS(y,id,firmid; controls)
 
-#Print the Bias-Corrected Components from the output
-println("Bias-corrected Variance of Worker Effects:", θ_worker)
-println("Bias-corrected Variance of Firm Effects:", θ_firms)
-println("Bias-corrected Variance of Cov Worker-Firm Effects:", θCOV)
+#Perform Lincom Inference using a Region Dummy
+data = DataFrame!(CSV.File("lincom.csv"; header=false))
+id = data[:,1]
+firmid = data[:,2]
+y = data[:,5]
+region = data[:,4] 
+region[findall(region.==-1)].=0
+
+θ_first, θ_second, θCOV = leave_out_KSS(y,id,firmid; do_lincom = true , Z_lincom = region, lincom_labels = ["Region Dummmy"] )
+
 
 ```
 

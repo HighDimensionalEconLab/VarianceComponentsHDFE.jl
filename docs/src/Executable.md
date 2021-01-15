@@ -13,7 +13,7 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 
 ## Windows
 
-1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.9/vchdfe--windows-latest.tar.gz). Move this file to `desired_installation_path`.
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.6.9/vchdfe--windows-latest.tar.gz). Move this file to `desired_installation_path`.
 2. Open up a powershell terminal. We recommend to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator". 
 
 3. Change the current directory to to the desired installation path by typing  in the powershell
@@ -30,7 +30,7 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
    tar -xvf vchdfe--windows-latest.tar.gz
    ```
 
-5. (RECOMMENDED) Add the installation directory to [PATH](#PATH-in-Windows). This will allow us to run the program everytime without specifying where the program is installed. 
+5. (RECOMMENDED) A folder named `vchdfe/bin` now exists inside your installation path. Add the path of that folder to [PATH](#PATH-in-Windows). This will allow us to run the program everytime without specifying where the program is installed. 
 6. (OPTIONAL) You can test the program using the sample test file provided with the executable. If you ran the previous step you may run:
 
    ```
@@ -83,7 +83,7 @@ We will describe two ways to add our program to `PATH`.
 
 ## MacOS
 
-1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.5.9/vchdfe-v0.1.5.9-macos-latest.tar.gz). Move this file to the desired installation path.
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.6.9/vchdfe-v0.1.6.9-macos-latest.tar.gz). Move this file to the desired installation path.
 2. Open Terminal: Press COMMAND + SPACE to open spotlight search, and type terminal and hit RETURN.
 
 3. You may unpack the .tar.gz file automatically when you double-click the icon. Otherwise, you may run the following code:
@@ -96,7 +96,7 @@ We will describe two ways to add our program to `PATH`.
 
     And then close the terminal.
 
-4.  (RECOMMENDED) Add the installation directory to [PATH](#PATH-in-MacOS). This will allow us to run the program everytime without specifying where the program is installed. 
+4.  (RECOMMENDED) A folder named `vchdfe/bin` now exists inside your installation path. Add the path of that folder to [PATH](#PATH-in-MacOS). This will allow us to run the program everytime without specifying where the program is installed. 
 5. (OPTIONAL) You can test the program using the sample test file provided with the executable. If you ran the previous step you may run:
 
    ```
@@ -186,6 +186,13 @@ to see a complete list of available arguments:
                             to be Exact if the number of observations is
                             less than 5000, and JLA otherwise. (default:
                             "Default")
+      --covariates NAME1 NAME2 ... 
+                            Column names of the covariates that will be 
+                            partialled out from the outcome. (default: [])
+      --do_lincom           Perform linear combination inference.
+      --lincom_covariates NAME1 NAME2 ...
+                            Column names of the covariates used in the linear
+                            combination inference step. (default: [])
       --simulations SIMULATIONS
                             number of simulations in the JLA algorithm. It
                             defaults to 100 * log(#total fixed effect)
@@ -200,14 +207,14 @@ to see a complete list of available arguments:
       --outcome_id_display OUTCOME_ID_DISPLAY
                             The display text associated with outcome_id
                             (e.g. Wage) (default: "Wage")
-      --detailed_output_path DETAILED_OUTPUT_PATH
+      --detailed_csv_path DETAILED_CSV_PATH
                             path to the CSV for the detailed output for
                             each observable (default:
                             "current_directory/variance_components.csv")
       --results_path RESULTS_PATH
                             path to the results of the output (default:
                             "current_directory/results.txt")
-      --write_detailed_CSV  write the detailed output to a CSV
+      --write_detailed_csv  write the detailed output to a CSV
       --write_results       write the results to a file
       --print_level PRINT_LEVEL
                             Level of verbosity of output. (type: Int64,
@@ -222,24 +229,26 @@ The program provides two outputs: a file contains the main results and a detaile
 
 ## Results output
 
-By using the argument `--write_results` followed by `--results_path MYFILE`, you can specify that you want to write the table with the main results in `MYFILE`. 
+By using the argument `--write_results` followed by `--results_path MYFILE`, you can specify that you want to write the table with the main results in `MYFILE`. This will store some summary statistics of the leave out connected sample, the bias-corrected variance components. If `do_lincom` is activated, it will also store the results of the inference part, where it regresses second effects (e.g. firm effects) against some covariates.
 
 
-## Detailed output
+## Detailed csv output
 
-You can save all the output details in a CSV file. You need to use `--write_detailed_CSV` followed by `--detailed_output_path MYFILE`, where `MYFILE` is the path to the detailed output file. 
+You can save all the output details in a CSV file. You need to use `--write_detailed_csv` followed by `--detailed_csv_path MYFILE`, where `MYFILE` is the path to the detailed output file. 
 
 The detailed output file includes:                                                                                                                                                                                                                              
                            
 - `observation` : observation identifier in the original dataset that belong to the Leave-out connected set. For instance, if the number 3 appears in this vector, it means that the third observation in the original dataset belongs to the leave-out connected set. 
-- `first_id`: the first identifier corresponding to each observation in `obs` (e.g. worked ids in the leave-out connected set).
-- `second_id`: the second identifier corresponding to each observation in `observation` (e.g. firm ids in the leave-out connected set).
-- `D_alpha`: the fixed effect for the first identifier corresponding to each observation. 
-- `F_psi`: the fixed effect for the second identifier corresponding to each observation. 
-- `Pii`: statistical leverage corresponding to each observation in `observation`.
-- `Bii_first`: The Bii for the variance of `first_id` effects corresponding to each observation in `observation`.
-- `Bii_second`: The Bii for the variance of `second_id` effects corresponding to each observation in `observation`.
-- `Bii_cov`: The Bii for the co-variance of `first_id` and `second_id` effects corresponding to each observation in `observation`.
+- `first_id_old`: the first identifier of the original dataset corresponding to each observation in `obs` (e.g. worked ids in the leave-out connected set).
+- `second_id_old`: the second identifier of the original dataset corresponding to each observation in `observation` (e.g. firm ids in the leave-out connected set).
+- - `first_id`: the first identifier computed in the routine corresponding to each observation in `obs` (e.g. worked ids in the leave-out connected set). The maximum of this vector corresponds to the number of first effects (e.g. worker fixed effects).
+- `second_id`: the second identifier computed in the routine corresponding to each observation in `observation` (e.g. firm ids in the leave-out connected set). The maximum of this vector corresponds to the number of second effects (e.g. firm fixed effects).
+- `Dalpha`: the fixed effect for the first identifier corresponding to each observation. 
+- `Fpsi`: the fixed effect for the second identifier corresponding to each observation. 
+- `Pii`: statistical leverage corresponding to each observation in `observation`. If the leave out strategy was done at the match level this number is repeated for every observation that belongs to the same match.
+- `Bii_first`: The Bii for the variance of `first_id` effects corresponding to each observation in `observation`. If the leave out strategy was done at the match level this number is repeated for every observation that belongs to the same match.
+- `Bii_second`: The Bii for the variance of `second_id` effects corresponding to each observation in `observation`. If the leave out strategy was done at the match level this number is repeated for every observation that belongs to the same match.
+- `Bii_cov`: The Bii for the co-variance of `first_id` and `second_id` effects corresponding to each observation in `observation`. If the leave out strategy was done at the match level this number is repeated for every observation that belongs to the same match.
 
 # Typical Executable Workflow (Windows)
 
@@ -271,7 +280,7 @@ installation_folder\vchdfe\bin\vchdfe my_data.csv --OPTIONS
 
 ## Detailed examples
 
-Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The structure of the data is such that the fifth column corresponds to the worker identifier and the third column corresponds to the firm identifier. Moreover, we want to store a summary of the results in this location `"project_path/summary.txt"`, and the detailed output (Pii and Bii matrices, stored fixed effects, etc.) here  `"project_path/output.csv"`. 
+Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The structure of the data is such that the fifth column corresponds to the worker identifier, third column corresponds to the firm identifier, and the fourth column corresponds to the outcome. Moreover, we want to store a summary of the results in this location `"project_path/summary.txt"`, and the detailed output (Pii and Bii matrices, stored fixed effects, etc.) here  `"project_path/output.csv"`. 
 
 
 1. To obtain all three bias-corrected components (variance of worker effects, variance of firm effects, and covariance of worker-firm effects), we only need to type in the terminal 
@@ -282,20 +291,20 @@ Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The 
    vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt
    ```
 
-2. To run the same thing while specifying 1000 simulations for the JLA algorithm that estimates (Pii,Bii) described in the computational appendix of KSS, we type in the terminal 
+2. To run the same thing while but we want to partial out the covariates in columns 7 and 8, we type in the terminal 
 
    ```
    cd project_path
 
-   vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt --algorithm JLA --simulations 1000
+   vchdfe my_data.csv --first_id 5 --second_id 3 --covariates Column7 Column8--write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt 
    ```
 
-3. To only obtain the bias-correction for the variance of firm effects, we type in the powershell 
+3. To only obtain the bias-correction and regress the second effects (e.g. firm effects) onto the observables in columns 7 and 8 instead, we type in the terminal 
 
    ```
    cd project_path
 
-   vchdfe my_data.csv --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  --algorithm JLA --simulations 1000
+   vchdfe my_data.csv --first_id 5 --second_id 3 --do_lincom --lincom_covariates Column7 Column8 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  
    ```
 
 
@@ -329,7 +338,7 @@ installation_folder/vchdfe/bin/vchdfe my_data.csv --OPTIONS
 
 ## Detailed examples
 
-Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The structure of the data is such that the fifth column corresponds to the worker identifier and the third column corresponds to the firm identifier. Moreover, we want to store a summary of the results in this location `"project_path/summary.txt"`, and the detailed output (Pii and Bii matrices, stored fixed effects, etc.) here  `"project_path/output.csv"`. 
+Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The structure of the data is such that the fifth column corresponds to the worker identifier, the third column corresponds to the firm identifier and the fourth column corresponds to the outcome. Moreover, we want to store a summary of the results in this location `"project_path/summary.txt"`, and the detailed output (Pii and Bii matrices, stored fixed effects, etc.) here  `"project_path/output.csv"`. 
 
 
 1. To obtain all three bias-corrected components (variance of worker effects, variance of firm effects, and covariance of worker-firm effects), we only need to type in the terminal 
@@ -340,21 +349,22 @@ Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The 
    vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt
    ```
 
-2. To run the same thing while specifying 1000 simulations for the JLA algorithm that estimates (Pii,Bii) described in the computational appendix of KSS, we type in the terminal 
+2. To run the same thing while but we want to partial out the covariates in columns 7 and 8, we type in the terminal 
 
    ```
    cd project_path
 
-   vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt --algorithm JLA --simulations 1000
+   vchdfe my_data.csv --first_id 5 --second_id 3 --covariates Column7 Column8--write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt 
    ```
 
-3. To only obtain the bias-correction for the variance of firm effects, we type in the powershell 
+3. To only obtain the bias-correction and regress the second effects (e.g. firm effects) onto the observables in columns 7 and 8 instead, we type in the terminal 
 
    ```
    cd project_path
 
-   vchdfe my_data.csv --first_id 5 --second_id 3 --no_first_effects --no_cov_effects --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  --algorithm JLA --simulations 1000
+   vchdfe my_data.csv --first_id 5 --second_id 3 --do_lincom --lincom_covariates Column7 Column8 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  
    ```
+
 
 # About the current version
 

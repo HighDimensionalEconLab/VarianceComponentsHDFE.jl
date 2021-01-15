@@ -60,7 +60,6 @@ The VCHDFESettings type is to pass information to methods regarding which algori
 * `second_id_display`: name of the second id (default = Firm)
 * `outcome_id_display_small`: name of the observation id in lower cases (default = wage)
 * `outcome_id_display`: name of the observation id (default = Wage)
-
 """
 @with_kw struct VCHDFESettings{LeverageAlgorithm}
     cg_maxiter::Int64 = 300
@@ -532,7 +531,7 @@ $(SIGNATURES)
 Computes a KSS quadratic form to correct bias.
 
 ### Arguments
-* `sigma_i`: individual variance estimator 
+* `sigma_i`: variance estimator of observation i.
 * `A_1`: left matrix of quadratic form
 * `A_2`: right matrix of quadratic form
 * `beta`: fixed effects coefficients vector
@@ -897,7 +896,20 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
 end
 
 
+"""
+$(SIGNATURES)
 
+This function regresses fixed effects based onto some observables. See appendix in KSS for more information.
+
+### Arguments
+* `y`: outcome variable.
+* `X`: the design matrix in the linear model.
+* `Z`: matrix of observables to use in regression.
+* `Transform`: matrix to compute fixed effects (e.g. Transform = [0 F] recovers second fixed effects).
+* `sigma_i`: estimate of the unbiased variance of observation i.
+* `lincom_labels`: labels of the columns of Z.
+* `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
+"""
 function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
     #lincom_KSS(y,X, Z, Transform, sigma_i, labels; joint_test =false, joint_test_regressors = nothing, nsim = 10000)
     #regressors is a vector of strings
