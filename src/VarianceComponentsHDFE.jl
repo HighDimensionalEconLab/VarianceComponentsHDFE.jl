@@ -337,8 +337,8 @@ function real_main()
             match_id = compute_matchid(second_id, first_id)
             weights = accumarray(match_id, 1)
 
-            D_alpha =  vcat(fill.(D_alpha, weights)...)
-            F_psi = vcat(fill.(F_psi, weights)...)
+            Dalpha =  vcat(fill.(Dalpha, weights)...)
+            Fpsi = vcat(fill.(Fpsi, weights)...)
             Bii_first = Bii_first == nothing ? nothing : vcat(fill.(Bii_first, weights)...)
             Bii_second = Bii_second == nothing ? nothing : vcat(fill.(Bii_second, weights)...)
             Bii_cov = Bii_cov == nothing ? nothing : vcat(fill.(Bii_cov, weights)...)
@@ -347,7 +347,7 @@ function real_main()
         #todo rename the DataFrame arguments
         output = DataFrame(observation = obs , first_id_old = first_id_old[obs], first_id = first_id_output ,
                            second_id_old = second_id_old[obs], second_id = second_id_output, y = y_untransformed[obs],
-                           D_alpha = Dalpha , F_psi = Fpsi, Pii = Pii, 
+                           Dalpha = Dalpha , Fpsi = Fpsi, Pii = Pii, 
                            Bii_first = Bii_first === nothing ? missings(max_length) : Bii_first,
                            Bii_second = Bii_second === nothing ? missings(max_length) :  Bii_second,
                            Bii_cov = Bii_cov === nothing ? missings(max_length) : Bii_cov
