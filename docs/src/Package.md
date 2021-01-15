@@ -32,7 +32,7 @@ Depth = 3
 
 ```@docs
     find_connected_set(y, first_idvar, second_idvar, settings)
-    get_leave_out_set(yvec, first_idvar, second_idvar, obs_id, settings)
+    get_leave_one_out_set(yvec, first_idvar, second_idvar, obs_id, settings)
     leave_out_estimation(y,first_id,second_id,controls,settings)
     compute_movers(first_id,second_id)
     compute_matchid(second_id,first_id)  

@@ -391,6 +391,10 @@ Returns a tuple with the observation number of the original dataset that belongs
 * `y`: outcome vector
 * `first_id`: first identifier (e.g. worker id)
 * `second_id`: second identifier (e.g. firm id)
+* `controls`: covariates that will be partialled out from outcome before it performs KSS.
+* `do_lincom`: boolean that indicates whether it runs inference. 
+* `Z_lincom`: matrix of covariates to be used in lincom inference.
+* `lincom_labels`: vector of labels of the columns of Z_lincom.
 * `settings`: settings based on `VCHDFESettings`
 * `controls`: at this version only `controls=nothing` is supported.
 """
