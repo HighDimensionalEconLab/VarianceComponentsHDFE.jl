@@ -84,13 +84,12 @@ We will describe two ways to add our program to `PATH`.
 ## MacOS
 
 1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.6.9/vchdfe-v0.1.7.0-macos-latest.tar.gz). Move this file to the desired installation path.
-2. Open Terminal: Press COMMAND + SPACE to open spotlight search, and type terminal and hit RETURN.
 
-3. You can unpack the .tar.gz file automatically by double-clicking the icon. 
+2. You can unpack the .tar.gz file automatically by double-clicking the icon. 
 
-4. A folder named `vchdfe/bin` now exists inside your installation path. You can double click the icon named vchdfe inside this folder. If the system warns you that it's not a recognized app you must click OK, to give permission.
+3. A folder named `vchdfe/bin` now exists inside your installation path. You can double click the icon named vchdfe inside this folder. If the system warns you that it's not a recognized app you must click OK, to give permission.
 
-5. (OPTIONAL) You can test the program using the sample test file provided with the executable. You may run the following line:
+4. (OPTIONAL) You can test the program using the sample test file provided with the executable. You may run the following line:
 
    ```
    vchdfe vchdfe/bin/test.csv
@@ -98,7 +97,7 @@ We will describe two ways to add our program to `PATH`.
 
    or you can test with some other file you store at the bin folder. 
 
-6. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. This might be very important if you intend to run bias-correction for very large datasets. Before running the program you may set the number of threads to, say 4, by entering the following line in the Powershell:
+5. To set the number of threads used for parallel computing in the code, you need to use the set command before running `vchdfe` command. This might be very important if you intend to run bias-correction for very large datasets. Before running the program you may set the number of threads to, say 4, by entering the following line in the Powershell:
 
    ```
    set JULIA_NUM_THREADS=4
