@@ -21,24 +21,22 @@ Depth = 3
 
 # Functions in this package
 
-## Main Functions 
+## Main Function 
 
 
 ```@docs
-    leave_out_estimation(y,first_id,second_id,controls,settings)
-    get_leave_one_out_set(y, first_id, second_id, settings, controls)    
+    leave_out_KSS(y,first_id,second_id;controls, do_lincom , Z_lincom , lincom_labels , settings)       
 ```
 
 ## Auxiliary Functions
 
 ```@docs
     find_connected_set(y, first_idvar, second_idvar, settings)
-    prunning_connected_set(yvec, first_idvar, second_idvar, obs_id, settings)
-    drop_single_obs(yvec, first_idvar, second_idvar,obs_id)
+    get_leave_out_set(yvec, first_idvar, second_idvar, obs_id, settings)
+    leave_out_estimation(y,first_id,second_id,controls,settings)
     compute_movers(first_id,second_id)
-    eff_res(::ExactAlgorithm, X,first_id,second_id,match_id, K, settings)
-    eff_res(lev::JLAAlgorithm, X,first_id,second_id,match_id, K, settings)
-    compute_matchid(second_id,first_id)   
+    compute_matchid(second_id,first_id)  
+    lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels ) 
 ```
 
 # Datatypes in this package
