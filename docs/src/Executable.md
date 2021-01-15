@@ -91,7 +91,7 @@ We will describe two ways to add our program to `PATH`.
    ```
    cd desired_installation_path
 
-   gunzip -c vchdfe-v0.1.5.3-macos-latest.tar.gz | tar xopft -
+   gunzip -c vchdfe-v0.1.6.9-macos-latest.tar.gz | tar xopft -
    ```
 
     And then close the terminal.
