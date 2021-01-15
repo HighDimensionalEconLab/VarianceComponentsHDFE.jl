@@ -337,8 +337,6 @@ function real_main()
             match_id = compute_matchid(second_id, first_id)
             weights = accumarray(match_id, 1)
 
-            Dalpha =  vcat(fill.(Dalpha, weights)...)
-            Fpsi = vcat(fill.(Fpsi, weights)...)
             Bii_first = Bii_first == nothing ? nothing : vcat(fill.(Bii_first, weights)...)
             Bii_second = Bii_second == nothing ? nothing : vcat(fill.(Bii_second, weights)...)
             Bii_cov = Bii_cov == nothing ? nothing : vcat(fill.(Bii_cov, weights)...)
