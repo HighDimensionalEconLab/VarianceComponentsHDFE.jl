@@ -384,7 +384,7 @@ function real_main()
                    write(io, output_template)
                     if Z_lincom != nothing 
                         #Write the output of inference 
-                        r = size(Z_lincom,2)
+                        r = size(Z_lincom_col,2)
                         write(io,"    Inference on Linear Combinations:\n")
                         if lincom_labels == nothing 
                             for q=2:r
@@ -403,10 +403,10 @@ function real_main()
                             for q=2:r
                                 tell_me = lincom_labels[q-1]
                                 output_inference = """
-                                    Coefficient of Column $(tell_me): $(linear_combination[q]) \n
-                                    Traditional HC Standard Error of Column $(tell_me): $(SE_naive[q]) \n 
-                                    KSS Standard Error of Column $(tell_me): $(SE_linear_combination_KSS[q]) \n 
-                                    T-Statistic of Column $(tell_me): $(test_statistic[q]) \n
+                                    Coefficient on $(tell_me): $(linear_combination[q-1]) \n
+                                    Traditional HC Standard Error on $(tell_me): $(SE_naive[q-1]) \n 
+                                    KSS Standard Error on $(tell_me): $(SE_linear_combination_KSS[q-1]) \n 
+                                    T-Statistic on $(tell_me): $(test_statistic[q-1]) \n
                                 """
                                 write(io,output_inference)  
                             end
