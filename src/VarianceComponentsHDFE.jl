@@ -324,7 +324,7 @@ function real_main()
         @unpack test_statistic, linear_combination , SE_linear_combination_KSS, SE_naive = lincom_KSS(y,X, Z_lincom_col, Transform, sigma_i; lincom_labels)
     end 
 
-    if parsed_args["write_detailed_CSV"]
+    if parsed_args["write_detailed_csv"]
 
         y_output = y
         first_id_output = first_id
