@@ -13,7 +13,7 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 
 ## Windows
 
-1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.6.9/vchdfe--windows-latest.tar.gz). Move this file to `desired_installation_path`.
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.7.0/vchdfe--windows-latest.tar.gz). Move this file to `desired_installation_path`.
 2. Open up a powershell terminal. We recommend to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator". 
 
 3. Change the current directory to to the desired installation path by typing  in the powershell
@@ -40,7 +40,7 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
    Otherwise, you will have to run
 
    ```
-   .\vchdfe .\vchdfe\bin\test.csv
+   .\vchdfe\bin\vchdfe .\vchdfe\bin\test.csv
    ```
    
    or you could test with some other file you store at the bin folder.
@@ -83,31 +83,18 @@ We will describe two ways to add our program to `PATH`.
 
 ## MacOS
 
-1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.6.9/vchdfe-v0.1.6.9-macos-latest.tar.gz). Move this file to the desired installation path.
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.6.9/vchdfe-v0.1.7.0-macos-latest.tar.gz). Move this file to the desired installation path.
 2. Open Terminal: Press COMMAND + SPACE to open spotlight search, and type terminal and hit RETURN.
 
-3. You may unpack the .tar.gz file automatically when you double-click the icon. Otherwise, you may run the following code:
+3. You can unpack the .tar.gz file automatically by double-clicking the icon. 
 
-   ```
-   cd desired_installation_path
+4. A folder named `vchdfe/bin` now exists inside your installation path. You can double click the icon named vchdfe inside this folder. If the system warns you that it's not a recognized app you must click OK, to give permission.
 
-   gunzip -c vchdfe-v0.1.6.9-macos-latest.tar.gz | tar xopft -
-   ```
-
-    And then close the terminal.
-
-4.  (RECOMMENDED) A folder named `vchdfe/bin` now exists inside your installation path. Add the path of that folder to [PATH](#PATH-in-MacOS). This will allow us to run the program everytime without specifying where the program is installed. 
-5. (OPTIONAL) You can test the program using the sample test file provided with the executable. If you ran the previous step you may run:
+5. (OPTIONAL) You can test the program using the sample test file provided with the executable. You may run the following line:
 
    ```
    vchdfe vchdfe/bin/test.csv
-   ```
-
-   Otherwise, you will have to run
-
-   ```
-   ./vchdfe ./vchdfe/bin/test.csv
-   ```   
+   ``` 
 
    or you can test with some other file you store at the bin folder. 
 
@@ -118,29 +105,6 @@ We will describe two ways to add our program to `PATH`.
    ```
     
    Typically, you want to set that number to the number of cores in your computer. You can now proceed to close the terminal.
-
-
-## PATH in MacOS
-
-The PATH is an important concept when working on the command line. It's a list of directories that tell your operating system where to look for programs, so that you can just write `program` instead of `some_folders\program`. But different operating systems have different ways to add a new directory to it. 
-
-Add the installation directory to PATH. To do so you must open again a terminal window as in Step 1. Run 
-
-```
-touch ~/.bash_profile; open ~/.bash_profile
-```
-
-This will open a file known as `.bash_profile`, where you can copy and paste the following line  
-
-```
-export PATH="$PATH:desired_installation_path/vchdfe/bin"
-```
-
-where `desired_installation_path` is the folder where you installed the executable in the previous steps. Next we save the file we just modified and close it. Finally, to make sure that it will load those changes without rebooting the computer, run the following line in the terminal
-
-```
-source ~/.bash_profile
-```
 
 
 # Syntax of the program
@@ -310,11 +274,7 @@ Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The 
 
 # Typical Executable Workflow (MacOS)
 
-You begin by opening the Command Line (COMMAND + SPACE), and typing 
-
-```
-cd path_to_dataset
-``` 
+You begin by clicking the app that can be found inside the `vchdfe/bin` folder. You may need to click OK to give permission to use the app.  
 
 At this point we recommend to exploit parallelization of the underlying code by changing an environment variable to be equal to the number of cores in your computer. Let `num_cores` be the number of cores. You can run the following line
 
@@ -325,20 +285,16 @@ set JULIA_NUM_THREADS=num_cores
 Then, if you completed all instalation steps you may run
 
 ```
+cd path_to_data
 vchdfe my_data.csv --OPTIONS
 ```
 
 where `OPTIONS` depend on the structure of your data. 
 
-If you didn't complete step 4 of the installation, you will have to run instead 
-
-```
-installation_folder/vchdfe/bin/vchdfe my_data.csv --OPTIONS
-```
 
 ## Detailed examples
 
-Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The structure of the data is such that the fifth column corresponds to the worker identifier, the third column corresponds to the firm identifier and the fourth column corresponds to the outcome. Moreover, we want to store a summary of the results in this location `"project_path/summary.txt"`, and the detailed output (Pii and Bii matrices, stored fixed effects, etc.) here  `"project_path/output.csv"`. 
+Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The structure of the data is such that the fifth column corresponds to the worker identifier, the third column corresponds to the firm identifier and the fourth column corresponds to the outcome. Moreover, we want to store a summary of the results in this location `"project_path/summary.txt"`, and the detailed output (Pii and Bii matrices, stored fixed effects, etc.) here  `"project_path/output.csv"`.  You begin by opening the app as shown in the previous section.
 
 
 1. To obtain all three bias-corrected components (variance of worker effects, variance of firm effects, and covariance of worker-firm effects), we only need to type in the terminal 

@@ -368,10 +368,9 @@ function real_main()
             Number of movers: $(num_movers) \n
             Mean Outcome: $(mean(y_py)) \n
             Variance Outcome: $(var(y_py)) \n
-            Max Pii: $(maximum(Pii)) \n
-            Variance of $(second_id_display) Effects: $θ_second \n
-            Covariance of  $(first_id_display)-$(second_id_display) Effects: $θCOV \n
-            Variance of  $(first_id_display) Effects:  $θ_first \n
+            Bias Corrected Variance of $(second_id_display) Effects: $θ_second \n
+            Bias Corrected Covariance of  $(first_id_display)-$(second_id_display) Effects: $θCOV \n
+            Bias Corrected Variance of  $(first_id_display) Effects:  $θ_first \n
         """ 
 
         if parsed_args["write_results"]
