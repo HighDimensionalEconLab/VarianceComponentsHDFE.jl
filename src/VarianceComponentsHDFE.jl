@@ -269,7 +269,7 @@ function real_main()
 
         y=y-X[:,N+J:end]*beta[N+J:end]
         controls = nothing
-        println("Partialling out completed.\n")
+        println("Partialling out completed.")
     end
 
     # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y,first_id,second_id,controls,settings)

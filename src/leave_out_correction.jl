@@ -957,7 +957,7 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
         for q=2:r
             tell_me = lincom_labels[q-1]
             println("\nCoefficient on ", tell_me,": ", numerator[q] )
-            println("Traditional HC Standard Error  on ", tell_me,": ", sqrt(denominator_naive[q]) )
+            println("Traditional HC Standard Error on ", tell_me,": ", sqrt(denominator_naive[q]) )
             println("KSS Standard Error on ", tell_me,": ", sqrt(denominator[q]) )
             println("T-statistic on ", tell_me,": ", test_statistic[q])
         end
