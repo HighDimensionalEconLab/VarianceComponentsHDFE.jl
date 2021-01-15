@@ -366,7 +366,7 @@ function real_main()
         num_movers = length(unique(movers .* first_id)) - 1 
 
         output_template = """
-            Number of observations (Leave-out Sample): $(length(obs)) \n 
+            Number of observations (Leave Out Sample): $(length(obs)) \n 
             Number of $(first_id_display_small)s: $(maximum(first_id)) \n 
             Number of $(second_id_display_small)s: $(maximum(second_id)) \n
             Number of movers: $(num_movers) \n
