@@ -477,7 +477,7 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
 
         #Run Inference 
         println("\nRegressing the $(settings.second_id_display_small) effects on observables Z.")
-        @unpack test_statistic, linear_combination , SE_linear_combination_KSS = lincom_KSS(y,X, Z_lincom_col, Transform, sigma_i; lincom_labels)
+        @unpack test_statistic, linear_combination , SE_linear_combination_KSS, SE_naive = lincom_KSS(y,X, Z_lincom_col, Transform, sigma_i; lincom_labels)
     end
 
     return (θ_first = θ_first, θ_second = θ_second , θCOV = θCOV)
@@ -966,7 +966,8 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
     test_statistic = test_statistic[2:end]
     linear_combination = numerator[2:end]
     SE_linear_combination_KSS = sqrt.(denominator[2:end])
-    return (test_statistic = test_statistic , linear_combination = linear_combination, SE_linear_combination_KSS = SE_linear_combination_KSS)
+    SE_naive = sqrt.(denominator[2:end])
+    return (test_statistic = test_statistic , linear_combination = linear_combination, SE_linear_combination_KSS = SE_linear_combination_KSS, SE_naive =SE_naive)
 end
 
 #    # PART 5: Joint-test. Quadratic form beta'*A*beta  MAYBE FOR FUTURE VERSION!

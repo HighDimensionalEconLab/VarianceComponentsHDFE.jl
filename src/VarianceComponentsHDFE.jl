@@ -79,7 +79,7 @@ function parse_commandline()
             help = "The display text associated with outcome_id (e.g. Wage)"
             arg_type = String
             default = "Wage"
-        "--detailed_output_path"
+        "--detailed_csv_path"
             help = "path to the CSV for the detailed output for each observable"
             arg_type = String
             default = joinpath(pwd(), "variance_components.csv")
@@ -87,7 +87,7 @@ function parse_commandline()
             help = "path to the results of the output"
             arg_type = String
             default = joinpath(pwd(), "results.txt")
-        "--write_detailed_CSV"
+        "--write_detailed_csv"
             help = "write the detailed output to a CSV"
             action = :store_true
         "--write_results"
@@ -190,7 +190,7 @@ function real_main()
         end
     end
 
-    if algorithm == "Default"
+    if algorithm == "default"
         if length(y) > 5000
             algorithm = "jla"
         else
@@ -321,7 +321,7 @@ function real_main()
             Z_lincom_col = hcat(Z_lincom_col,(transform(groupby(DataFrame(z = Z_lincom[:,i], match_id = match_id), :match_id), :z => mean  => :z_py).z_py)) 
         end
 
-        @unpack test_statistic, linear_combination , SE_linear_combination_KSS = lincom_KSS(y,X, Z_lincom_col, Transform, sigma_i; lincom_labels)
+        @unpack test_statistic, linear_combination , SE_linear_combination_KSS, SE_naive = lincom_KSS(y,X, Z_lincom_col, Transform, sigma_i; lincom_labels)
     end 
 
     if parsed_args["write_detailed_CSV"]
@@ -332,8 +332,20 @@ function real_main()
 
         max_length = length(obs)
 
+        if leave_out_level == "match"
+            #We need to take the output to the person-year space 
+            match_id = compute_matchid(second_id, first_id)
+            weights = accumarray(match_id, 1)
+
+            D_alpha =  vcat(fill.(D_alpha, weights)...)
+            F_psi = vcat(fill.(F_psi, weights)...)
+            Bii_first = Bii_first == nothing ? nothing : vcat(fill.(Bii_first, weights)...)
+            Bii_second = Bii_second == nothing ? nothing : vcat(fill.(Bii_second, weights)...)
+            Bii_cov = Bii_cov == nothing ? nothing : vcat(fill.(Bii_cov, weights)...)
+        end
+
         #todo rename the DataFrame arguments
-        output = DataFrame(observation = obs === obs, first_id_old = first_id_old[obs], first_id = first_id_output ,
+        output = DataFrame(observation = obs , first_id_old = first_id_old[obs], first_id = first_id_output ,
                            second_id_old = second_id_old[obs], second_id = second_id_output, y = y_untransformed[obs],
                            D_alpha = Dalpha , F_psi = Fpsi, Pii = Pii, 
                            Bii_first = Bii_first === nothing ? missings(max_length) : Bii_first,
@@ -375,17 +387,17 @@ function real_main()
                 open(output_path, "w") do io
                    write(io, output_template)
                     if Z_lincom != nothing 
-                       #Write the output of inference 
-                       r = size(Z_lincom,2)
-                       write(io,"Inference on Linear Combinations:\n")
-                       if lincom_labels == nothing 
+                        #Write the output of inference 
+                        r = size(Z_lincom,2)
+                        write(io,"   Inference on Linear Combinations:\n")
+                        if lincom_labels == nothing 
                             for q=2:r
                                 if q <= r
                                     ncol = q-1 
                                     output_inference = """
-                                        Coefficient of Column $(ncol): $(numerator[q]) \n
-                                        Traditional HC Standard Error of Column $(ncol): $(sqrt(denominator_naive[q])) \n 
-                                        KSS Standard Error of Column $(ncol): $(sqrt(denominator[q])) \n 
+                                        Coefficient of Column $(ncol): $(linear_combination[q]) \n
+                                        Traditional HC Standard Error of Column $(ncol): $(SE_naive[q]) \n 
+                                        KSS Standard Error of Column $(ncol): $(SE_linear_combination_KSS[q]) \n 
                                         T-Statistic of Column $(ncol): $(test_statistic[q]) \n
                                     """
                                     write(io,output_inference)
@@ -395,9 +407,9 @@ function real_main()
                             for q=2:r
                                 tell_me = lincom_labels[q-1]
                                 output_inference = """
-                                    Coefficient of Column $(tell_me): $(numerator[q]) \n
-                                    Traditional HC Standard Error of Column $(tell_me): $(sqrt(denominator_naive[q])) \n 
-                                    KSS Standard Error of Column $(tell_me): $(sqrt(denominator[q])) \n 
+                                    Coefficient of Column $(tell_me): $(linear_combination[q]) \n
+                                    Traditional HC Standard Error of Column $(tell_me): $(SE_naive[q]) \n 
+                                    KSS Standard Error of Column $(tell_me): $(SE_linear_combination_KSS[q]) \n 
                                     T-Statistic of Column $(tell_me): $(test_statistic[q]) \n
                                 """
                                 write(io,output_inference)  
