@@ -14,7 +14,11 @@ function approxcholOperator(ldli::LDLinv{Tind,Tval},buff::Vector{Tval}) where {T
     return PreallocatedLinearOperator{Tval}(length(ldli.d), length(ldli.d), true, true, prod, nothing, nothing)
 end
 
-
+# Wrap the Algebraic Multigrid object as preallocated linear operator
+function AmgOperator(ml::AlgebraicMultigrid.MultiLevel, buff::Vector{Tval}) where {Tval}
+    prod =  @closure rhs -> AlgebraicMultigrid.solve!(buff,ml,rhs)
+    return PreallocatedLinearOperator{Tval}(length(buff), length(buff), true, true, prod, nothing, nothing)
+end
 
 # Compute a solver for a grounded system (SDDM matrix) with a PreallocatedLinearOperator, and an adjacency matrix
 function approxcholSolver(P::PreallocatedLinearOperator, la::AbstractArray; tol::Real=1e-6, maxits=300, verbose=0)
