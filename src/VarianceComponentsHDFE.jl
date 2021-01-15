@@ -348,7 +348,7 @@ function real_main()
                            Bii_second = Bii_second === nothing ? missings(max_length) :  Bii_second,
                            Bii_cov = Bii_cov === nothing ? missings(max_length) : Bii_cov
                         )
-        output_path = parsed_args["detailed_output_path"]
+        output_path = parsed_args["detailed_csv_path"]
         #TODO not sure about the paths
         if isabspath(output_path) == false
             output_path = joinpath(pwd(), output_path)
