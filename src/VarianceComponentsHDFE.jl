@@ -335,14 +335,14 @@ function real_main()
         first_id_output = [first_id_output...]
         second_id_old = [second_id_old[obs]...]
         second_id_output = [second_id_output...]
-        y_untransformed = [y_untransformed[obs]...]
+        y_output = [y_untransformed[obs]...]
         Dalpha = [Dalpha...] 
         Fpsi = [Fpsi...]
         Pii = [Pii...]
 
         #todo rename the DataFrame arguments
         output = DataFrame(observation = obs , first_id_old = first_id_old, first_id = first_id_output ,
-                           second_id_old = second_id_old, second_id = second_id_output, y = y_untransformed,
+                           second_id_old = second_id_old, second_id = second_id_output, y = y_output,
                            Dalpha = Dalpha , Fpsi = Fpsi, Pii = Pii, 
                            Bii_first = Bii_first === nothing ? missings(max_length) : Bii_first,
                            Bii_second = Bii_second === nothing ? missings(max_length) :  Bii_second,
