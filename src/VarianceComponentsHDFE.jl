@@ -167,6 +167,7 @@ function real_main()
     if covariates == []
         controls = nothing
     else
+        #It creates a dictionary of the covariates 
         if typeof(covariates[1]) == String 
             #Build controls matrix 
             controls = data[:,covariates[1]]
@@ -174,18 +175,9 @@ function real_main()
                 for k=2:length(covariates)
                     hcat(controls, data[:,covariates[k]])
                 end
-            end
-        elseif typeof(covariates[1]) <:Number
-            #Create symbols first 
-            symbols = []
-            for covindex=1:length(covariates)
-                push!(symbols, Symbol(covariates[covindex]))
-            end
-
-            #Build controls matrix
-            controls = Matrix(data[:,symbols])       
+            end    
         else
-            println("WARNING: Elements of covariates are neither numbers or strings. No partialling out will be performed.")
+            println("WARNING: Elements of covariates are not defined correctly. No partialling out will be performed.")
             controls = nothing 
         end
     end
@@ -290,25 +282,18 @@ function real_main()
         else
             if typeof(lincom_covariates[1]) == String 
                 #Build lincom controls matrix 
-                lincom_labels = lincom_covariates
+                lincom_labels = []
+                push!(lincom_labels,String.(lincom_covariates[1]))
+                
                 Z_lincom = data[obs,lincom_covariates[1]]
-                if length(covariates)>=2
-                    for k=2:length(covariates)
+                if length(lincom_covariates)>=2
+                    for k=2:length(lincom_covariates)
                         hcat(Z_lincom, data[obs,lincom_covariates[k]])
+                        push!(lincom_labels,String.(lincom_covariates[k]))
                     end
-                end
-            elseif typeof(covariates[1]) <:Number
-                lincom_labels = nothing
-                #Create symbols first 
-                symbols = []
-                for covindex=1:length(covariates)
-                    push!(symbols, Symbol(covariates[covindex]))
-                end
-    
-                #Build controls matrix
-                Z_lincom = Matrix(data[obs,symbols])       
+                end     
             else
-                println("WARNING: Elements of lincom covariates are neither numbers or strings. No inference will be performed.")
+                println("WARNING: Elements of lincom covariates are not defined correctly. No inference will be performed.")
             end
         end 
     end
@@ -342,9 +327,20 @@ function real_main()
             Bii_cov = Bii_cov == nothing ? nothing : vcat(fill.(Bii_cov, weights)...)
         end
 
+        #Make sure that we can put them in a DataFrame 
+        obs = [obs...]
+        first_id_old = [first_id_old[obs]...]
+        first_id_output = [first_id_output...]
+        second_id_old = [second_id_old[obs]...]
+        second_id_output = [second_id_output...]
+        y_untransformed = [y_untransformed[obs]...]
+        Dalpha = [Dalpha...] 
+        Fpsi = [Fpsi...]
+        Pii = [Pii...]
+
         #todo rename the DataFrame arguments
-        output = DataFrame(observation = obs , first_id_old = first_id_old[obs], first_id = first_id_output ,
-                           second_id_old = second_id_old[obs], second_id = second_id_output, y = y_untransformed[obs],
+        output = DataFrame(observation = obs , first_id_old = first_id_old, first_id = first_id_output ,
+                           second_id_old = second_id_old, second_id = second_id_output, y = y_untransformed,
                            Dalpha = Dalpha , Fpsi = Fpsi, Pii = Pii, 
                            Bii_first = Bii_first === nothing ? missings(max_length) : Bii_first,
                            Bii_second = Bii_second === nothing ? missings(max_length) :  Bii_second,
@@ -387,7 +383,7 @@ function real_main()
                     if Z_lincom != nothing 
                         #Write the output of inference 
                         r = size(Z_lincom,2)
-                        write(io,"   Inference on Linear Combinations:\n")
+                        write(io,"    Inference on Linear Combinations:\n")
                         if lincom_labels == nothing 
                             for q=2:r
                                 if q <= r
