@@ -239,7 +239,7 @@ function real_main()
 
     #Residualize outcome variable 
     if controls != nothing  
-        println("\nPartialling out controls from $(settings.outcome_id_display)...")
+        println("\nPartialling out controls...")
         NT = size(y,1)
         J = maximum(second_id)
         N = maximum(first_id)
