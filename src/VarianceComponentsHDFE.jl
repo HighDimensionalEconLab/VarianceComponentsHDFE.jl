@@ -394,7 +394,7 @@ function real_main()
                         corr = θCOV/(sqrt(θ_first)*sqrt(θ_second)) 
                         r2 = (θ_second+2*θCOV+θ_first)/var_den
                         write(io, "    Bias Corrected Correlation of  $(first_id_display)-$(second_id_display) Effects: $corr \n\n")                   
-                        write(io, "    Bias Corrected Fraction of Variance explained by  $(first_id_display)-$(second_id_display) Effects: $corr \n\n")                   
+                        write(io, "    Bias Corrected Fraction of Variance explained by  $(first_id_display)-$(second_id_display) Effects: $r2 \n\n")                   
                    end
                    
 
