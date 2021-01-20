@@ -11,7 +11,7 @@ For instructions on how to install and use the executable follow this [link](htt
 
 For instructions on how to install the Julia Package and know about the exported methods follow this [link](https://highdimensionaleconlab.github.io/VarianceComponentsHDFE.jl/dev/Package/).
 
-## Developing the Julia Package
+## Julia Package Development
 
 Some instructions are provided at the [Development Setup](develop.md) and at the [Package docs](https://highdimensionaleconlab.github.io/VarianceComponentsHDFE.jl/dev/Package/).
 
