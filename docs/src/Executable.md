@@ -7,13 +7,13 @@ Depth = 3
 
 # About the executable/app
 
-The algorithm prints the plug-in and the bias-corrected variance components estimators for the first identifier effects (e.g. variance of worker effects), the second identifier effects (e.g. variance of firm effects), and the covariance of both these effects (e.g. covariance of worker-firm effects). The user may choose to compute only a subset of these three components. Additionally, the executable will create a CSV file that stores the outcome variable, the first and second set of identifiers, and the estimated fixed effects for every observation that belongs to the leave-out connected set as defined in KSS. The algorithm also saves the statistical leverages, Pii, as well the weighting terms defined as Bii in KSS for a given variance component.
+The algorithm prints the plug-in and the bias-corrected variance components estimators for the first identifier effects (e.g. variance of worker effects), the second identifier effects (e.g. variance of firm effects), and the covariance of both these effects (e.g. covariance of worker-firm effects). The user may choose to compute only a subset of these three components. Additionally, the executable will create a CSV file that stores the outcome variable, the first and second set of identifiers, and the estimated fixed effects for every observation that belongs to the leave-out connected set as defined in KSS. The algorithm also saves the statistical leverages, Pii, as well the weighting terms defined as Bii in KSS for a given variance component. More details of this are provided below at the Results output and Detailed csv output sections. 
 
 # Installation 
 
 ## Windows
 
-1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.7.0/vchdfe--windows-latest.tar.gz). Move this file to `desired_installation_path`.
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.7.1/vchdfe--windows-latest.tar.gz). Move this file to `desired_installation_path`.
 2. Open up a powershell terminal. We recommend to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator". 
 
 3. Change the current directory to to the desired installation path by typing  in the powershell
@@ -83,7 +83,7 @@ We will describe two ways to add our program to `PATH`.
 
 ## MacOS
 
-1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.6.9/vchdfe-v0.1.7.0-macos-latest.tar.gz). Move this file to the desired installation path.
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.6.9/vchdfe-v0.1.7.1-macos-latest.tar.gz). Move this file to the desired installation path.
 
 2. You can unpack the .tar.gz file automatically by double-clicking the icon. 
 
@@ -108,7 +108,7 @@ We will describe two ways to add our program to `PATH`.
 
 # Syntax of the program
 
-Before this, make sure you've completed the installation steps shown above. To use the executable you only need to open the terminal. Windows users can press the keys Windows + R, then type "powershell" and press Enter. MacOS users can press COMMAND + SPACE to open spotlight search, and type terminal and hit RETURN. 
+Before this, make sure you've completed the installation steps shown above. To use the executable you only need to open the terminal. Windows users can press the keys Windows + R, then type "powershell" and press Enter. MacOS users can click to open the app manually. You can also see some examples in the Typical Workflow sections below.
 
 The basic syntax of this command is 
 
@@ -151,14 +151,19 @@ to see a complete list of available arguments:
                             "Default")
       --covariates NAME1 NAME2 ... 
                             Column names of the covariates that will be 
-                            partialled out from the outcome. (default: [])
+                            partialled out from the outcome. If dataset
+                            contains no headers use Column1, Column2, etc.
+                            to refer to such columns. (default: [])
       --do_lincom           Perform linear combination inference.
       --lincom_covariates NAME1 NAME2 ...
                             Column names of the covariates used in the linear
-                            combination inference step. (default: [])
+                            combination inference step. If dataset
+                            contains no headers use Column1, Column2, etc.
+                            to refer to such columns. (default: [])
       --simulations SIMULATIONS
-                            number of simulations in the JLA algorithm. It
-                            defaults to 100 * log(#total fixed effect)
+                            number of simulations in the JLA algorithm. If
+                            no number or zero is provided, it will default
+                            to 200 simulations within the algorithm.
                             (type: Int64, default: 0)
       --header              CSV file contains header
       --first_id_display FIRST_ID_DISPLAY

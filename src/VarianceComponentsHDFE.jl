@@ -358,6 +358,7 @@ function real_main()
 
     if parsed_args["write_results"]
         y_py = y_untransformed[obs]
+        y_den = var(y_py)
         movers , T = compute_movers(first_id, second_id)
         num_movers = length(unique(movers .* first_id)) - 1 
 
@@ -369,8 +370,6 @@ function real_main()
             Mean Outcome: $(mean(y_py)) \n
             Variance Outcome: $(var(y_py)) \n
             Bias Corrected Variance of $(second_id_display) Effects: $θ_second \n
-            Bias Corrected Covariance of  $(first_id_display)-$(second_id_display) Effects: $θCOV \n
-            Bias Corrected Variance of  $(first_id_display) Effects:  $θ_first \n
         """ 
 
         if parsed_args["write_results"]
@@ -381,10 +380,26 @@ function real_main()
                 end
                 open(output_path, "w") do io
                    write(io, output_template)
+                   if first_id_effects == 1 
+                        write(io, "    Bias Corrected Variance of  $(first_id_display) Effects:  $θ_first \n")
+                   end
+
+                   if cov_effects == 1 
+                        write(io, "    Bias Corrected Covariance of  $(first_id_display)-$(second_id_display) Effects: $θCOV \n")
+                   end
+
+                   if (first_id_effects == 1 ) && (cov_effects == 1 )
+                        corr = θCOV/(sqrt(θ_first)*sqrt(θ_second)) 
+                        r2 = (θ_second+2*θCOV+θ_first)/var_den
+                        write(io, "    Bias Corrected Correlation of  $(first_id_display)-$(second_id_display) Effects: $corr \n")                   
+                        write(io, "    Bias Corrected Fraction of Variance explained by  $(first_id_display)-$(second_id_display) Effects: $corr \n")                   
+                   end
+                   
+
                     if Z_lincom != nothing 
                         #Write the output of inference 
                         r = size(Z_lincom_col,2)
-                        write(io,"    Inference on Linear Combinations:\n")
+                        write(io,"    Results of High Dimensional Lincom \n\n")
                         if lincom_labels == nothing 
                             for q=2:r
                                 if q <= r
