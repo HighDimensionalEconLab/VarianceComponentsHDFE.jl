@@ -607,8 +607,8 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     σ2_α_AKM = var(pe)
     println("Plug-in Variance of $(settings.first_id_display_small) Effects: ", σ2_α_AKM )
     σ2_ψα_AKM = cov(pe,-fe)
-    println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM, "\n")
-    println("Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM/(sqrt(σ2_ψ_AKM)*sqrt(σ2_α_AKM)), "\n" )
+    println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM)
+    println("Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM/(sqrt(σ2_ψ_AKM)*sqrt(σ2_α_AKM)))
     println("Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (σ2_ψ_AKM+2*σ2_ψα_AKM+σ2_ψα_AKM)/var_den, "\n" )
 
     #Part 2: Collapse & Reweight (if needed)
@@ -709,13 +709,13 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     #TODO print estimates
     if settings.print_level > 0
         println("Bias-Corrected Variance Components:")
-        println("Bias-Corrected variance of $(settings.second_id_display_small) Effects: ", θ_second)
-        (settings.first_id_effects > 0) && println("Bias-Corrected variance of $(settings.first_id_display_small) Effects: ", θ_first)
-        (settings.cov_effects > 0) && println("Bias-Corrected covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", θCOV)
+        println("Bias-Corrected Variance of $(settings.second_id_display_small) Effects: ", θ_second)
+        (settings.first_id_effects > 0) && println("Bias-Corrected Variance of $(settings.first_id_display_small) Effects: ", θ_first)
+        (settings.cov_effects > 0) && println("Bias-Corrected Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", θCOV)
         θ_first = abs(θ_first) #This is only required for the very small dataset that does the precompilation
         θ_second = abs(θ_second) #This is only required for the very small dataset that does the precompilation
-        (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Bias-Corrected Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", θCOV/(sqrt(θ_first)*sqrt(θ_second)), "\n" )
-        (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Bias-Corrected Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (θ_second+2*θCOV+θ_first)/var_den, "\n" )
+        (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Bias-Corrected Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", θCOV/(sqrt(θ_first)*sqrt(θ_second)) )
+        (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Bias-Corrected Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (θ_second+2*θCOV+θ_first)/var_den)
     end
 
     return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = pe, Fpsi = fe, Pii = Pii, Bii_first = Bii_first,
