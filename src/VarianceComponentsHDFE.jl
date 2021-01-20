@@ -358,7 +358,7 @@ function real_main()
 
     if parsed_args["write_results"]
         y_py = y_untransformed[obs]
-        y_den = var(y_py)
+        var_den = var(y_py)
         movers , T = compute_movers(first_id, second_id)
         num_movers = length(unique(movers .* first_id)) - 1 
 
