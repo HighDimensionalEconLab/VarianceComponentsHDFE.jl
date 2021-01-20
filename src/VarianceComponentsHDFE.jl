@@ -389,6 +389,8 @@ function real_main()
                    end
 
                    if (first_id_effects == 1 ) && (cov_effects == 1 )
+                        θ_first = abs(θ_first) #This is only required for the very small dataset that does the precompilation
+                        θ_second = abs(θ_second) #This is only required for the very small dataset that does the precompilation
                         corr = θCOV/(sqrt(θ_first)*sqrt(θ_second)) 
                         r2 = (θ_second+2*θCOV+θ_first)/var_den
                         write(io, "    Bias Corrected Correlation of  $(first_id_display)-$(second_id_display) Effects: $corr \n")                   
