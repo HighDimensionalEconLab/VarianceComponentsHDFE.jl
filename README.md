@@ -20,7 +20,7 @@ Some instructions are provided at the [Development Setup](develop.md) and at the
 The Matlab version of the package can be 
 found [here](https://github.com/rsaggio87/LeaveOutTwoWay).
 
-## Summary of Latest Version of Executable
+## Summary of Executable's Latest Version 
 
 * By default, the code runs a leave-out correction by leaving a match out as opposed to leaving an observation out. See Matlab's [vignette](https://github.com/rsaggio87/LeaveOutTwoWay/blob/master/doc/VIGNETTE.pdf) for details.
 * New, optimized, random projection algorithm for calculation of the statistical leverages which scale extremely well to large datasets.
