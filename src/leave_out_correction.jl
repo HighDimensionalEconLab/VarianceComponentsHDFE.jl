@@ -712,8 +712,8 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         println("Bias-Corrected Variance of $(settings.second_id_display_small) Effects: ", θ_second)
         (settings.first_id_effects > 0) && println("Bias-Corrected Variance of $(settings.first_id_display_small) Effects: ", θ_first)
         (settings.cov_effects > 0) && println("Bias-Corrected Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", θCOV)
-        θ_first = abs(θ_first) #This is only required for the very small dataset that does the precompilation
-        θ_second = abs(θ_second) #This is only required for the very small dataset that does the precompilation
+        θ_first = θ_first == nothing ? nothing : abs(θ_first) #This is only required for the very small dataset that does the precompilation
+        θ_second = θ_second == nothing ? nothing : abs(θ_second) #This is only required for the very small dataset that does the precompilation
         (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Bias-Corrected Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", θCOV/(sqrt(θ_first)*sqrt(θ_second)) )
         (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Bias-Corrected Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (θ_second+2*θCOV+θ_first)/var_den)
     end

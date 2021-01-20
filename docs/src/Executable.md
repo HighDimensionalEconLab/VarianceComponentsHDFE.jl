@@ -13,7 +13,7 @@ The algorithm prints the plug-in and the bias-corrected variance components esti
 
 ## Windows
 
-1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.7.4/vchdfe--windows-latest.tar.gz). Move this file to `desired_installation_path`.
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.7.5/vchdfe--windows-latest.tar.gz). Move this file to `desired_installation_path`.
 2. Open up a powershell terminal. We recommend to run powershell as administrator for installation. To do this, open Windows menu, type "powershell". Right-click on the powershell, click "run as administrator". 
 
 3. Change the current directory to to the desired installation path by typing  in the powershell
@@ -83,7 +83,7 @@ We will describe two ways to add our program to `PATH`.
 
 ## MacOS
 
-1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.6.9/vchdfe-v0.1.7.4-macos-latest.tar.gz). Move this file to the desired installation path.
+1. Download our latest version of the package from the following [link](https://github.com/HighDimensionalEconLab/VarianceComponentsHDFE.jl/releases/download/v0.1.7.5/vchdfe-v0.1.7.5-macos-latest.tar.gz). Move this file to the desired installation path.
 
 2. You can unpack the .tar.gz file automatically by double-clicking the icon. 
 
