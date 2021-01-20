@@ -4,15 +4,16 @@
 [![Coverage](https://codecov.io/gh/HighDimensionalEconLab/VarianceComponentsHDFE.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/HighDimensionalEconLab/VarianceComponentsHDFE.jl)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://HighDimensionalEconLab.github.io/VarianceComponentsHDFE.jl/dev)
 
-- [Development Setup](develop.md)
-
-
 This Julia package implements the leave out correction of 
 [Kline, Saggio and Soelvsten (2020)](https://eml.berkeley.edu/~pkline/papers/KSS2020.pdf) for estimating variance components in two-way fixed effects models. We provide the usual Julia Package as well as an executable/app that can be run in the terminal and does not require the installation of Julia or any other statistical software.
 
 For instructions on how to install and use the executable follow this [link](https://highdimensionaleconlab.github.io/VarianceComponentsHDFE.jl/dev/Executable/).
 
 For instructions on how to install the Julia Package and know about the exported methods follow this [link](https://highdimensionaleconlab.github.io/VarianceComponentsHDFE.jl/dev/Package/).
+
+## Developing the Julia Package
+
+Some instructions are provided at the [Development Setup](develop.md) and at the [Package docs](https://highdimensionaleconlab.github.io/VarianceComponentsHDFE.jl/dev/Package/).
 
 ## Matlab Version
 
