@@ -381,11 +381,11 @@ function real_main()
                 open(output_path, "w") do io
                    write(io, output_template)
                    if first_id_effects == 1 
-                        write(io, "    Bias Corrected Variance of  $(first_id_display) Effects:  $θ_first \n")
+                        write(io, "    Bias Corrected Variance of  $(first_id_display) Effects:  $θ_first \n\n")
                    end
 
                    if cov_effects == 1 
-                        write(io, "    Bias Corrected Covariance of  $(first_id_display)-$(second_id_display) Effects: $θCOV \n")
+                        write(io, "    Bias Corrected Covariance of  $(first_id_display)-$(second_id_display) Effects: $θCOV \n\n")
                    end
 
                    if (first_id_effects == 1 ) && (cov_effects == 1 )
@@ -393,8 +393,8 @@ function real_main()
                         θ_second = abs(θ_second) #This is only required for the very small dataset that does the precompilation
                         corr = θCOV/(sqrt(θ_first)*sqrt(θ_second)) 
                         r2 = (θ_second+2*θCOV+θ_first)/var_den
-                        write(io, "    Bias Corrected Correlation of  $(first_id_display)-$(second_id_display) Effects: $corr \n")                   
-                        write(io, "    Bias Corrected Fraction of Variance explained by  $(first_id_display)-$(second_id_display) Effects: $corr \n")                   
+                        write(io, "    Bias Corrected Correlation of  $(first_id_display)-$(second_id_display) Effects: $corr \n\n")                   
+                        write(io, "    Bias Corrected Fraction of Variance explained by  $(first_id_display)-$(second_id_display) Effects: $r2 \n\n")                   
                    end
                    
 

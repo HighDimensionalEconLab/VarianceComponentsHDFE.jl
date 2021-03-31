@@ -66,6 +66,7 @@ The VCHDFESettings type is to pass information to methods regarding which algori
     leverage_algorithm::LeverageAlgorithm = JLAAlgorithm()
     leave_out_level::String = "match"
     first_id_effects::Bool = true
+    first_id_bar_effects::Bool = true
     cov_effects::Bool = true
     print_level::Int64 = 1
     first_id_display_small::String = "person"
@@ -607,8 +608,8 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     σ2_α_AKM = var(pe)
     println("Plug-in Variance of $(settings.first_id_display_small) Effects: ", σ2_α_AKM )
     σ2_ψα_AKM = cov(pe,-fe)
-    println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM, "\n")
-    println("Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM/(sqrt(σ2_ψ_AKM)*sqrt(σ2_α_AKM)), "\n" )
+    println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM)
+    println("Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM/(sqrt(σ2_ψ_AKM)*sqrt(σ2_α_AKM)))
     println("Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (σ2_ψ_AKM+2*σ2_ψα_AKM+σ2_ψα_AKM)/var_den, "\n" )
 
     #Part 2: Collapse & Reweight (if needed)
@@ -643,6 +644,10 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         X = hcat(D, -F*S)   
         Dvar = hcat( sparse(collect(1:length(match_id)),first_id_weighted,1) , spzeros(length(match_id),J-1))
         Fvar = hcat(spzeros(length(match_id),N), -1*sparse(collect(1:length(match_id)), second_id_weighted,1  )*S )
+
+        Fweighted = sparse(collect(1:length(match_id)), second_id_weighted,1 ) 
+        Dweighted = sparse(collect(1:length(match_id)),first_id_weighted,1) 
+        Dbarvar = hcat( Fweighted * inv(Matrix(Fweighted'*Fweighted)) * Fweighted' *Dweighted, spzeros(length(match_id),J-1))
             
         #Weighting
         weight_mat = sparse(collect(1:NT), collect(1:NT), weight.^(0.5) , NT, NT )
@@ -663,11 +668,12 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         X = hcat(D, -F*S)
         Dvar = hcat(  D, spzeros(NT,J-1) )
         Fvar = hcat(spzeros(NT,N), -F*S )
-
+        # Dbarvar = hcat(F * inv(Matrix(F' *F)) * F' * D , spzeros(NT,J-1) )
+        Dbarvar = hcat(F * sparse(collect(1:J), collect(1:J), 1 ./ sum(F, dims = 1)[1,:]) * F' * D , spzeros(NT,J-1) )
     end
 
     #Part 3: Compute Pii, Bii
-    @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov = leverages(settings.leverage_algorithm, X, Dvar, Fvar, settings)
+    @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov, Bii_first_bar = leverages(settings.leverage_algorithm, X, Dvar, Fvar, Dbarvar, settings)
 
     (settings.print_level > 1) && println("Pii and Bii have been computed.")
 
@@ -698,6 +704,8 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
     θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
 
+    θ_firstbar = settings.first_id_bar_effects == true ? kss_quadratic_form(sigma_i, Dbarvar, Dbarvar, beta, Bii_first_bar) : nothing #todo
+
     #Pii = diag(Pii)
 
     #Bii_second = diag(Bii_second)
@@ -709,17 +717,17 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     #TODO print estimates
     if settings.print_level > 0
         println("Bias-Corrected Variance Components:")
-        println("Bias-Corrected variance of $(settings.second_id_display_small) Effects: ", θ_second)
-        (settings.first_id_effects > 0) && println("Bias-Corrected variance of $(settings.first_id_display_small) Effects: ", θ_first)
-        (settings.cov_effects > 0) && println("Bias-Corrected covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", θCOV)
-        θ_first = abs(θ_first) #This is only required for the very small dataset that does the precompilation
-        θ_second = abs(θ_second) #This is only required for the very small dataset that does the precompilation
-        (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Bias-Corrected Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", θCOV/(sqrt(θ_first)*sqrt(θ_second)), "\n" )
-        (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Bias-Corrected Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (θ_second+2*θCOV+θ_first)/var_den, "\n" )
+        println("Bias-Corrected Variance of $(settings.second_id_display_small) Effects: ", θ_second)
+        (settings.first_id_effects > 0) && println("Bias-Corrected Variance of $(settings.first_id_display_small) Effects: ", θ_first)
+        (settings.cov_effects > 0) && println("Bias-Corrected Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", θCOV)
+        θ_first = θ_first == nothing ? nothing : abs(θ_first) #This is only required for the very small dataset that does the precompilation
+        θ_second = θ_second == nothing ? nothing : abs(θ_second) #This is only required for the very small dataset that does the precompilation
+        (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Bias-Corrected Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", θCOV/(sqrt(θ_first)*sqrt(θ_second)) )
+        (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Bias-Corrected Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (θ_second+2*θCOV+θ_first)/var_den)
     end
 
-    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = pe, Fpsi = fe, Pii = Pii, Bii_first = Bii_first,
-            Bii_second = Bii_second, Bii_cov = Bii_cov, y = y , X = X, sigma_i = sigma_i )
+    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, θ_firstbar = θ_firstbar, β = beta, Dalpha = pe, Fpsi = fe, Pii = Pii, Bii_first = Bii_first,
+            Bii_second = Bii_second, Bii_cov = Bii_cov, Bii_first_bar = Bii_first_bar, y = y , X = X, sigma_i = sigma_i )
 end
 
 
@@ -736,7 +744,7 @@ This function computes the diagonal matrices containing Pii and Bii under Exact 
 * `Fvar`: matrix with incidence information of second_id
 * `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
 """
-function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, settings)
+function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, Dbarvar, settings)
 
     M = size(X,1)
 
@@ -757,6 +765,7 @@ function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, settings)
     Bii_second = zeros(M)
     Bii_cov= settings.cov_effects ==true ? zeros(M) : nothing
     Bii_first= settings.first_id_effects == true ? zeros(M) : nothing
+    Bii_first_bar = settings.first_id_bar_effects == true ? zeros(M) : nothing
 
     Threads.@threads for i=1:M
 
@@ -780,6 +789,11 @@ function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, settings)
             Bii_cov[i] = COV[1]*(size(Dvar,1)-1)
         end
 
+        if Bii_first_bar != nothing
+            COV = cov(Dbarvar * zexact, Dbarvar*zexact)
+            Bii_first_bar[i] = COV[1] * (size(Dbarvar, 1)-1)
+        end
+
     end
 
     #Censor
@@ -788,7 +802,7 @@ function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, settings)
     correction_JLA = 1 
     Mii = 1 .- Pii
 
-    return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov)
+    return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov, Bii_first_bar = Bii_first_bar)
 end
 
 
@@ -805,7 +819,7 @@ This function computes the diagonal matrices containing Pii and Bii under Johnso
 * `Fvar`: matrix with incidence information of second_id
 * `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
 """
-function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
+function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, settings)
 
     NT = size(X,1)
     FE = size(X,2)
@@ -838,6 +852,7 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
     Bii_second=zeros(NT)
     Bii_cov= settings.cov_effects ==true ? zeros(NT) : nothing
     Bii_first= settings.first_id_effects == true ? zeros(NT) : nothing
+    Bii_first_bar = settings.first_id_bar_effects == true ? zeros(NT) : nothing
     
     Mii = zeros(NT)
     Pii_sq = zeros(NT)
@@ -891,6 +906,13 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
             end
 
         end    
+
+        if settings.first_id_bar_effects == true 
+            Z_pe_bar = compute_sol[Threads.threadid()]( [rademach*Dbarvar...] ; verbose=false)
+            Z_pe_bar = X*Z_pe_bar
+
+            Bii_first_bar = Bii_first_bar + (Z_pe_bar.*Z_pe_bar)
+        end
     end
 
     #Censor
@@ -903,7 +925,7 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
     Bi = (1/p)*(Mii.*Pii_sq-Pii.*Mii_sq+2*(Mii-Pii).*Pii_Mii)
     correction_JLA = (1 .- Vi./(Mii.^2)+Bi./Mii)       
 
-    return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov)
+    return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov, Bii_first_bar = Bii_first_bar)
 end
 
 
