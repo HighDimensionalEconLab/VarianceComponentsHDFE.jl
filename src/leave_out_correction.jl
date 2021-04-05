@@ -10,6 +10,7 @@
 getlagged(x) = [NaN; x[1:(end - 1)]]
 
 using DocStringExtensions
+using LinearMaps
 
 
 #Defining types and structures
@@ -672,7 +673,9 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         Dbarvar = F' * D
         Dbarvar =Diagonal(1 ./ sum(F, dims = 1)[1,:]) * Dbarvar
         # Dbarvar = spdiagm( 0 => 1 ./ sum(F, dims = 1)[1,:]) * Dbarvar
-        Dbarvar = LinearOperator(Dbarvar)        
+        # Dbarvar = LinearOperator(Dbarvar)
+
+        Dbarvar = LinearMap(Dbarvar)        
         Dbarvar = F*Dbarvar
         Dbarvar = hcat(Dbarvar, spzeros(NT,J-1))
         # Dbarvar = hcat(F * sparse(collect(1:J), collect(1:J), 1 ./ sum(F, dims = 1)[1,:]) * F' * D , spzeros(NT,J-1) )
@@ -680,7 +683,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
     #Part 3: Compute Pii, Bii
     @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov, Bii_first_bar = leverages(settings.leverage_algorithm, X, Dvar, Fvar, Dbarvar, settings)
-
+    print("unpacking done first \n ********************************************************* \n ***************************************")
     (settings.print_level > 1) && println("Pii and Bii have been computed.")
 
     #Compute Leave-out residual
@@ -914,8 +917,9 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, settings)
         end    
 
         if settings.first_id_bar_effects == true 
-            tmp = rademach * Dbarvar
-            tmp = Matrix(tmp)
+            print("i is: ", i)
+            @time tmp = rademach * Dbarvar
+            @time tmp = Matrix(tmp)
             # tmp2 = hcat(tmp, zeros(1, size(X, 2) - size(tmp, 2)))
             # Z_pe_bar = compute_sol[Threads.threadid()]( [rademach*Dbarvar...] ; verbose=false)
             Z_pe_bar = compute_sol[Threads.threadid()]( [tmp...] ; verbose=false)

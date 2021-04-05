@@ -9,6 +9,7 @@ using LinearAlgebra
 using DataFrames
 using Pipe
 using ShiftedArrays
+using LinearMaps
 
 # First line: the whole data, second and third lines: SSA data
 # also uncomment the write section at the ends
@@ -40,10 +41,10 @@ settings = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=0),
 print(size(data,1) == size(y, 1))
 
 using JLD2
-# @save "tmp.jld2" obs y first_id second_id controls y_raw first_id_raw second_id_raw settings
+@save "tmp.jld2" obs y first_id second_id controls settings
 # @save "tmp2.jld2" obs y first_id second_id controls settings
 # @load "tmp.jld2" obs y first_id second_id controls y_raw first_id_raw second_id_raw settings
-@load "tmp.jld2" obs y first_id second_id controls settings
+# @load "tmp3.jld2" obs y first_id second_id controls 
 # using LinearOperators
 # Dbarvar = hcat(F * opCholesky((F' *F)) * F' * D , spzeros(NT,J-1) )
 
