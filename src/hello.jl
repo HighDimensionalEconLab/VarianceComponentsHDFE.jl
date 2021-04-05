@@ -24,7 +24,7 @@ data = CSV.read("gen_data.csv", DataFrame, missingstrings = ["NA", ""])
 
 # ommitting the obs that are outliers in term of wage growth for at least one s
 # @pipe data |> filter!(x -> x.obs_1 & x.obs_2 & x.obs_3 & x.obs_4 & x.obs_5, _)
-
+data = data[1:100000, :]
 first_id_raw = data[:,"id"]
 second_id_raw = data[:, "year_by_firm"]
 # y_raw = data[:, "log_dailywages"]
@@ -41,13 +41,13 @@ print(size(data,1) == size(y, 1))
 
 using JLD2
 # @save "tmp.jld2" obs y first_id second_id controls y_raw first_id_raw second_id_raw settings
-@save "tmp2.jld2" obs y first_id second_id controls settings
+# @save "tmp2.jld2" obs y first_id second_id controls settings
 # @load "tmp.jld2" obs y first_id second_id controls y_raw first_id_raw second_id_raw settings
 @load "tmp.jld2" obs y first_id second_id controls settings
 # using LinearOperators
 # Dbarvar = hcat(F * opCholesky((F' *F)) * F' * D , spzeros(NT,J-1) )
 
-@unpack θ_first, θ_second, θCOV, θ_firstbar, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, Bii_first_bar, y, X, sigma_i = leave_out_estimation(y,first_id,second_id,controls,settings)
+@time @unpack θ_first, θ_second, θCOV, θ_firstbar, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, Bii_first_bar, y, X, sigma_i = leave_out_estimation(y,first_id,second_id,controls,settings)
 
 print(θ_firstbar)
 print(θCOV)

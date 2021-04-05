@@ -551,15 +551,6 @@ function kss_quadratic_form(sigma_i, A_1, A_2, beta, Bii)
     theta_KSS                           = theta-(1/dof)*sum(Bii.*sigma_i)
 end
 
-function kss_quadratic_form_Dbarvar(sigma_i, A, F, J, beta, Bii)
-    right                               = ((beta' * vcat(A', spzeros(J-1, size(A', 2)))) * F')'
-    left                                = right
-    theta                               = cov(left,right)
-    theta                               = theta[1]
-    dof                                 = size(left,1)-1
-    theta_KSS                           = theta-(1/dof)*sum(Bii.*sigma_i)
-end
-
 
 """
 $(SIGNATURES)
@@ -679,16 +670,16 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         Fvar = hcat(spzeros(NT,N), -F*S )
         # Dbarvar = hcat(F * inv(Matrix(F' *F)) * F' * D , spzeros(NT,J-1) )
         Dbarvar = F' * D
-        # Dbarvar = LinearOperator(Dbarvar)
-        # Dbarvar =Diagonal(1 ./ sum(F, dims = 1)[1,:]) * Dbarvar
-        Dbarvar = spdiagm( 0 => 1 ./ sum(F, dims = 1)[1,:]) * Dbarvar
-        # Dbarvar = F*Dbarvar
-        # Dbarvar = hcat(Dbarvar, spzeros(NT,J-1))
+        Dbarvar =Diagonal(1 ./ sum(F, dims = 1)[1,:]) * Dbarvar
+        # Dbarvar = spdiagm( 0 => 1 ./ sum(F, dims = 1)[1,:]) * Dbarvar
+        Dbarvar = LinearOperator(Dbarvar)        
+        Dbarvar = F*Dbarvar
+        Dbarvar = hcat(Dbarvar, spzeros(NT,J-1))
         # Dbarvar = hcat(F * sparse(collect(1:J), collect(1:J), 1 ./ sum(F, dims = 1)[1,:]) * F' * D , spzeros(NT,J-1) )
     end
 
     #Part 3: Compute Pii, Bii
-    @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov, Bii_first_bar = leverages(settings.leverage_algorithm, X, Dvar, Fvar, F, J, Dbarvar, settings)
+    @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov, Bii_first_bar = leverages(settings.leverage_algorithm, X, Dvar, Fvar, Dbarvar, settings)
 
     (settings.print_level > 1) && println("Pii and Bii have been computed.")
 
@@ -711,7 +702,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         sigma_i[stayers] .= [sigma_stayers[j] for j in findall(x->x==true,stayers )]
     end
 
-
+    print("hi")
     #Compute bias corrected variance comp of second (Firm) Effects
     θ_second = kss_quadratic_form(sigma_i, Fvar, Fvar, beta, Bii_second)
 
@@ -719,7 +710,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
     θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
 
-    θ_firstbar = settings.first_id_bar_effects == true ? kss_quadratic_form_Dbarvar(sigma_i, Dbarvar, F, J, beta, Bii_first_bar) : nothing #todo
+    θ_firstbar = settings.first_id_bar_effects == true ? kss_quadratic_form(sigma_i, Dbarvar, Dbarvar, beta, Bii_first_bar) : nothing #todo
 
     #Pii = diag(Pii)
 
@@ -759,7 +750,7 @@ This function computes the diagonal matrices containing Pii and Bii under Exact 
 * `Fvar`: matrix with incidence information of second_id
 * `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
 """
-function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, F, J, Dbarvar, settings)
+function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, Dbarvar, settings)
 
     M = size(X,1)
 
@@ -834,7 +825,7 @@ This function computes the diagonal matrices containing Pii and Bii under Johnso
 * `Fvar`: matrix with incidence information of second_id
 * `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
 """
-function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, F, J, Dbarvar, settings)
+function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, settings)
 
     NT = size(X,1)
     FE = size(X,2)
@@ -923,9 +914,9 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, F, J, Dbarvar, settings)
         end    
 
         if settings.first_id_bar_effects == true 
-            tmp = rademach * F 
-            tmp = tmp * Dbarvar
-            tmp = hcat(tmp, spzeros(1,J-1))
+            tmp = rademach * Dbarvar
+            tmp = Matrix(tmp)
+            # tmp2 = hcat(tmp, zeros(1, size(X, 2) - size(tmp, 2)))
             # Z_pe_bar = compute_sol[Threads.threadid()]( [rademach*Dbarvar...] ; verbose=false)
             Z_pe_bar = compute_sol[Threads.threadid()]( [tmp...] ; verbose=false)
             Z_pe_bar = X*Z_pe_bar
