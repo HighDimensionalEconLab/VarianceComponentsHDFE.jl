@@ -673,11 +673,11 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         Dbarvar = F' * D
         Dbarvar =Diagonal(1 ./ sum(F, dims = 1)[1,:]) * Dbarvar
         # Dbarvar = spdiagm( 0 => 1 ./ sum(F, dims = 1)[1,:]) * Dbarvar
-        # Dbarvar = LinearOperator(Dbarvar)
+        Dbarvar = LinearOperator(Dbarvar)
 
-        Dbarvar = LinearMap(Dbarvar)        
+        # Dbarvar = LinearMap(Dbarvar)        
         Dbarvar = F*Dbarvar
-        Dbarvar = hcat(Dbarvar, spzeros(NT,J-1))
+        Dbarvar2 = hcat(Dbarvar, spzeros(NT,J-1))
         # Dbarvar = hcat(F * sparse(collect(1:J), collect(1:J), 1 ./ sum(F, dims = 1)[1,:]) * F' * D , spzeros(NT,J-1) )
     end
 
@@ -920,9 +920,14 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, settings)
             print("i is: ", i)
             @time tmp = rademach * Dbarvar
             @time tmp = Matrix(tmp)
+            @time tmp = transpose(Dbarvar) * rademach'
+            # @time tmp = Matrix(tmp')
+            tmp = (tmp * [1])'
+            tmp = tmp'
             # tmp2 = hcat(tmp, zeros(1, size(X, 2) - size(tmp, 2)))
             # Z_pe_bar = compute_sol[Threads.threadid()]( [rademach*Dbarvar...] ; verbose=false)
             Z_pe_bar = compute_sol[Threads.threadid()]( [tmp...] ; verbose=false)
+            Z_pe_bar = compute_sol[1]( [tmp...] ; verbose=false)
             Z_pe_bar = X*Z_pe_bar
 
             Bii_first_bar = Bii_first_bar + (Z_pe_bar.*Z_pe_bar)

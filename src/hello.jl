@@ -44,7 +44,7 @@ using JLD2
 @save "tmp.jld2" obs y first_id second_id controls settings
 # @save "tmp2.jld2" obs y first_id second_id controls settings
 # @load "tmp.jld2" obs y first_id second_id controls y_raw first_id_raw second_id_raw settings
-# @load "tmp3.jld2" obs y first_id second_id controls 
+@load "tmp3.jld2" obs y first_id second_id controls 
 # using LinearOperators
 # Dbarvar = hcat(F * opCholesky((F' *F)) * F' * D , spzeros(NT,J-1) )
 
