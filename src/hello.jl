@@ -21,15 +21,76 @@ using LinearMaps
 # data = CSV.read("py_final_1985_2001_veneto_only_added_vars.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("SSA_data_group_A_True.csv", DataFrame, missingstrings = ["NA", ""])
 data = CSV.read("gen_data.csv", DataFrame, missingstrings = ["NA", ""])
+# data = CSV.read("reduced_data.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("SSA_data_group_B_False.csv")
+
+
+### experiments
+
+#first we run leave on out function to find leave one out sets. aassume we have them. We then get the corresponding firmids too in addition to firmyearids. For now assume we have them.
+firmid = data[:, "firmidg"]
+firmyearid = data.:firmyearid
+year = data.:year
+# nworkers = data.:nworkers
+
+personid = data[:, "idg"]
+firmyearid = data[:, "firmyearid"]
+y = data[:, :lwage]
+firmid = data[:, :firmidg]
+year = data[:, :year]
+
+personid = [1, 1, 2, 2, 1, 2]
+firmyearid = [1, 2, 1, 3, 4, 4, 5, 6, 7, 8]
+firmid = [1, 2, 1, 1, 2, 2, 2, 2, 1, 1]
+year = [1, 2, 1, 2, 3, 3, 4, 5, 6, 7]
+
+df = DataFrame(firmid = firmid, firmyearid = firmyearid,  year = year)
+df = @pipe groupby(df, [:firmyearid]) |> combine(_, :firmid => first => :firmid, :year => first => :year, nrow => :nworkers)
+
+#we assume that the data is sorted by firmid and year, so the sort in the next line shouldn't affect anything.
+df = @pipe sort(df, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (lead(x) .- 1) ) => :has_next) |> transform(_, :nworkers => lead => :nworkers_next)
+df[ismissing.(df.:has_next), :has_next] = 0
+df[!, :row_number] = 1:nrow(df)
+
+# sum(skipmissing(d3.:has_next))
+
+df2 = df[df.:has_next .== 1, :]
+df2[!, :row_number2] = 1:nrow(df2)
+M = size(df, 1)
+N = size(df2, 1)
+
+A1 = sparse(df2.:row_number2, df2.:row_number, -1)
+A1 = hcat(A1, spzeros(N, M - size(A1, 2)))
+A2 = sparse(df2.:row_number2, df2.row_number .+ 1, 1)
+A2 = hcat(A2, spzeros(N, M - size(A2, 2)))
+
+A = A1 + A2
+
+weights = sqrt.(df2.:nworkers_next)
+W = Diagonal(weights)
+# NT = size(personid, 1)
+# J = maximum(firmyearid)
+# N = maximum(personid)
+
+#first (worker) Dummies
+D = sparse(collect(1:NT),personid,1)
+D = Matrix(D)
+#second (firm) Dummies
+F = sparse(collect(1:NT),firmyearid,1)
+F = Matrix(F)
+F
+F * (F'*F)^(-1) * F'
+### experimentsd1
 
 # ommitting the obs that are outliers in term of wage growth for at least one s
 # @pipe data |> filter!(x -> x.obs_1 & x.obs_2 & x.obs_3 & x.obs_4 & x.obs_5, _)
 data = data[1:100000, :]
 first_id_raw = data[:,"id"]
 second_id_raw = data[:, "year_by_firm"]
-# y_raw = data[:, "log_dailywages"]
-y_raw = data[:, "lwage"]
+y_raw = data[:, "log_dailywages"]
+# y_raw = data[:, "lwage"]
+
+
 
 settings = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=0),
     print_level = 1,
@@ -52,6 +113,7 @@ print(size(data,1) == size(y, 1))
 
 print(θ_firstbar)
 print(θCOV)
+print(θ_second)
 # using JLD2
 # @save "obs.jld2" obs
 # @save "y.jld2" y
