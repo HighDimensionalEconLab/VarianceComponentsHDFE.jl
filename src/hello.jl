@@ -68,6 +68,16 @@ A = A1 + A2
 
 weights = sqrt.(df2.:nworkers_next)
 W = Diagonal(weights)
+
+
+
+weightedA = W * A
+nrows = size(A, 1)
+A1 = hcat(spzeros(nrows, N), weightedA[:, 1:J-1])
+
+tmp = Diagonal(1 ./ sum(F, dims = 1)[1,:]) * F'
+A2 = weightedA * tmp
+W
 # NT = size(personid, 1)
 # J = maximum(firmyearid)
 # N = maximum(personid)
@@ -87,8 +97,8 @@ F * (F'*F)^(-1) * F'
 data = data[1:100000, :]
 first_id_raw = data[:,"id"]
 second_id_raw = data[:, "year_by_firm"]
-y_raw = data[:, "log_dailywages"]
-# y_raw = data[:, "lwage"]
+# y_raw = data[:, "log_dailywages"]
+y_raw = data[:, "lwage"]
 
 
 

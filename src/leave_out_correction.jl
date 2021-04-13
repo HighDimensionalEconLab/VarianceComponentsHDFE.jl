@@ -683,7 +683,6 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
     #Part 3: Compute Pii, Bii
     @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov, Bii_first_bar = leverages(settings.leverage_algorithm, X, Dvar, Fvar, Dbarvar, settings)
-    print("unpacking done first \n ********************************************************* \n ***************************************")
     (settings.print_level > 1) && println("Pii and Bii have been computed.")
 
     #Compute Leave-out residual
@@ -917,7 +916,7 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, settings)
         end    
 
         if settings.first_id_bar_effects == true 
-            print("i is: ", i)
+            # print("i is: ", i)
             # @time tmp = rademach * Dbarvar
             # @time tmp = Matrix(tmp)
             # tmp = transpose(tmp) * [1]
