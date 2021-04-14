@@ -44,7 +44,8 @@ firmyearid = [1, 2, 1, 3, 4, 4, 5, 6, 7, 8]
 firmid = [1, 2, 1, 1, 2, 2, 2, 2, 1, 1]
 year = [1, 2, 1, 2, 3, 3, 4, 5, 6, 7]
 
-df = DataFrame(firmid = firmid, firmyearid = firmyearid,  year = year)
+df = DataFrame(firmid = data.:firmidg, firmyearid = data.:firmyearid, year = data.:year)
+# df = DataFrame(firmid = firmid, firmyearid = firmyearid,  year = year)
 df = @pipe groupby(df, [:firmyearid]) |> combine(_, :firmid => first => :firmid, :year => first => :year, nrow => :nworkers)
 
 #we assume that the data is sorted by firmid and year, so the sort in the next line shouldn't affect anything.
@@ -72,6 +73,7 @@ W = Diagonal(weights)
 
 
 weightedA = W * A
+
 nrows = size(A, 1)
 A1 = hcat(spzeros(nrows, N), weightedA[:, 1:J-1])
 
@@ -101,13 +103,32 @@ second_id_raw = data[:, "year_by_firm"]
 y_raw = data[:, "lwage"]
 
 
+data = data[obs, :]
+tmp = unique(data.:firmidg)
+data[!, :firmidg] = indexin(data.:firmidg, tmp)
+
+tmp = unique(unique(data.:firmyearid))
+data[!, :firmyearid] = indexin(data.:firmyearid, tmp)
+
+tmp = unique(unique(data.:id))
+data[!, :id] = indexin(data.:id, tmp)
 
 settings = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=0),
     print_level = 1,
-    leave_out_level = "obs"
+    leave_out_level = "obs", 
+    first_id_effects = true,
+    first_id_bar_effects = true,
+    cov_effects = true
     )
 
 @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y_raw, first_id_raw, second_id_raw, settings, nothing)
+
+
+data = data[obs, :]
+
+y = data.:lwage
+first_id = data.:id
+second_id = data.:firmyearid
 
 print(size(data,1) == size(y, 1))
 
