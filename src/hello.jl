@@ -20,12 +20,23 @@ using LinearMaps
 # data = CSV.read("layoff_raw_data_mlayoff_dropped_SSA_B.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("py_final_1985_2001_veneto_only_added_vars.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("SSA_data_group_A_True.csv", DataFrame, missingstrings = ["NA", ""])
-data = CSV.read("gen_data.csv", DataFrame, missingstrings = ["NA", ""])
+# data = CSV.read("gen_data.csv", DataFrame, missingstrings = ["NA", ""])
+data = CSV.read("small_data_gen2.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("reduced_data.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("SSA_data_group_B_False.csv")
-
+CSV.write("small_data_gen2.csv", data)
 
 ### experiments
+
+data = data[obs, :]
+tmp = unique(data.:firmidg)
+data[!, :firmidg] = indexin(data.:firmidg, tmp)
+
+tmp = unique(unique(data.:firmyearid))
+data[!, :firmyearid] = indexin(data.:firmyearid, tmp)
+
+tmp = unique(unique(data.:id))
+data[!, :id] = indexin(data.:id, tmp)
 
 #first we run leave on out function to find leave one out sets. aassume we have them. We then get the corresponding firmids too in addition to firmyearids. For now assume we have them.
 firmid = data[:, "firmidg"]
@@ -67,12 +78,20 @@ A2 = hcat(A2, spzeros(N, M - size(A2, 2)))
 
 A = A1 + A2
 
+denom = sum(df2.:nworkers_next)
+# denom = nrow(data)
+numer = nrow(df2)
+# numer = 2
+scall = sqrt((numer-1)/(denom-1))
+# scall = 1
 weights = sqrt.(df2.:nworkers_next)
 W = Diagonal(weights)
+weightedA = scall * W * A
 
 
-
-weightedA = W * A
+y = data.:lwage
+first_id = data.:id
+second_id = data.:firmyearid
 
 nrows = size(A, 1)
 A1 = hcat(spzeros(nrows, N), weightedA[:, 1:J-1])
@@ -103,15 +122,7 @@ second_id_raw = data[:, "year_by_firm"]
 y_raw = data[:, "lwage"]
 
 
-data = data[obs, :]
-tmp = unique(data.:firmidg)
-data[!, :firmidg] = indexin(data.:firmidg, tmp)
 
-tmp = unique(unique(data.:firmyearid))
-data[!, :firmyearid] = indexin(data.:firmyearid, tmp)
-
-tmp = unique(unique(data.:id))
-data[!, :id] = indexin(data.:id, tmp)
 
 settings = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=0),
     print_level = 1,
@@ -122,13 +133,10 @@ settings = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=0),
     )
 
 @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y_raw, first_id_raw, second_id_raw, settings, nothing)
-
-
+data
 data = data[obs, :]
 
-y = data.:lwage
-first_id = data.:id
-second_id = data.:firmyearid
+
 
 print(size(data,1) == size(y, 1))
 

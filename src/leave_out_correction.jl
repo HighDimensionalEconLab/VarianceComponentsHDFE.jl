@@ -543,13 +543,14 @@ Computes a KSS quadratic form to correct bias.
 * `beta`: fixed effects coefficients vector
 * `Bii`: Bii correction elements.
 """
-function kss_quadratic_form(sigma_i, A_1, A_2, beta, Bii)
+function kss_quadratic_form2(sigma_i, A_1, A_2, beta, Bii)
     right                               = A_2*beta
     left                                = A_1*beta
-    theta                               = cov(left,right)
-    theta                               = theta[1]
-    dof                                 = size(left,1)-1
-    theta_KSS                           = theta-(1/dof)*sum(Bii.*sigma_i)
+    theta                               = left' * right
+    # theta                               = cov(left,right)
+    # theta                               = theta[1]
+    # dof                                 = size(left,1)-1
+    # theta_KSS                           = theta-(1/dof)*sum(Bii.*sigma_i)
 end
 
 
@@ -566,7 +567,7 @@ Returns the bias-corrected components, the vector of coefficients, the correspon
 * `controls`: matrix of control variables. At this version it doesn't work properly for very large datasets.
 """
 function leave_out_estimation(y,first_id,second_id,controls,settings)
-
+    controls = nothing
     #Create matrices for computations
     NT = size(y,1)
     J = maximum(second_id)
@@ -685,9 +686,9 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         # weightedA = ttt
         # weightedA = weightedA[:, 1:size(weightedA, 2)-1]
         A1 = hcat(spzeros(size(weightedA, 1), N), weightedA[:, 1:J-1])
-        A2 = hcat(ttt * Diagonal(1 ./ sum(F, dims = 1)[1,:]) * F' * D, spzeros(size(weightedA, 1), J-1))
+        # A2 = hcat(ttt * Diagonal(1 ./ sum(F, dims = 1)[1,:]) * F' * D, spzeros(size(weightedA, 1), J-1))
 
-        A2 = hcat(ttt * Diagonal(1 ./ sum(F, dims = 1)[1,:]) * -F' * D, spzeros(size(weightedA, 1), J-1))
+        A2 = hcat(weightedA * Diagonal(1 ./ sum(F, dims = 1)[1,:]) * -F' * D, spzeros(size(weightedA, 1), J-1))
         
         # Dbarvar = hcat(F * sparse(collect(1:J), collect(1:J), 1 ./ sum(F, dims = 1)[1,:]) * F' * D , spzeros(NT,J-1) )
     end
@@ -726,9 +727,9 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
     θ_firstbar = settings.first_id_bar_effects == true ? kss_quadratic_form(sigma_i, Dbarvar, Dbarvar, beta, Bii_first_bar) : nothing #todo
 
-    θ_var_bar = kss_quadratic_form(sigma_i, A2, A2, beta, Bii_var_bar)
+    θ_var_bar = kss_quadratic_form2(sigma_i, A2, A2, beta, Bii_var_bar)
 
-    θ_cov_bar = kss_quadratic_form(sigma_i, A1, A2, beta, Bii_cov_bar)
+    θ_cov_bar = kss_quadratic_form2(sigma_i, A1, A2, beta, Bii_cov_bar)
 
     #Pii = diag(Pii)
 

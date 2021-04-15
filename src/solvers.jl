@@ -21,7 +21,7 @@ function AmgOperator(ml::AlgebraicMultigrid.MultiLevel, buff::Vector{Tval}) wher
 end
 
 # Compute a solver for a grounded system (SDDM matrix) with a PreallocatedLinearOperator, and an adjacency matrix
-function approxcholSolver(P::PreallocatedLinearOperator, la::AbstractArray; tol::Real=1e-6, maxits=300, verbose=0)
+function approxcholSolver(P::PreallocatedLinearOperator, la::AbstractArray; tol::Real=1e-10, maxits=300, verbose=0)
 
     tol_=tol
     maxits_=maxits
