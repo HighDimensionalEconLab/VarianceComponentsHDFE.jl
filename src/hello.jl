@@ -21,14 +21,19 @@ using LinearMaps
 # data = CSV.read("py_final_1985_2001_veneto_only_added_vars.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("SSA_data_group_A_True.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("gen_data.csv", DataFrame, missingstrings = ["NA", ""])
-data = CSV.read("small_data_gen2.csv", DataFrame, missingstrings = ["NA", ""])
+data = CSV.read("small_data_gen4.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("reduced_data.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("SSA_data_group_B_False.csv")
-CSV.write("small_data_gen2.csv", data)
+data = CSV.read("first_step_reduced_leave_out_data_renamed.csv", DataFrame, missingstrings = ["NA", ""])
+# data = CSV.read("first_step_reduced_leave_out_data_renamed_nge50.csv", DataFrame, missingstrings = ["NA", ""])
+CSV.write("first_step_reduced_leave_out_data_renamed_nge50.csv", data)
+
+CSV.write("small_data_gen3.csv", data)
+
 
 ### experiments
-
-data = data[obs, :]
+rename!(data, :firmid => :firmidg)
+# data = data[obs, :]
 tmp = unique(data.:firmidg)
 data[!, :firmidg] = indexin(data.:firmidg, tmp)
 
@@ -39,21 +44,21 @@ tmp = unique(unique(data.:id))
 data[!, :id] = indexin(data.:id, tmp)
 
 #first we run leave on out function to find leave one out sets. aassume we have them. We then get the corresponding firmids too in addition to firmyearids. For now assume we have them.
-firmid = data[:, "firmidg"]
-firmyearid = data.:firmyearid
-year = data.:year
-# nworkers = data.:nworkers
+# firmid = data[:, "firmidg"]
+# firmyearid = data.:firmyearid
+# year = data.:year
+# # nworkers = data.:nworkers
 
-personid = data[:, "idg"]
-firmyearid = data[:, "firmyearid"]
-y = data[:, :lwage]
-firmid = data[:, :firmidg]
-year = data[:, :year]
+# personid = data[:, "idg"]
+# firmyearid = data[:, "firmyearid"]
+# y = data[:, :lwage]
+# firmid = data[:, :firmidg]
+# year = data[:, :year]
 
-personid = [1, 1, 2, 2, 1, 2]
-firmyearid = [1, 2, 1, 3, 4, 4, 5, 6, 7, 8]
-firmid = [1, 2, 1, 1, 2, 2, 2, 2, 1, 1]
-year = [1, 2, 1, 2, 3, 3, 4, 5, 6, 7]
+# personid = [1, 1, 2, 2, 1, 2]
+# firmyearid = [1, 2, 1, 3, 4, 4, 5, 6, 7, 8]
+# firmid = [1, 2, 1, 1, 2, 2, 2, 2, 1, 1]
+# year = [1, 2, 1, 2, 3, 3, 4, 5, 6, 7]
 
 df = DataFrame(firmid = data.:firmidg, firmyearid = data.:firmyearid, year = data.:year)
 # df = DataFrame(firmid = firmid, firmyearid = firmyearid,  year = year)
@@ -78,20 +83,47 @@ A2 = hcat(A2, spzeros(N, M - size(A2, 2)))
 
 A = A1 + A2
 
-denom = sum(df2.:nworkers_next)
+# sum_weights = sum(df2.:nworkers_next)
 # denom = nrow(data)
-numer = nrow(df2)
+ncols = nrow(df2)
 # numer = 2
-scall = sqrt((numer-1)/(denom-1))
+# scall = sqrt((numer-1)/(denom-1))
 # scall = 1
-weights = sqrt.(df2.:nworkers_next)
-W = Diagonal(weights)
-weightedA = scall * W * A
+weights = df2.:nworkers_next
 
+# @time weightedA = vcat([repeat(A[i,:]', inner=(weights[i],1)) for i=1:size(A,1)]...)
+
+# sum_weights = sum(weights)
+# weights = df2.:nworkers_next
+# W = Diagonal(weights)
+# weightedA = scall * W * A
+
+# weights = [3 2 4]
+# S = [-1 1 0 0 0; 0 -1 1 0 0; 0 0 0 -1 1]
+# ncols = 3
+sum_weights = sum(weights)
+Wp = spzeros(sum_weights, ncols)
+i = 1
+j = 1
+@time for weight in weights
+    Wp[i:i+weight-1, j] .= 1.0
+    i += weight
+    j += 1
+end
+
+Matrix(Wp)
+# weightedA = Wp
+weightedA = Wp * A
+
+# rows, cols, vals = findnz(A)
 
 y = data.:lwage
 first_id = data.:id
 second_id = data.:firmyearid
+
+y_raw = y
+first_id_raw = first_id
+second_id_raw = second_id
 
 nrows = size(A, 1)
 A1 = hcat(spzeros(nrows, N), weightedA[:, 1:J-1])
@@ -123,13 +155,18 @@ y_raw = data[:, "lwage"]
 
 
 
+S = sparse( [-1.0 1.0 0 0;0 0.0 -1.0 1.0; ])
+w = [3 ; 2 ]  #3 times first row, 2 times second row
+Matrix(S)
+Srep = vcat([repeat(S[i,:]', inner=(w[i],1)) for i=1:size(S,1)]...)
+Matrix(Srep)
 
 settings = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=0),
     print_level = 1,
     leave_out_level = "obs", 
-    first_id_effects = true,
+    first_id_effects = false,
     first_id_bar_effects = true,
-    cov_effects = true
+    cov_effects = false
     )
 
 @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y_raw, first_id_raw, second_id_raw, settings, nothing)

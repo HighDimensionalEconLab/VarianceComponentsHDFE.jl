@@ -671,24 +671,27 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         Dvar = hcat(  D, spzeros(NT,J-1) )
         Fvar = hcat(spzeros(NT,N), -F*S )
         # Dbarvar = hcat(F * inv(Matrix(F' *F)) * F' * D , spzeros(NT,J-1) )
-        Dbarvar = F' * D
-        Dbarvar =Diagonal(1 ./ sum(F, dims = 1)[1,:]) * Dbarvar
+        lOp = F' * D
+        lOp =Diagonal(1 ./ sum(F, dims = 1)[1,:]) * lOp
         # Dbarvar = spdiagm( 0 => 1 ./ sum(F, dims = 1)[1,:]) * Dbarvar
-        Dbarvar = LinearOperator(Dbarvar)
+        lOp = LinearOperator(lOp)
 
         # Dbarvar = LinearMap(Dbarvar)        
-        Dbarvar = F*Dbarvar
+        Dbarvar = F*lOp
         Dbarvar = hcat(Dbarvar, spzeros(NT,J-1))
 
         # I also did a dimension change
         # I'm not sure about ttt var, TODO
-        ttt = weightedA
+        # ttt = weightedA
         # weightedA = ttt
         # weightedA = weightedA[:, 1:size(weightedA, 2)-1]
-        A1 = hcat(spzeros(size(weightedA, 1), N), weightedA[:, 1:J-1])
+        @time A1 = hcat(spzeros(size(weightedA, 1), N), weightedA[:, 1:J-1])
         # A2 = hcat(ttt * Diagonal(1 ./ sum(F, dims = 1)[1,:]) * F' * D, spzeros(size(weightedA, 1), J-1))
+        tmp = weightedA * lOp
 
-        A2 = hcat(weightedA * Diagonal(1 ./ sum(F, dims = 1)[1,:]) * -F' * D, spzeros(size(weightedA, 1), J-1))
+        # @time A2 = hcat(weightedA * Diagonal(1 ./ sum(F, dims = 1)[1,:]) * -F' * D, spzeros(size(weightedA, 1), J-1))
+
+        @time A2 = hcat(tmp, spzeros(size(weightedA, 1), J-1) )
         
         # Dbarvar = hcat(F * sparse(collect(1:J), collect(1:J), 1 ./ sum(F, dims = 1)[1,:]) * F' * D , spzeros(NT,J-1) )
     end
@@ -696,7 +699,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     #Part 3: Compute Pii, Bii
     using Random
     using Statistics
-    @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov, Bii_first_bar, Bii_cov_bar, Bii_var_bar = leverages2(settings.leverage_algorithm, X, Dvar, Fvar, Dbarvar, A1, A2, settings)
+    @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov, Bii_first_bar, Bii_cov_bar, Bii_var_first_bar, Bii_var_second_bar = leverages2(settings.leverage_algorithm, X, Dvar, Fvar, Dbarvar, A1, A2, settings)
     (settings.print_level > 1) && println("Pii and Bii have been computed.")
 
     #Compute Leave-out residual
@@ -727,9 +730,31 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
     θ_firstbar = settings.first_id_bar_effects == true ? kss_quadratic_form(sigma_i, Dbarvar, Dbarvar, beta, Bii_first_bar) : nothing #todo
 
-    θ_var_bar = kss_quadratic_form2(sigma_i, A2, A2, beta, Bii_var_bar)
+    # θ_var_bar = kss_quadratic_form2(sigma_i, A2, A2, beta, Bii_var_bar)
 
-    θ_cov_bar = kss_quadratic_form2(sigma_i, A1, A2, beta, Bii_cov_bar)
+    # θ_cov_bar = kss_quadratic_form2(sigma_i, A1, A2, beta, Bii_cov_bar)
+
+    θ_var_first_bar = kss_quadratic_form(sigma_i, A2, A2, beta, Bii_var_first_bar)
+
+    θ_cov_bar = kss_quadratic_form(sigma_i, A1, A2, beta, Bii_cov_bar)
+
+    θ_var_second_bar = kss_quadratic_form(sigma_i, A1, A1, beta, Bii_var_second_bar)
+
+    β2 = θ_cov_bar/θ_var_first_bar
+
+    Rsquared = β2 * β2 * θ_var_first_bar / θ_var_second_bar
+
+    maximum(sigma_i)
+
+    minimum(sigma_i)
+
+    mean(sigma_i)
+
+    # sigma_i = zeros(size(sigma_i))
+
+    # θ_var_bar = kss_quadratic_form(sigma_i, A2, A2, beta, Bii_var_bar)
+
+    # θ_cov_bar = kss_quadratic_form(sigma_i, A1, A2, beta, Bii_cov_bar)
 
     #Pii = diag(Pii)
 
@@ -879,7 +904,8 @@ function leverages2(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, A1, A2, settings)
     Bii_first= settings.first_id_effects == true ? zeros(NT) : nothing
     Bii_first_bar = settings.first_id_bar_effects == true ? zeros(NT) : nothing
     Bii_cov_bar = zeros(NT)
-    Bii_var_bar = zeros(NT)
+    Bii_var_first_bar = zeros(NT)
+    Bii_var_second_bar = zeros(NT)
 
     Mii = zeros(NT)
     Pii_sq = zeros(NT)
@@ -949,15 +975,19 @@ function leverages2(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, A1, A2, settings)
         rademach  = rademach /sqrt(p)
         rademach = rademach .- mean(rademach)
 
-        Z = compute_sol[Threads.threadid()]( [rademach*A2...] ; verbose=false)
+        @time tmp = transpose(A2) * rademach'
+        tmp = (tmp * [1])
+        Z = compute_sol[Threads.threadid()]( [tmp...] ; verbose=false)
         Z = X * Z
         
-        Bii_var_bar = Bii_var_bar + (Z .* Z)
+        Bii_var_first_bar = Bii_var_first_bar + (Z .* Z)
 
         Z2 = compute_sol[Threads.threadid()]( [rademach*A1...] ; verbose=false)
         Z2 = X * Z2
 
         Bii_cov_bar = Bii_cov_bar + (Z2 .* Z)
+
+        Bii_var_second_bar = Bii_var_second_bar + (Z2 .* Z2)
     end
 
     #Censor
@@ -970,7 +1000,7 @@ function leverages2(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, A1, A2, settings)
     Bi = (1/p)*(Mii.*Pii_sq-Pii.*Mii_sq+2*(Mii-Pii).*Pii_Mii)
     correction_JLA = (1 .- Vi./(Mii.^2)+Bi./Mii)       
 
-    return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov, Bii_first_bar = Bii_first_bar, Bii_cov_bar = Bii_cov_bar, Bii_var_bar = Bii_var_bar)
+    return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov, Bii_first_bar = Bii_first_bar, Bii_cov_bar = Bii_cov_bar, Bii_var_first_bar = Bii_var_first_bar, Bii_var_second_bar = Bii_var_second_bar)
 end
 
 
