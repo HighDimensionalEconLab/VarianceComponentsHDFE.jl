@@ -15,27 +15,11 @@ using LinearMaps
 # also uncomment the write section at the ends
 
 
-# data = CSV.read("layoff_raw_data_mlayoff_dropped.csv", DataFrame, missingstrings = ["NA", ""])
-# data = CSV.read("layoff_raw_data_mlayoff_dropped_SSA_B.csv", DataFrame, missingstrings = ["NA", ""])
-# data = CSV.read("layoff_raw_data_mlayoff_dropped_SSA_B.csv", DataFrame, missingstrings = ["NA", ""])
-# data = CSV.read("py_final_1985_2001_veneto_only_added_vars.csv", DataFrame, missingstrings = ["NA", ""])
-# data = CSV.read("SSA_data_group_A_True.csv", DataFrame, missingstrings = ["NA", ""])
-# data = CSV.read("gen_data.csv", DataFrame, missingstrings = ["NA", ""])
-# data = CSV.read("small_data_gen4.csv", DataFrame, missingstrings = ["NA", ""])
-# data = CSV.read("reduced_data.csv", DataFrame, missingstrings = ["NA", ""])
-# data = CSV.read("gen_data_homoskedastic_m0_v1.csv")
-# data = CSV.read("first_step_reduced_leave_out_data_renamed.csv", DataFrame, missingstrings = ["NA", ""])
 data = CSV.read("gen_data_homoskedastic_m0_v1.csv", DataFrame, missingstrings = ["NA", ""])
 
-# data = CSV.read("first_step_reduced_leave_out_data_renamed_nge50.csv", DataFrame, missingstrings = ["NA", ""])
-# CSV.write("first_step_reduced_leave_out_data_renamed_nge50.csv", data)
+### some data cleaning
+# rename!(data, :firmid => :firmidg)
 
-# CSV.write("small_data_gen3.csv", data)
-
-
-### experiments
-rename!(data, :firmid => :firmidg)
-# data = data[obs, :]
 tmp = unique(data.:firmidg)
 data[!, :firmidg] = indexin(data.:firmidg, tmp)
 
@@ -45,33 +29,14 @@ data[!, :firmyearid] = indexin(data.:firmyearid, tmp)
 tmp = unique(unique(data.:id))
 data[!, :id] = indexin(data.:id, tmp)
 
-#first we run leave on out function to find leave one out sets. aassume we have them. We then get the corresponding firmids too in addition to firmyearids. For now assume we have them.
-# firmid = data[:, "firmidg"]
-# firmyearid = data.:firmyearid
-# year = data.:year
-# # nworkers = data.:nworkers
-
-# personid = data[:, "idg"]
-# firmyearid = data[:, "firmyearid"]
-# y = data[:, :lwage]
-# firmid = data[:, :firmidg]
-# year = data[:, :year]
-
-# personid = [1, 1, 2, 2, 1, 2]
-# firmyearid = [1, 2, 1, 3, 4, 4, 5, 6, 7, 8]
-# firmid = [1, 2, 1, 1, 2, 2, 2, 2, 1, 1]
-# year = [1, 2, 1, 2, 3, 3, 4, 5, 6, 7]
-
+### In the following lines, we find W and Fdelta
 df = DataFrame(firmid = data.:firmidg, firmyearid = data.:firmyearid, year = data.:year)
-# df = DataFrame(firmid = firmid, firmyearid = firmyearid,  year = year)
 df = @pipe groupby(df, [:firmyearid]) |> combine(_, :firmid => first => :firmid, :year => first => :year, nrow => :nworkers)
 
 #we assume that the data is sorted by firmid and year, so the sort in the next line shouldn't affect anything.
 df = @pipe sort(df, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (lead(x) .- 1) ) => :has_next) |> transform(_, :nworkers => lead => :nworkers_next)
 df[ismissing.(df.:has_next), :has_next] = 0
 df[!, :row_number] = 1:nrow(df)
-
-# sum(skipmissing(d3.:has_next))
 
 df2 = df[df.:has_next .== 1, :]
 df2[!, :row_number2] = 1:nrow(df2)
@@ -83,41 +48,22 @@ A1 = hcat(A1, spzeros(N, M - size(A1, 2)))
 A2 = sparse(df2.:row_number2, df2.row_number .+ 1, 1)
 A2 = hcat(A2, spzeros(N, M - size(A2, 2)))
 
-A = A1 + A2
+Fdelta = A1 + A2
 
-# sum_weights = sum(df2.:nworkers_next)
-# denom = nrow(data)
 ncols = nrow(df2)
-# numer = 2
-# scall = sqrt((numer-1)/(denom-1))
-# scall = 1
 weights = df2.:nworkers_next
-
-# @time weightedA = vcat([repeat(A[i,:]', inner=(weights[i],1)) for i=1:size(A,1)]...)
-
-# sum_weights = sum(weights)
-# weights = df2.:nworkers_next
-# W = Diagonal(weights)
-# weightedA = scall * W * A
-
-# weights = [3 2 4]
-# S = [-1 1 0 0 0; 0 -1 1 0 0; 0 0 0 -1 1]
-# ncols = 3
 sum_weights = sum(weights)
-Wp = spzeros(sum_weights, ncols)
+W = spzeros(sum_weights, ncols)
 i = 1
 j = 1
 @time for weight in weights
-    Wp[i:i+weight-1, j] .= 1.0
+    W[i:i+weight-1, j] .= 1.0
     i += weight
     j += 1
 end
 
-# Matrix(Wp)
-# weightedA = Wp
-weightedA = Wp * A
-
-# rows, cols, vals = findnz(A)
+### Finishing finding W and Fdelta
+WFdelta = W * Fdelta
 
 y = data.:lwage
 first_id = data.:id

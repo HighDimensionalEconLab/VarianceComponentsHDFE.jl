@@ -543,14 +543,13 @@ Computes a KSS quadratic form to correct bias.
 * `beta`: fixed effects coefficients vector
 * `Bii`: Bii correction elements.
 """
-function kss_quadratic_form2(sigma_i, A_1, A_2, beta, Bii)
+function kss_quadratic_form(sigma_i, A_1, A_2, beta, Bii)
     right                               = A_2*beta
     left                                = A_1*beta
-    theta                               = left' * right
-    # theta                               = cov(left,right)
-    # theta                               = theta[1]
-    # dof                                 = size(left,1)-1
-    # theta_KSS                           = theta-(1/dof)*sum(Bii.*sigma_i)
+    theta                               = cov(left,right)
+    theta                               = theta[1]
+    dof                                 = size(left,1)-1
+    theta_KSS                           = theta-(1/dof)*sum(Bii.*sigma_i)
 end
 
 
@@ -566,7 +565,7 @@ Returns the bias-corrected components, the vector of coefficients, the correspon
 * `settings`: settings based on `VCHDFESettings`
 * `controls`: matrix of control variables. At this version it doesn't work properly for very large datasets.
 """
-function leave_out_estimation(y,first_id,second_id,controls,settings)
+function leave_out_estimation(y,first_id,second_id,controls,settings, WFdelta)
     controls = nothing
     #Create matrices for computations
     NT = size(y,1)
@@ -670,36 +669,22 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         X = hcat(D, -F*S)
         Dvar = hcat(  D, spzeros(NT,J-1) )
         Fvar = hcat(spzeros(NT,N), -F*S )
-        # Dbarvar = hcat(F * inv(Matrix(F' *F)) * F' * D , spzeros(NT,J-1) )
-        lOp = F' * D
-        lOp =Diagonal(1 ./ sum(F, dims = 1)[1,:]) * lOp
-        # Dbarvar = spdiagm( 0 => 1 ./ sum(F, dims = 1)[1,:]) * Dbarvar
-        lOp = LinearOperator(lOp)
-
-        # Dbarvar = LinearMap(Dbarvar)        
+        lOp = F' * D 
+        lOp = Diagonal(1 ./ sum(F, dims = 1)[1,:]) * lOp
+        lOp = LinearOperator(lOp) # We are going to use this variable lOp again for the differences scenario      
         Dbarvar = F*lOp
         Dbarvar = hcat(Dbarvar, spzeros(NT,J-1))
 
-        # I also did a dimension change
-        # I'm not sure about ttt var, TODO
-        # ttt = weightedA
-        # weightedA = ttt
-        # weightedA = weightedA[:, 1:size(weightedA, 2)-1]
-        @time A1 = hcat(spzeros(size(weightedA, 1), N), weightedA[:, 1:J-1])
-        # A2 = hcat(ttt * Diagonal(1 ./ sum(F, dims = 1)[1,:]) * F' * D, spzeros(size(weightedA, 1), J-1))
-        tmp = weightedA * lOp
+        @time A1 = hcat(spzeros(size(WFdelta, 1), N), WFdelta[:, 1:J-1])
 
-        # @time A2 = hcat(weightedA * Diagonal(1 ./ sum(F, dims = 1)[1,:]) * -F' * D, spzeros(size(weightedA, 1), J-1))
+        tmp = WFdelta * lOp #big matrice, needed to use linearoperators, note lOp is computed a few lines above
+        @time A2 = hcat(tmp, spzeros(size(WFdelta, 1), J-1) )
 
-        @time A2 = hcat(tmp, spzeros(size(weightedA, 1), J-1) )
-        
-        # Dbarvar = hcat(F * sparse(collect(1:J), collect(1:J), 1 ./ sum(F, dims = 1)[1,:]) * F' * D , spzeros(NT,J-1) )
     end
 
     #Part 3: Compute Pii, Bii
-    using Random
-    using Statistics
-    @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov, Bii_first_bar, Bii_cov_bar, Bii_var_first_bar, Bii_var_second_bar = leverages2(settings.leverage_algorithm, X, Dvar, Fvar, Dbarvar, A1, A2, settings)
+    #Note that "leverages2" is a function very similar to leverages, where we compute some more terms in it. Also it has a different signiture.
+    @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov, Bii_first_bar, Bii_dif_cov, Bii_dif_first_bar, Bii_dif_second_bar = leverages2(settings.leverage_algorithm, X, Dvar, Fvar, Dbarvar, A1, A2, settings)
     (settings.print_level > 1) && println("Pii and Bii have been computed.")
 
     #Compute Leave-out residual
@@ -721,82 +706,82 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         sigma_i[stayers] .= [sigma_stayers[j] for j in findall(x->x==true,stayers )]
     end
 
+    #We print on the go
     #Compute bias corrected variance comp of second (Firm) Effects
+    println("KSS Results:")
     θ_second = kss_quadratic_form(sigma_i, Fvar, Fvar, beta, Bii_second)
+    println(θ_second)
 
     θ_first = settings.first_id_effects==true  ? kss_quadratic_form(sigma_i, Dvar, Dvar, beta, Bii_first) : nothing
-
+    println(θ_first)
+    
     θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
+    println(θCOV)
 
-    θ_firstbar = settings.first_id_bar_effects == true ? kss_quadratic_form(sigma_i, Dbarvar, Dbarvar, beta, Bii_first_bar) : nothing #todo
+    #var(alphbar)
+    θ_firstbar = settings.first_id_bar_effects == true ? kss_quadratic_form(sigma_i, Dbarvar, Dbarvar, beta, Bii_first_bar) : nothing 
+    println(θ_firstbar)
 
-    β1 = θCOV/θ_firstbar
+    β1 = θCOV/θ_firstbar # Note that cov(psi, alphabar) = cov(psi , alpha) = θCOV
+    println(β1)
+    
     Rsquared1 = β1 * β1 * θ_firstbar / θ_second
+    println(Rsquared1)
 
-    # θ_var_bar = kss_quadratic_form2(sigma_i, A2, A2, beta, Bii_var_bar)
+    θ_dif_first_bar = kss_quadratic_form(sigma_i, A2, A2, beta, Bii_dif_first_bar)
+    println(θ_dif_first_bar)
 
-    # θ_cov_bar = kss_quadratic_form2(sigma_i, A1, A2, beta, Bii_cov_bar)
+    θ_dif_cov = kss_quadratic_form(sigma_i, A1, A2, beta, Bii_dif_cov)
+    println(θ_dif_cov)
 
-    θ_var_first_bar = kss_quadratic_form(sigma_i, A2, A2, beta, Bii_var_first_bar)
+    θ_dif_second_bar = kss_quadratic_form(sigma_i, A1, A1, beta, Bii_dif_second_bar)
+    println(θ_dif_second_bar)
 
-    θ_cov_bar = kss_quadratic_form(sigma_i, A1, A2, beta, Bii_cov_bar)
+    β2 = θ_dif_cov/θ_dif_first_bar
+    println(β2)
 
-    θ_var_second_bar = kss_quadratic_form(sigma_i, A1, A1, beta, Bii_var_second_bar)
+    Rsquared2 = β2 * β2 * θ_dif_first_bar / θ_dif_second_bar
+    println(Rsquared2)
 
-    β2 = θ_cov_bar/θ_var_first_bar
-
-    Rsquared2 = β2 * β2 * θ_var_first_bar / θ_var_second_bar
-
-    maximum(sigma_i)
-
-    minimum(sigma_i)
-
-    mean(sigma_i)
-
+    #Now we set sigma_i = 0 to find PI version
     sigma_i = zeros(size(sigma_i, 1))
 
-    #Compute bias corrected variance comp of second (Firm) Effects
+    println("PI Results:")
     θ_second = kss_quadratic_form(sigma_i, Fvar, Fvar, beta, Bii_second)
+    println(θ_second)
 
     θ_first = settings.first_id_effects==true  ? kss_quadratic_form(sigma_i, Dvar, Dvar, beta, Bii_first) : nothing
-
+    println(θ_first)
+    
     θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
+    println(θCOV)
 
-    θ_firstbar = settings.first_id_bar_effects == true ? kss_quadratic_form(sigma_i, Dbarvar, Dbarvar, beta, Bii_first_bar) : nothing #todo
+    #var(alphbar)
+    θ_firstbar = settings.first_id_bar_effects == true ? kss_quadratic_form(sigma_i, Dbarvar, Dbarvar, beta, Bii_first_bar) : nothing 
+    println(θ_firstbar)
 
-    β1PI = θCOV/θ_firstbar
-    Rsquared1 = β1PI * β1PI * θ_firstbar / θ_second
+    β1 = θCOV/θ_firstbar # Note that cov(psi, alphabar) = cov(psi , alpha) = θCOV
+    println(β1)
+    
+    Rsquared1 = β1 * β1 * θ_firstbar / θ_second
+    println(Rsquared1)
 
-    # θ_var_bar = kss_quadratic_form2(sigma_i, A2, A2, beta, Bii_var_bar)
+    θ_dif_first_bar = kss_quadratic_form(sigma_i, A2, A2, beta, Bii_dif_first_bar)
+    println(θ_dif_first_bar)
 
-    # θ_cov_bar = kss_quadratic_form2(sigma_i, A1, A2, beta, Bii_cov_bar)
+    θ_dif_cov = kss_quadratic_form(sigma_i, A1, A2, beta, Bii_dif_cov)
+    println(θ_dif_cov)
 
-    θ_var_first_bar = kss_quadratic_form(sigma_i, A2, A2, beta, Bii_var_first_bar)
+    θ_dif_second_bar = kss_quadratic_form(sigma_i, A1, A1, beta, Bii_dif_second_bar)
+    println(θ_dif_second_bar)
 
-    θ_cov_bar = kss_quadratic_form(sigma_i, A1, A2, beta, Bii_cov_bar)
+    β2 = θ_dif_cov/θ_dif_first_bar
+    println(β2)
 
-    θ_var_second_bar = kss_quadratic_form(sigma_i, A1, A1, beta, Bii_var_second_bar)
+    Rsquared2 = β2 * β2 * θ_dif_first_bar / θ_dif_second_bar
+    println(Rsquared2)
 
-    β2PI = θ_cov_bar/θ_var_first_bar
-
-    Rsquared2 = β2PI * β2PI * θ_var_first_bar / θ_var_second_bar
-
-
-    # sigma_i = zeros(size(sigma_i))
-
-    # θ_var_bar = kss_quadratic_form(sigma_i, A2, A2, beta, Bii_var_bar)
-
-    # θ_cov_bar = kss_quadratic_form(sigma_i, A1, A2, beta, Bii_cov_bar)
-
-    #Pii = diag(Pii)
-
-    #Bii_second = diag(Bii_second)
-
-    #Bii_first = settings.first_id_effects == true ? diag(Bii_first) : nothing
-
-    #Bii_cov = settings.cov_effects == true ? diag(Bii_cov) : nothing
-
-    #TODO print estimates
+    #TODO println estimates
     if settings.print_level > 0
         println("Bias-Corrected Variance Components:")
         println("Bias-Corrected Variance of $(settings.second_id_display_small) Effects: ", θ_second)
@@ -902,7 +887,6 @@ This function computes the diagonal matrices containing Pii and Bii under Johnso
 * `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
 """
 function leverages2(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, A1, A2, settings)
-
     NT = size(X,1)
     FE = size(X,2)
 
@@ -935,9 +919,9 @@ function leverages2(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, A1, A2, settings)
     Bii_cov= settings.cov_effects ==true ? zeros(NT) : nothing
     Bii_first= settings.first_id_effects == true ? zeros(NT) : nothing
     Bii_first_bar = settings.first_id_bar_effects == true ? zeros(NT) : nothing
-    Bii_cov_bar = zeros(NT)
-    Bii_var_first_bar = zeros(NT)
-    Bii_var_second_bar = zeros(NT)
+    Bii_dif_cov = zeros(NT)
+    Bii_dif_first_bar = zeros(NT)
+    Bii_dif_second_bar = zeros(NT)
 
     Mii = zeros(NT)
     Pii_sq = zeros(NT)
@@ -992,8 +976,9 @@ function leverages2(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, A1, A2, settings)
 
         end    
 
+        #levels scenario (alphabar)
         if settings.first_id_bar_effects == true 
-            @time tmp = transpose(Dbarvar) * rademach'
+            tmp = transpose(Dbarvar) * rademach'
             tmp = (tmp * [1])
             Z_pe_bar = compute_sol[Threads.threadid()]( [tmp...] ; verbose=false)
             Z_pe_bar = X*Z_pe_bar
@@ -1001,25 +986,27 @@ function leverages2(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, A1, A2, settings)
             Bii_first_bar = Bii_first_bar + (Z_pe_bar.*Z_pe_bar)
         end
 
+        #Differences scenario (Delta alphabar and Delta psi)
+
         #Another size Rademacher
         rademach =  rand(mts[Threads.threadid()],1,size(A2,1)) .> 0.5
         rademach  = rademach  .- (rademach .== 0)
         rademach  = rademach /sqrt(p)
         rademach = rademach .- mean(rademach)
 
-        @time tmp = transpose(A2) * rademach'
+        tmp = transpose(A2) * rademach'
         tmp = (tmp * [1])
-        Z = compute_sol[Threads.threadid()]( [tmp...] ; verbose=false)
-        Z = X * Z
+        Z_dif_pe_bar = compute_sol[Threads.threadid()]( [tmp...] ; verbose=false)
+        Z_dif_pe_bar = X * Z_dif_pe_bar
         
-        Bii_var_first_bar = Bii_var_first_bar + (Z .* Z)
+        Bii_dif_first_bar = Bii_dif_first_bar + (Z_dif_pe_bar .* Z_dif_pe_bar)
 
-        Z2 = compute_sol[Threads.threadid()]( [rademach*A1...] ; verbose=false)
-        Z2 = X * Z2
+        Z_dif_fe_bar = compute_sol[Threads.threadid()]( [rademach*A1...] ; verbose=false)
+        Z_dif_fe_bar = X * Z_dif_fe_bar
 
-        Bii_cov_bar = Bii_cov_bar + (Z2 .* Z)
+        Bii_dif_cov = Bii_dif_cov + (Z_dif_fe_bar .* Z_dif_pe_bar)
 
-        Bii_var_second_bar = Bii_var_second_bar + (Z2 .* Z2)
+        Bii_dif_second_bar = Bii_dif_second_bar + (Z_dif_fe_bar .* Z_dif_fe_bar)
     end
 
     #Censor
@@ -1032,7 +1019,7 @@ function leverages2(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, A1, A2, settings)
     Bi = (1/p)*(Mii.*Pii_sq-Pii.*Mii_sq+2*(Mii-Pii).*Pii_Mii)
     correction_JLA = (1 .- Vi./(Mii.^2)+Bi./Mii)       
 
-    return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov, Bii_first_bar = Bii_first_bar, Bii_cov_bar = Bii_cov_bar, Bii_var_first_bar = Bii_var_first_bar, Bii_var_second_bar = Bii_var_second_bar)
+    return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov, Bii_first_bar = Bii_first_bar, Bii_dif_cov = Bii_dif_cov, Bii_dif_first_bar = Bii_dif_first_bar, Bii_dif_second_bar = Bii_dif_second_bar)
 end
 
 
