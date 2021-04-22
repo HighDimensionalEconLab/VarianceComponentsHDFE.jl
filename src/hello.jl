@@ -21,14 +21,16 @@ using LinearMaps
 # data = CSV.read("py_final_1985_2001_veneto_only_added_vars.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("SSA_data_group_A_True.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("gen_data.csv", DataFrame, missingstrings = ["NA", ""])
-data = CSV.read("small_data_gen4.csv", DataFrame, missingstrings = ["NA", ""])
+# data = CSV.read("small_data_gen4.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("reduced_data.csv", DataFrame, missingstrings = ["NA", ""])
-# data = CSV.read("SSA_data_group_B_False.csv")
-data = CSV.read("first_step_reduced_leave_out_data_renamed.csv", DataFrame, missingstrings = ["NA", ""])
-# data = CSV.read("first_step_reduced_leave_out_data_renamed_nge50.csv", DataFrame, missingstrings = ["NA", ""])
-CSV.write("first_step_reduced_leave_out_data_renamed_nge50.csv", data)
+# data = CSV.read("gen_data_homoskedastic_m0_v1.csv")
+# data = CSV.read("first_step_reduced_leave_out_data_renamed.csv", DataFrame, missingstrings = ["NA", ""])
+data = CSV.read("gen_data_homoskedastic_m0_v1.csv", DataFrame, missingstrings = ["NA", ""])
 
-CSV.write("small_data_gen3.csv", data)
+# data = CSV.read("first_step_reduced_leave_out_data_renamed_nge50.csv", DataFrame, missingstrings = ["NA", ""])
+# CSV.write("first_step_reduced_leave_out_data_renamed_nge50.csv", data)
+
+# CSV.write("small_data_gen3.csv", data)
 
 
 ### experiments
@@ -111,7 +113,7 @@ j = 1
     j += 1
 end
 
-Matrix(Wp)
+# Matrix(Wp)
 # weightedA = Wp
 weightedA = Wp * A
 
@@ -121,16 +123,26 @@ y = data.:lwage
 first_id = data.:id
 second_id = data.:firmyearid
 
-y_raw = y
-first_id_raw = first_id
-second_id_raw = second_id
+settings = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=0),
+    print_level = 1,
+    leave_out_level = "obs", 
+    first_id_effects = true,
+    first_id_bar_effects = true,
+    cov_effects = true
+    )
 
-nrows = size(A, 1)
-A1 = hcat(spzeros(nrows, N), weightedA[:, 1:J-1])
+## NOW GO run the Leave out estimation function
 
-tmp = Diagonal(1 ./ sum(F, dims = 1)[1,:]) * F'
-A2 = weightedA * tmp
-W
+# y_raw = y
+# first_id_raw = first_id
+# second_id_raw = second_id
+
+# nrows = size(A, 1)
+# A1 = hcat(spzeros(nrows, N), weightedA[:, 1:J-1])
+
+# tmp = Diagonal(1 ./ sum(F, dims = 1)[1,:]) * F'
+# A2 = weightedA * tmp
+# W
 # NT = size(personid, 1)
 # J = maximum(firmyearid)
 # N = maximum(personid)
@@ -161,13 +173,7 @@ Matrix(S)
 Srep = vcat([repeat(S[i,:]', inner=(w[i],1)) for i=1:size(S,1)]...)
 Matrix(Srep)
 
-settings = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=0),
-    print_level = 1,
-    leave_out_level = "obs", 
-    first_id_effects = false,
-    first_id_bar_effects = true,
-    cov_effects = false
-    )
+
 
 @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y_raw, first_id_raw, second_id_raw, settings, nothing)
 data
