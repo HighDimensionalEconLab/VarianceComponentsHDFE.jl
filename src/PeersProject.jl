@@ -10,7 +10,7 @@ using LinearMaps
 using Random
 using Statistics
 
-data = CSV.read("gen_data_homoskedastic_m0_v1.csv", DataFrame, missingstrings = ["NA", ""])
+data = CSV.read("gen_data_homoskedastic_v03_v01_psibar.csv", DataFrame, missingstrings = ["NA", ""])
 
 ### some data cleaning
 # rename!(data, :firmid => :firmidg)
