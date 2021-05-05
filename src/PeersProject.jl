@@ -10,7 +10,8 @@ using LinearMaps
 using Random
 using Statistics
 
-data = CSV.read("gen_data_homoskedastic_v03_v01_psibar.csv", DataFrame, missingstrings = ["NA", ""])
+# data = CSV.read("gen_data_homoskedastic_v03_v01_psibar.csv", DataFrame, missingstrings = ["NA", ""])
+data = CSV.read("small_data_gen4.csv", DataFrame, missingstrings = ["NA", ""])
 
 ### some data cleaning
 # rename!(data, :firmid => :firmidg)
@@ -24,6 +25,9 @@ data[!, :firmyearid] = indexin(data.:firmyearid, tmp)
 tmp = unique(unique(data.:id))
 data[!, :id] = indexin(data.:id, tmp)
 
+################################################
+################################################
+################################################
 ### In the following lines, we find W and Fdelta
 df = DataFrame(firmid = data.:firmidg, firmyearid = data.:firmyearid, year = data.:year)
 df = @pipe groupby(df, [:firmyearid]) |> combine(_, :firmid => first => :firmid, :year => first => :year, nrow => :nworkers)
@@ -44,6 +48,7 @@ A2 = sparse(df2.:row_number2, df2.row_number .+ 1, 1)
 A2 = hcat(A2, spzeros(N, M - size(A2, 2)))
 
 Fdelta = A1 + A2
+#Fdelta founded
 
 ncols = nrow(df2)
 weights = df2.:nworkers_next
@@ -59,6 +64,9 @@ end
 
 ### Finishing finding W and Fdelta
 WFdelta = W * Fdelta
+###################################################################
+###################################################################
+###################################################################
 
 y = data.:lwage
 first_id = data.:id
@@ -69,7 +77,8 @@ settings = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=0),
     leave_out_level = "obs", 
     first_id_effects = true,
     first_id_bar_effects = true,
-    cov_effects = true
+    cov_effects = true, 
+    diff_effects = true
     )
 
 #We call a modified version of leave_out_estimation, so if you want to call it, you should run "] instantiate" again. Or just run that function in REPL line by line
