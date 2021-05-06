@@ -26,51 +26,6 @@ data[!, :firmyearid] = indexin(data.:firmyearid, tmp)
 tmp = unique(unique(data.:id))
 data[!, :id] = indexin(data.:id, tmp)
 
-# ################################################
-# #We will find Flag
-# df = DataFrame(firmid = data.:firmidg, firmyearid = data.:firmyearid, year = data.:year)
-# df = @pipe groupby(df, [:firmyearid]) |> combine(_, :firmid => first => :firmid, :year => first => :year, nrow => :nworkers)
-
-# df = @pipe sort(df, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (lag(x) .+ 1) ) => :has_prev_1) |> transform(_, :nworkers => lag => :nworkers_prev)
-# df[ismissing.(df.:has_prev_1), :has_prev_1] = 0
-# df[!, :row_number] = 1:nrow(df)
-
-
-# df2 = df[df.:has_prev_1 .== 1, :]
-# df2[!, :row_number2] = 1:nrow(df2)
-# M = size(df, 1)
-# N = size(df2, 1)
-
-# Flag1 = sparse(df2.:row_number2, df2.:row_number .- 1, 1)
-# Flag1 = hcat(Flag1, spzeros(N, M - size(Flag1, 2)))
-
-# Flag0 = sparse(df2.:row_number2, df2.:row_number, 1)
-# Flag0 = hcat(Flag0, spzeros(N, M - size(Flag0, 2)))
-
-# ##### Now creating W and WFlag1
-# ncols = nrow(df2)
-# weights = df2.:nworkers_prev
-# sum_weights = sum(weights)
-# W = spzeros(sum_weights, ncols)
-# i = 1
-# j = 1
-# @time for weight in weights
-#     W[i:i+weight-1, j] .= 1.0
-#     i += weight
-#     j += 1
-# end
-
-# W2 = spzeros(sum_weights, ncols)
-# i = 1
-# j = 1
-# @time for weight in weights
-#     W2[i:i+weight-1, j] .= 1.0
-#     i += weight
-#     j += 1
-# end
-
-# WFlag1 = W * Flag1
-# WF = W2 * Flag0
 
 y = data.:lwage
 first_id = data.:id
