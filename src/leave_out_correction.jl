@@ -11,6 +11,7 @@ getlagged(x) = [NaN; x[1:(end - 1)]]
 
 using DocStringExtensions
 using LinearMaps
+using Pipe
 
 
 #Defining types and structures
@@ -580,6 +581,7 @@ function leverages3(X, Fvar, FlagVar, settings)
     mts = MersenneTwister.(1:Threads.nthreads())
     Bii_lag_cov = zeros(NT)
     Bii_lag_var = zeros(NT)
+    Bii_current_var = zeros(NT)
 
     Threads.@threads for i=1:p        
         rademach =  rand(mts[Threads.threadid()],1,size(FlagVar,1)) .> 0.5
@@ -593,11 +595,13 @@ function leverages3(X, Fvar, FlagVar, settings)
         Z_lag_fe = compute_sol[Threads.threadid()]( [rademach * FlagVar...]; verbose = false)
         Z_lag_fe = X * Z_lag_fe
 
-        Bii_lag_cov = Bii_lag_cov + (Z_fe .* Z_lag_fe)
+        # Bii_lag_cov = Bii_lag_cov + (Z_fe .* Z_lag_fe)
 
         Bii_lag_var = Bii_lag_var + (Z_lag_fe .* Z_lag_fe)
+
+        Bii_current_var = Bii_current_var + (Z_fe .* Z_fe)
     end
-    return (Bii_lag_var=Bii_lag_var, Bii_lag_cov=Bii_lag_cov)
+    return (Bii_lag_var=Bii_lag_var, Bii_current_var = Bii_current_var, Bii_lag_cov=nothing)
 end
 
 function leave_out_AR(y, first_id, second_id, firmid, year, settings)
@@ -630,8 +634,11 @@ function leave_out_AR(y, first_id, second_id, firmid, year, settings)
     df = DataFrame(firmid = firmid, firmyearid = second_id, year = year)
     df = @pipe groupby(df, [:firmyearid]) |> combine(_, :firmid => first => :firmid, :year => first => :year, nrow => :nworkers)
 
+    base_year = 1985
     for counter in 1:16
-        df = @pipe sort(df, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (lag(x, counter) .+ counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
+        # df = @pipe sort(df, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (lag(x, counter) .+ counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
+        # We need to be sure that the data is totally balanced, otherwise, it may not work
+        df = @pipe sort(df, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (base_year + counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
         df[ismissing.(df.:has_prev), :has_prev] = 0
         df[!, :row_number] = 1:nrow(df)
 
@@ -668,16 +675,17 @@ function leave_out_AR(y, first_id, second_id, firmid, year, settings)
         Fvar = hcat(spzeros(size(WF, 1), N), WF[:, 1:J-1])
         FlagVar = hcat(spzeros(size(WFlag, 1), N), WFlag[:, 1:J-1])
 
-        @time @unpack Bii_lag_var, Bii_lag_cov = leverages3(X, Fvar, FlagVar, settings)
+        # @time @unpack Bii_lag_var, Bii_lag_cov = leverages3(X, Fvar, FlagVar, settings)
 
         θ_lag_cov = kss_quadratic_form(sigma_i, Fvar, FlagVar, beta, Bii_lag_cov)
         θ_lag_var = kss_quadratic_form(sigma_i, FlagVar, FlagVar, beta, Bii_lag_var)
         println(counter, ":")
         println(θ_lag_cov)
         println(θ_lag_var)
+        println(size(WF, 1))
         println(" ")
     end
-end
+end 
 
 """
 $(SIGNATURES)

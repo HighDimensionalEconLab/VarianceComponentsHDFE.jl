@@ -24,6 +24,9 @@ export lincom_KSS, compute_matchid, leave_out_estimation, get_leave_one_out_set
 export VCHDFESettings, JLAAlgorithm, ExactAlgorithm, AbstractLeverageAlgorithm
 export leave_out_KSS, leverages, kss_quadratic_form, sigma_for_stayers
 
+# Exporting these for the autocorrelation
+export leverages2, leverages3
+
 # Exporting these functions for ease of benchmarking/testing
 export computeLDLinv, approxcholOperator, approxcholSolver
 
