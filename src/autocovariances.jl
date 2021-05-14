@@ -10,15 +10,27 @@ using Random
 using Statistics
 using VarianceComponentsHDFE
 
-# data = CSV.read("gen_data_homoskedastic_v03_v01_psibar.csv", DataFrame, missingstrings = ["NA", ""])
+function find_firm_balanced_set(id, firmid, year)
+    df = DataFrame(id = id, firmid = firmid, year = year)
+
+    num_periods = maximum(year) - minimum(year) + 1
+
+    df_firmyear_collapsed = @pipe unique(df, [:firmid, :year]) |> select(_, [:firmid, :year])
+
+    df_firmyear_collapsed = @pipe groupby(df_firmyear_collapsed, :firmid) |> transform(_, nrow => :num_years_present) |> transform(_, :num_years_present => (x -> (x .== num_periods)) => :is_in_balanced)
+
+    new_df = leftjoin(df_firmyear_collapsed, df, on = [:firmid, :year])
+
+    sum(new_df.:is_in_balanced)
+    return new_df.:is_in_balanced
+end
+
+# data = CSV.read("gen_data_homoskedastic_v03_v01.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("data_set_firm_balanced_DGP_small_connected_set_no_error.csv", DataFrame, missingstrings = ["NA", ""])
-# data = CSV.read("first_step_reduced_leave_out_data_renamed.csv", DataFrame, missingstrings = ["NA", ""])
-data = CSV.read("data_set_firm_balanced.csv", DataFrame, missingstrings = ["NA", ""])
+data = CSV.read("first_step_reduced_leave_out_data_renamed.csv", DataFrame, missingstrings = ["NA", ""])
+# data = CSV.read("data_set_firm_balanced.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("data_set_firm_balanced_DGP_large_connected_set.csv", DataFrame, missingstrings = ["NA", ""])
 
-
-### some data cleaning
-# rename!(data, :firmid => :firmidg)
 
 tmp = unique(data.:firmidg)
 data[!, :firmidg] = indexin(data.:firmidg, tmp)
@@ -29,6 +41,12 @@ data[!, :firmyearid] = indexin(data.:firmyearid, tmp)
 tmp = unique(unique(data.:id))
 data[!, :id] = indexin(data.:id, tmp)
 
+id = data.:id
+firmid = data.:firmidg
+year = data.:year
+
+data.:is_in_balanced = find_firm_balanced_set(id, firmid, year)
+# sum(data.:is_in_balanced)
 
 y = data.:lwage
 first_id = data.:id
@@ -89,9 +107,9 @@ sigma_i = ( ( y .- mean(y) ) .* eta_h ) .* correction_JLA
 df0 = DataFrame(firmid = firmid, firmyearid = second_id, year = year, is_in_balanced = is_in_balanced)
 df0 = @pipe groupby(df0, [:firmyearid]) |> combine(_, :firmid => first => :firmid, :year => first => :year, nrow => :nworkers, :is_in_balanced => maximum => :is_in_balanced)
 
-base_year = 1986
+base_year = 1987
 counter = 1
-for counter in 1:15
+for counter in 1:14
     # df = @pipe sort(df, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (lag(x, counter) .+ counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
     # We need to be sure that the data is totally balanced, otherwise, it may not work
     df = @pipe sort(df0, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (base_year + counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
