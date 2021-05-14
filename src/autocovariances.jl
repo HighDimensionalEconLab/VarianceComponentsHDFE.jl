@@ -25,7 +25,7 @@ function find_firm_balanced_set(id, firmid, year)
     return new_df.:is_in_balanced
 end
 
-function leave_out_AR(y, id, firmid, year, settings)
+function leave_out_AR(y, id, firmid, year, settings, autocorr_table = false)
 
     data = DataFrame(lwage = y, id = id, firmidg = firmid, year = year)
     data = @pipe data |> transform(_, [:firmidg, :year] => ((x, y) -> (string.(x, "_", y))) => :firmyearid)
@@ -96,70 +96,141 @@ function leave_out_AR(y, id, firmid, year, settings)
     df0 = DataFrame(firmid = firmid, firmyearid = second_id, year = year, is_in_balanced = is_in_balanced)
     df0 = @pipe groupby(df0, [:firmyearid]) |> combine(_, :firmid => first => :firmid, :year => first => :year, nrow => :nworkers, :is_in_balanced => maximum => :is_in_balanced)
 
+
+    
+
     first_year = minimum(data.:year)
     last_year =maximum(data.:year)
-    for base_year in first_year:last_year
-        print("base year:")
-        println(base_year)
-        for counter in 1:(last_year - base_year)
-            # df = @pipe sort(df, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (lag(x, counter) .+ counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
-            # We need to be sure that the data is totally balanced, otherwise, it may not work
-            df = @pipe sort(df0, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (base_year + counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
-            df[ismissing.(df.:has_prev), :has_prev] = 0
-            df[!, :row_number] = 1:nrow(df)
+    println("autocorrelation plot")
+    for counter in 1:(last_year - first_year)
+        df = @pipe sort(df, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (lag(x, counter) .+ counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
+        # We need to be sure that the data is totally balanced, otherwise, it may not work
+        # df = @pipe sort(df0, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (base_year + counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
+        df[ismissing.(df.:has_prev), :has_prev] = 0
+        df[!, :row_number] = 1:nrow(df)
 
 
-            df2 = df[df.:has_prev .== 1 .& df.:is_in_balanced .== 1, :]
-            df2[!, :row_number2] = 1:nrow(df2)
-            df2[!, :nWorkers_mean] = floor.(Int, (df2.:nworkers .+ df2.:nworkers_prev) ./ 2)
-            M = size(df, 1)
-            L = size(df2, 1)
+        df2 = df[df.:has_prev .== 1 .& df.:is_in_balanced .== 1, :]
+        df2[!, :row_number2] = 1:nrow(df2)
+        df2[!, :nWorkers_mean] = floor.(Int, (df2.:nworkers .+ df2.:nworkers_prev) ./ 2)
+        M = size(df, 1)
+        L = size(df2, 1)
 
-            Flag = sparse(df2.:row_number2, df2.:row_number .- counter, 1)
-            Flag = hcat(Flag, spzeros(L, M - size(Flag, 2)))
+        Flag = sparse(df2.:row_number2, df2.:row_number .- counter, 1)
+        Flag = hcat(Flag, spzeros(L, M - size(Flag, 2)))
 
-            Flag0 = sparse(df2.:row_number2, df2.:row_number, 1)
-            Flag0 = hcat(Flag0, spzeros(L, M - size(Flag0, 2)))
+        Flag0 = sparse(df2.:row_number2, df2.:row_number, 1)
+        Flag0 = hcat(Flag0, spzeros(L, M - size(Flag0, 2)))
 
-            ##### Now creating W and WFlag1
-            ncols = nrow(df2)
-            weights = df2.:nWorkers_mean
-            sum_weights = sum(weights)
-            W = spzeros(sum_weights, ncols)
-            i = 1
-            j = 1
-            @time for weight in weights
-                W[i:i+weight-1, j] .= 1.0
-                i += weight
-                j += 1
+        ##### Now creating W and WFlag1
+        ncols = nrow(df2)
+        weights = df2.:nWorkers_mean
+        sum_weights = sum(weights)
+        W = spzeros(sum_weights, ncols)
+        i = 1
+        j = 1
+        @time for weight in weights
+            W[i:i+weight-1, j] .= 1.0
+            i += weight
+            j += 1
+        end
+
+        WFlag = W * Flag
+        WF = W * Flag0
+
+
+        Fvar = hcat(spzeros(size(WF, 1), N), WF[:, 1:J-1])
+        FlagVar = hcat(spzeros(size(WFlag, 1), N), WFlag[:, 1:J-1])
+
+        @time @unpack Bii_lag_var, Bii_current_var, Bii_lag_cov = leverages3(X, Fvar, FlagVar, settings)
+
+        # θ_lag_cov = kss_quadratic_form(sigma_i[is_in_balanced, :], Fvar[is_in_balanced, :], FlagVar[is_in_balanced, :], beta[is_in_balanced], Bii_lag_cov[is_in_balanced])
+        # θ_lag_var = kss_quadratic_form(sigma_i[is_in_balanced, :], FlagVar[is_in_balanced, :], FlagVar[is_in_balanced, :], beta[is_in_balanced], Bii_lag_var[is_in_balanced])
+        θ_lag_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], FlagVar, FlagVar, beta, Bii_lag_var[is_in_balanced .== 1])
+        θ_lag_cov = kss_quadratic_form(zeros(size(sigma_i, 1))[is_in_balanced .== 1, :], Fvar, FlagVar, beta, zeros(size(Bii_lag_var, 1))[is_in_balanced .== 1, :])
+        θ_current_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], Fvar, Fvar, beta, Bii_current_var[is_in_balanced .== 1])
+        println(counter, ":")
+        
+        print("cov: ")
+        println(θ_lag_cov)
+        print("var lag: ")
+        println(θ_lag_var)
+        print("var current: ")
+        println(θ_current_var)
+        print("corr:")
+        println(θ_lag_cov/(sqrt(θ_lag_var) * sqrt(θ_current_var)))
+        print("corr2:")
+        println(θ_lag_cov/(sqrt(θ_second) * sqrt(θ_current_var)))
+        # println(size(WF, 1))
+        println(" ")
+    end
+
+    if autocorr_table == true
+        for base_year in first_year:last_year
+            print("base year:")
+            println(base_year)
+            for counter in 1:(last_year - base_year)
+                # df = @pipe sort(df, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (lag(x, counter) .+ counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
+                # We need to be sure that the data is totally balanced, otherwise, it may not work
+                df = @pipe sort(df0, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (base_year + counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
+                df[ismissing.(df.:has_prev), :has_prev] = 0
+                df[!, :row_number] = 1:nrow(df)
+
+
+                df2 = df[df.:has_prev .== 1 .& df.:is_in_balanced .== 1, :]
+                df2[!, :row_number2] = 1:nrow(df2)
+                df2[!, :nWorkers_mean] = floor.(Int, (df2.:nworkers .+ df2.:nworkers_prev) ./ 2)
+                M = size(df, 1)
+                L = size(df2, 1)
+
+                Flag = sparse(df2.:row_number2, df2.:row_number .- counter, 1)
+                Flag = hcat(Flag, spzeros(L, M - size(Flag, 2)))
+
+                Flag0 = sparse(df2.:row_number2, df2.:row_number, 1)
+                Flag0 = hcat(Flag0, spzeros(L, M - size(Flag0, 2)))
+
+                ##### Now creating W and WFlag1
+                ncols = nrow(df2)
+                weights = df2.:nWorkers_mean
+                sum_weights = sum(weights)
+                W = spzeros(sum_weights, ncols)
+                i = 1
+                j = 1
+                @time for weight in weights
+                    W[i:i+weight-1, j] .= 1.0
+                    i += weight
+                    j += 1
+                end
+
+                WFlag = W * Flag
+                WF = W * Flag0
+
+
+                Fvar = hcat(spzeros(size(WF, 1), N), WF[:, 1:J-1])
+                FlagVar = hcat(spzeros(size(WFlag, 1), N), WFlag[:, 1:J-1])
+
+                @time @unpack Bii_lag_var, Bii_current_var, Bii_lag_cov = leverages3(X, Fvar, FlagVar, settings)
+
+                # θ_lag_cov = kss_quadratic_form(sigma_i[is_in_balanced, :], Fvar[is_in_balanced, :], FlagVar[is_in_balanced, :], beta[is_in_balanced], Bii_lag_cov[is_in_balanced])
+                # θ_lag_var = kss_quadratic_form(sigma_i[is_in_balanced, :], FlagVar[is_in_balanced, :], FlagVar[is_in_balanced, :], beta[is_in_balanced], Bii_lag_var[is_in_balanced])
+                θ_lag_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], FlagVar, FlagVar, beta, Bii_lag_var[is_in_balanced .== 1])
+                θ_lag_cov = kss_quadratic_form(zeros(size(sigma_i, 1))[is_in_balanced .== 1, :], Fvar, FlagVar, beta, zeros(size(Bii_lag_var, 1))[is_in_balanced .== 1, :])
+                θ_current_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], Fvar, Fvar, beta, Bii_current_var[is_in_balanced .== 1])
+                println(counter, ":")
+                
+                print("cov: ")
+                println(θ_lag_cov)
+                print("var lag: ")
+                println(θ_lag_var)
+                print("var current: ")
+                println(θ_current_var)
+                print("corr:")
+                println(θ_lag_cov/(sqrt(θ_lag_var) * sqrt(θ_current_var)))
+                print("corr2:")
+                println(θ_lag_cov/(sqrt(θ_second) * sqrt(θ_current_var)))
+                # println(size(WF, 1))
+                println(" ")
             end
-
-            WFlag = W * Flag
-            WF = W * Flag0
-
-
-            Fvar = hcat(spzeros(size(WF, 1), N), WF[:, 1:J-1])
-            FlagVar = hcat(spzeros(size(WFlag, 1), N), WFlag[:, 1:J-1])
-
-            @time @unpack Bii_lag_var, Bii_current_var, Bii_lag_cov = leverages3(X, Fvar, FlagVar, settings)
-
-            # θ_lag_cov = kss_quadratic_form(sigma_i[is_in_balanced, :], Fvar[is_in_balanced, :], FlagVar[is_in_balanced, :], beta[is_in_balanced], Bii_lag_cov[is_in_balanced])
-            # θ_lag_var = kss_quadratic_form(sigma_i[is_in_balanced, :], FlagVar[is_in_balanced, :], FlagVar[is_in_balanced, :], beta[is_in_balanced], Bii_lag_var[is_in_balanced])
-            θ_lag_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], FlagVar, FlagVar, beta, Bii_lag_var[is_in_balanced .== 1])
-            θ_lag_cov = kss_quadratic_form(zeros(size(sigma_i, 1))[is_in_balanced .== 1, :], Fvar, FlagVar, beta, zeros(size(Bii_lag_var, 1))[is_in_balanced .== 1, :])
-            θ_current_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], Fvar, Fvar, beta, Bii_current_var[is_in_balanced .== 1])
-            println(counter, ":")
-            
-            print("cov: ")
-            println(θ_lag_cov)
-            print("var lag: ")
-            println(θ_lag_var)
-            print("var current: ")
-            println(θ_current_var)
-            print("corr:")
-            println(θ_lag_cov/(sqrt(θ_lag_var) * sqrt(θ_second)))
-            # println(size(WF, 1))
-            println(" ")
         end
     end
 end
