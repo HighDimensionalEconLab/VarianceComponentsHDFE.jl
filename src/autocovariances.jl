@@ -25,7 +25,10 @@ function find_firm_balanced_set(id, firmid, year)
     return new_df.:is_in_balanced
 end
 
-function leave_out_AR(y, id, firmid, year, settings, autocorr_table = false)
+function leave_out_AR(y, first_id, second_id, year, settings, autocorr_table = false)
+
+    @unpack obs,  lwage  , id , firmid, controls = get_leave_one_out_set(y, first_id, second_id, settings, controls)
+    year = year[obs, :]
 
     data = DataFrame(lwage = y, id = id, firmidg = firmid, year = year)
     data = @pipe data |> transform(_, [:firmidg, :year] => ((x, y) -> (string.(x, "_", y))) => :firmyearid)
