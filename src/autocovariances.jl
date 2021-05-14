@@ -102,6 +102,7 @@ function leave_out_AR(y, id, firmid, year, settings, autocorr_table = false)
     first_year = minimum(data.:year)
     last_year =maximum(data.:year)
     println("autocorrelation plot")
+    #TODO check sanity
     for counter in 1:(last_year - first_year)
         df = @pipe sort(df, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (lag(x, counter) .+ counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
         # We need to be sure that the data is totally balanced, otherwise, it may not work
