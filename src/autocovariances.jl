@@ -52,29 +52,48 @@ Returns the values for autocorrelation plot and autocorrelation table of the bal
 * `autocorr_table`: should compute the autocorrelation table? The default is false
 * `lags`: lag vectors, if nothing (default), computes for all lags. 
 """
-function leave_out_AR(y, first_id, second_id, year, settings = VCHDFESettings(); autocorr_table = false, lags = nothing)
-    @unpack obs,  lwage  , id , firmid, controls = get_leave_one_out_set(y, first_id, second_id, settings, controls)
-    year = year[obs, :]
+function leave_out_AR(y, first_id, second_id, time_id, settings = VCHDFESettings(); autocorr_table = false, lags = nothing)
+    #Create time-second_id identifier (naming it second_id) and rename the second_id to firmid as it is the second id in the time varying AKM model
+    data = DataFrame(y = y, first_id = first_id, firmid = second_id, time_id = time_id)
+    data = @pipe data |> transform(_, [:firmid, :time_id] => ((x, y) -> (string.(x, "_", y))) => :second_id)
 
-    data = DataFrame(lwage = y, id = id, firmidg = firmid, year = year)
-    data = @pipe data |> transform(_, [:firmidg, :year] => ((x, y) -> (string.(x, "_", y))) => :firmyearid)
-    
-    tmp = unique(data.:firmidg)
-    data[!, :firmidg] = indexin(data.:firmidg, tmp)
+    tmp = unique(sort(data.:firmid))
+    data[!, :firmid] = indexin(data.:firmid, tmp)
 
-    tmp = unique(unique(data.:firmyearid))
-    data[!, :firmyearid] = indexin(data.:firmyearid, tmp)
+    tmp = unique(unique(data.:second_id))
+    data[!, :second_id] = indexin(data.:second_id, tmp)
 
-    tmp = unique(unique(data.:id))
-    data[!, :id] = indexin(data.:id, tmp)
+    tmp = unique(unique(data.:first_id))
+    data[!, :first_id] = indexin(data.:first_id, tmp)
 
-    data.:is_in_balanced = find_firm_balanced_set(data.:id, data.:firmidg, data.:year)
+    y = data.:y
+    first_id = data.:first_id
+    second_id = data.second_id
 
-    y = data.lwage
-    first_id = data.:id
-    second_id = data.:firmyearid
-    firmid = data.:firmidg
-    year = data.:year
+    #Find the leave-out connected set
+    tmp = get_leave_one_out_set(y, first_id, second_id, settings, nothing)
+    obs = tmp.:obs
+
+    #Limiting data to the leave out connected set
+    data = data[obs, :]
+
+    tmp = unique(sort(data.:firmid))
+    data[!, :firmid] = indexin(data.:firmid, tmp)
+
+    tmp = unique(unique(data.:second_id))
+    data[!, :second_id] = indexin(data.:second_id, tmp)
+
+    tmp = unique(unique(data.:first_id))
+    data[!, :first_id] = indexin(data.:first_id, tmp)
+
+    #Find the balanced set
+    data.:is_in_balanced = find_balanced_set(data.:first_id, data.:firmid, data.:time_id; settings)
+
+    y = (data.:y)
+    first_id = (data.:first_id)
+    second_id = data.:second_id
+    firmid = data.:firmid
+    time_id = data.:time_id
     is_in_balanced = data.:is_in_balanced
 
     
@@ -108,6 +127,7 @@ function leave_out_AR(y, first_id, second_id, year, settings = VCHDFESettings();
 
     X = hcat(D, -F*S)
 
+    #TODO need to clean out the leverages method
     @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov, Bii_first_bar, Bii_dif_cov, Bii_dif_first_bar, Bii_dif_second_bar = leverages2(settings.leverage_algorithm, X, Fvar, Fvar, Fvar, Fvar, Fvar, settings)
     xx=X'*X
     xy=X'*y
@@ -118,19 +138,20 @@ function leave_out_AR(y, first_id, second_id, year, settings = VCHDFESettings();
     eta_h = eta ./ Mii
     sigma_i = ( ( y .- mean(y) ) .* eta_h ) .* correction_JLA
 
-    θ_second = kss_quadratic_form(zeros(size(sigma_i, 1)), Fvar, Fvar, beta, Bii_second)
+    # θ_second = kss_quadratic_form(zeros(size(sigma_i, 1)), Fvar, Fvar, beta, Bii_second)
     θ_second = kss_quadratic_form(sigma_i, Fvar, Fvar, beta, Bii_second)
 
     # Creating matrixes
-    df0 = DataFrame(firmid = firmid, firmyearid = second_id, year = year, is_in_balanced = is_in_balanced)
+    # we use the term firmyearid to name second_id and year for time_id
+    df0 = DataFrame(firmid = firmid, firmyearid = second_id, year = time_id, is_in_balanced = is_in_balanced)
     df0 = @pipe groupby(df0, [:firmyearid]) |> combine(_, :firmid => first => :firmid, :year => first => :year, nrow => :nworkers, :is_in_balanced => maximum => :is_in_balanced)
 
-    first_year = minimum(data.:year)
-    last_year =maximum(data.:year)
+    first_year = minimum(df0.:year)
+    last_year =maximum(df0.:year)
 
     lags = (lags == nothing) ? (1:(last_year - first_year)) : lags
 
-    println("autocorrelation plot")
+    println("autocorrelation plot values:")
     #TODO check sanity
     for counter in lags
         if (counter + first_year) <= last_year
@@ -244,23 +265,21 @@ function leave_out_AR(y, first_id, second_id, year, settings = VCHDFESettings();
 
                     @time @unpack Bii_lag_var, Bii_current_var, Bii_lag_cov = leverages3(X, Fvar, FlagVar, settings)
 
-                    # θ_lag_cov = kss_quadratic_form(sigma_i[is_in_balanced, :], Fvar[is_in_balanced, :], FlagVar[is_in_balanced, :], beta[is_in_balanced], Bii_lag_cov[is_in_balanced])
-                    # θ_lag_var = kss_quadratic_form(sigma_i[is_in_balanced, :], FlagVar[is_in_balanced, :], FlagVar[is_in_balanced, :], beta[is_in_balanced], Bii_lag_var[is_in_balanced])
-                    θ_lag_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], FlagVar, FlagVar, beta, Bii_lag_var[is_in_balanced .== 1])
-                    θ_lag_cov = kss_quadratic_form(zeros(size(sigma_i, 1))[is_in_balanced .== 1, :], Fvar, FlagVar, beta, zeros(size(Bii_lag_var, 1))[is_in_balanced .== 1, :])
+                    # θ_lag_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], FlagVar, FlagVar, beta, Bii_lag_var[is_in_balanced .== 1])
+                    θ_lag_cov = kss_quadratic_form(zeros(size(sigma_i, 1))[is_in_balanced .== 1, :], Fvar, FlagVar, beta, zeros(size(Bii_current_var, 1))[is_in_balanced .== 1, :])
                     θ_current_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], Fvar, Fvar, beta, Bii_current_var[is_in_balanced .== 1])
                     println(counter, ":")
                     
                     print("cov: ")
                     println(θ_lag_cov)
-                    print("var lag: ")
-                    println(θ_lag_var)
+                    # print("var lag: ")
+                    # println(θ_lag_var)
                     print("var current: ")
                     println(θ_current_var)
                     print("corr:")
-                    println(θ_lag_cov/(sqrt(θ_lag_var) * sqrt(θ_current_var)))
-                    print("corr2:")
                     println(θ_lag_cov/(sqrt(θ_second) * sqrt(θ_current_var)))
+                    # print("corr2:")
+                    # println(θ_lag_cov/(sqrt(θ_second) * sqrt(θ_current_var)))
                     # println(size(WF, 1))
                     println(" ")
                 end
@@ -271,9 +290,15 @@ end
 
 # data = CSV.read("gen_data_homoskedastic_v03_v01.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("data_set_firm_balanced_DGP_small_connected_set_no_error.csv", DataFrame, missingstrings = ["NA", ""])
-data = CSV.read("first_step_reduced_leave_out_data_renamed.csv", DataFrame, missingstrings = ["NA", ""])
+# data = CSV.read("first_step_reduced_leave_out_data_renamed.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("data_set_firm_balanced.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("data_set_firm_balanced_DGP_large_connected_set.csv", DataFrame, missingstrings = ["NA", ""])
+data = CSV.read("data_set_firm_balanced_DGP_small.csv", DataFrame, missingstrings = ["NA", ""])
+
+y = data.lwage
+first_id = data.id
+second_id = data.firmidg
+time_id = data.year
 
 tmp = unique(data.:firmidg)
 data[!, :firmidg] = indexin(data.:firmidg, tmp)
@@ -311,7 +336,12 @@ year = data.:year
 
 is_in_balanced = data.:is_in_balanced
 
-# @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y, first_id, second_id, settings, nothing)
+@unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y, first_id, second_id, settings, nothing)
+
+obs1 = obs
+y1 = y
+first_id1 = first_id
+second_id1 = second_id
 
 # df = data[obs, :]
 # CSV.write("data_set_firm_balanced_DGP_small_connected_set.csv", df)

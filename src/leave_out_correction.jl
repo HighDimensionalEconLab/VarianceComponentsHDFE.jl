@@ -699,8 +699,7 @@ Returns the bias-corrected components, the vector of coefficients, the correspon
 * `settings`: settings based on `VCHDFESettings`
 * `controls`: matrix of control variables. At this version it doesn't work properly for very large datasets.
 """
-function leave_out_estimation(y,first_id,second_id,controls,settings, WFdelta)
-    controls = nothing
+function leave_out_estimation(y,first_id,second_id,controls,settings, WFdelta = nothing)
     #Create matrices for computations
     NT = size(y,1)
     J = maximum(second_id)
@@ -1067,9 +1066,9 @@ function leverages2(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, FdiffVar, DdiffVar,
     Bii_cov= settings.cov_effects ==true ? zeros(NT) : nothing
     Bii_first= settings.first_id_effects == true ? zeros(NT) : nothing
     Bii_first_bar = settings.first_id_bar_effects == true ? zeros(NT) : nothing
-    Bii_dif_cov = zeros(NT)
-    Bii_dif_first_bar = zeros(NT)
-    Bii_dif_second_bar = zeros(NT)
+    Bii_dif_cov = settings.diff_effects == true ? zeros(NT) : nothing
+    Bii_dif_first_bar = settings.diff_effects == true ? zeros(NT) : nothing
+    Bii_dif_second_bar =settings.diff_effects == true ? zeros(NT) : nothing
 
     Mii = zeros(NT)
     Pii_sq = zeros(NT)
