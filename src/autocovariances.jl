@@ -9,25 +9,50 @@ using LinearMaps
 using Random
 using Statistics
 using VarianceComponentsHDFE
+using DocStringExtensions
 
+"""
+$(SIGNATURES)
 
-function find_firm_balanced_set(id, firmid, year)
-    df = DataFrame(id = id, firmid = firmid, year = year)
+Returns a vector indicating if an observation belongs to the second_id-balanced set. 
 
-    num_periods = maximum(year) - minimum(year) + 1
+### Arguments
+* `first_id`: first identifier (e.g. worker id)
+* `second_id`: second identifier (e.g. firm id)
+* `time_id`: time identifier 
+* `settings`: settings based on `VCHDFESettings`
+"""
+function find_balanced_set(first_id, second_id, time_id; settings = VCHDFESettings())
+    df = DataFrame(first_id = first_id, second_id = second_id, time_id = time_id)
 
-    df_firmyear_collapsed = @pipe unique(df, [:firmid, :year]) |> select(_, [:firmid, :year])
+    num_periods = maximum(time_id) - minimum(time_id) + 1
+    (settings.print_level >= 1) && println("Number of time periods in the balanced dataset: $(num_periods)")
 
-    df_firmyear_collapsed = @pipe groupby(df_firmyear_collapsed, :firmid) |> transform(_, nrow => :num_years_present) |> transform(_, :num_years_present => (x -> (x .== num_periods)) => :is_in_balanced)
+    df_firmyear_collapsed = @pipe unique(df, [:second_id, :time_id]) |> select(_, [:second_id, :time_id])
 
-    new_df = leftjoin(df_firmyear_collapsed, df, on = [:firmid, :year])
+    df_firmyear_collapsed = @pipe groupby(df_firmyear_collapsed, :second_id) |> transform(_, nrow => :num_years_present) |> transform(_, :num_years_present => (x -> (x .== num_periods)) => :is_in_balanced)
 
-    sum(new_df.:is_in_balanced)
+    new_df = leftjoin(df_firmyear_collapsed, df, on = [:second_id, :time_id])
+    (settings.print_level >= 1) && println("Number of observations belonging to the balanced dataset: $(sum(new_df.:is_in_balanced))")
+
     return new_df.:is_in_balanced
 end
 
-function leave_out_AR(y, first_id, second_id, year, settings; autocorr_table = false, lags = nothing)
+"""
+$(SIGNATURES)
 
+Returns the values for autocorrelation plot and autocorrelation table of the balanced set of the leave out connected set of the input dataset. 
+
+### Arguments
+* `y`: outcome vector
+* `first_id`: first identifier (e.g. worker id)
+* `second_id`: second identifier (e.g. firm id)
+* `time_id`: time identifier 
+* `settings`: settings based on `VCHDFESettings`
+* `autocorr_table`: should compute the autocorrelation table? The default is false
+* `lags`: lag vectors, if nothing (default), computes for all lags. 
+"""
+function leave_out_AR(y, first_id, second_id, year, settings = VCHDFESettings(); autocorr_table = false, lags = nothing)
     @unpack obs,  lwage  , id , firmid, controls = get_leave_one_out_set(y, first_id, second_id, settings, controls)
     year = year[obs, :]
 
