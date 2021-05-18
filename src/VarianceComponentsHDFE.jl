@@ -27,7 +27,7 @@ export leave_out_KSS, leverages, kss_quadratic_form, sigma_for_stayers
 export leave_out_AR, find_balanced_set
 
 # Exporting these for the autocorrelation
-export leverages2, leverages3
+export leverages3
 
 # Exporting these functions for ease of benchmarking/testing
 export computeLDLinv, approxcholOperator, approxcholSolver

@@ -119,6 +119,7 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
 
     @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = leave_out_estimation(y,first_id,second_id,controls,settings)
 
+    beta = β
     # xx=X'*X
     # xy=X'*y
     # compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
@@ -184,13 +185,12 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
                 WFlag = W * Flag
                 WF = W * Flag0
 
+                Fvar = hcat(spzeros(size(WF, 1), N), WF[:, 1:J-1])
+                FlagVar = hcat(spzeros(size(WFlag, 1), N), WFlag[:, 1:J-1])
+
                 if isempty(Fvar) || isempty(FlagVar)
                     continue
                 end
-
-
-                Fvar = hcat(spzeros(size(WF, 1), N), WF[:, 1:J-1])
-                FlagVar = hcat(spzeros(size(WFlag, 1), N), WFlag[:, 1:J-1])
 
                 @time @unpack Bii_lag_var, Bii_current_var, Bii_lag_cov = leverages3(X, Fvar, FlagVar, settings)
                 
@@ -270,12 +270,12 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
                 WFlag = W * Flag
                 WF = W * Flag0
 
+                Fvar = hcat(spzeros(size(WF, 1), N), WF[:, 1:J-1])
+                FlagVar = hcat(spzeros(size(WFlag, 1), N), WFlag[:, 1:J-1])
+
                 if isempty(Fvar) || isempty(FlagVar)
                     continue
                 end
-
-                Fvar = hcat(spzeros(size(WF, 1), N), WF[:, 1:J-1])
-                FlagVar = hcat(spzeros(size(WFlag, 1), N), WFlag[:, 1:J-1])
 
                 @time @unpack Bii_lag_var, Bii_current_var, Bii_lag_cov = leverages3(X, Fvar, FlagVar, settings)
 

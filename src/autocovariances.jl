@@ -1,4 +1,4 @@
-
+using VarianceComponentsHDFE
 using CSV
 using Parameters
 using SparseArrays
@@ -9,7 +9,6 @@ using ShiftedArrays
 using LinearMaps
 using Random
 using Statistics
-using VarianceComponentsHDFE
 using DocStringExtensions
 # data = CSV.read("gen_data_homoskedastic_v03_v01.csv", DataFrame, missingstrings = ["NA", ""])
 # data = CSV.read("data_set_firm_balanced_DGP_small_connected_set_no_error.csv", DataFrame, missingstrings = ["NA", ""])
@@ -24,6 +23,20 @@ y = data.lwage
 first_id = data.id
 second_id = data.firmidg
 time_id = data.year
+
+settings = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=0),
+    print_level = 1,
+    leave_out_level = "obs", 
+    first_id_effects = false,
+    first_id_bar_effects = false,
+    cov_effects = false, 
+    )
+
+controls = nothing
+
+lags = nothing
+
+@unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf, acp = leave_out_AR1(y, first_id, second_id, time_id, controls, settings, lags = lags)
 
 tmp = unique(data.:firmidg)
 data[!, :firmidg] = indexin(data.:firmidg, tmp)
@@ -46,13 +59,7 @@ first_id = data.:id
 second_id = data.:firmyearid
 
 
-settings = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=0),
-    print_level = 1,
-    leave_out_level = "obs", 
-    first_id_effects = false,
-    first_id_bar_effects = false,
-    cov_effects = false, 
-    )
+
 
 #We call a modified version of leave_out_estimation, so if you want to call it, you should run "] instantiate" again. Or just run that function in REPL line by line
 # leave_out_estimation(y,first_id,second_id,nothing,settings, WFdelta)
