@@ -55,7 +55,9 @@ Returns the values for autocorrelation plot and autocorrelation table of the bal
 function leave_out_AR(y, first_id, second_id, time_id, settings = VCHDFESettings(); autocorr_plot = false, lags = nothing)
     #Create time-second_id identifier (naming it second_id) and rename the second_id to firmid as it is the second id in the time varying AKM model
     data = DataFrame(y = y, first_id = first_id, firmid = second_id, time_id = time_id)
-    data = @pipe data |> transform(_, [:firmid, :time_id] => ((x, y) -> (string.(x, "_", y))) => :second_id)
+    
+    data.:second_id = compute_matchid(data.:first_id, data.:firmid)
+    # data = @pipe data |> transform(_, [:firmid, :time_id] => ((x, y) -> (string.(x, "_", y))) => :second_id)
 
     tmp = unique(sort(data.:firmid))
     data[!, :firmid] = indexin(data.:firmid, tmp)

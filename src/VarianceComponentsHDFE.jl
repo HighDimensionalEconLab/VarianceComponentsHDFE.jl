@@ -50,9 +50,13 @@ function parse_commandline()
             arg_type = Int
             default = nothing
         "--lags"
-            help = "The lag structure"
+            help = "The lag structure, default is all lags."
+            arg_type = Array{Int64,1}
+            nargs = "*"
+        "--lags2"
+            help = "The lag structure, default is all lags."
             arg_type = Int
-            default = "all"
+            nargs = "*"
         "--outcome_id"
             help = "column index in CSV file for outcome (e.g. Wage)."
             arg_type = Int
@@ -151,6 +155,8 @@ function real_main()
     first_idx = parsed_args["first_id"]
     second_idx = parsed_args["second_id"]
     time_idx = parsed_args["time_id"]
+    lags = parsed_args["lags"]
+    lags2 = parsed_args["lags2"]
     outcome_idx = parsed_args["outcome_id"]
     leave_out_level = parsed_args["leave_out_level"]
     algorithm = parsed_args["algorithm"]
@@ -284,52 +290,55 @@ function real_main()
         # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y,first_id,second_id,controls,settings)
         @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = leave_out_estimation(y,first_id,second_id,controls,settings)
 
-        Z_lincom = nothing 
-        if  parsed_args["do_lincom"]
-            #Construct Transform 
-            F = sparse(collect(1:length(second_id)),second_id,1)
-            J = size(F,2)
-            S = sparse(1.0I, J-1, J-1)
-            S = vcat(S,sparse(-zeros(1,J-1)))
-            Transform = hcat(spzeros(length(second_id),maximum(first_id)), -F*S )
-
-            #Construct Z_lincom 
-            if lincom_covariates == [] 
-                println("\n User asked for lincom but no covariates were specified. This step will not be performed.")
-            else
-                if typeof(lincom_covariates[1]) == String 
-                    #Build lincom controls matrix 
-                    lincom_labels = []
-                    push!(lincom_labels,String.(lincom_covariates[1]))
-                    
-                    Z_lincom = data[obs,lincom_covariates[1]]
-                    if length(lincom_covariates)>=2
-                        for k=2:length(lincom_covariates)
-                            hcat(Z_lincom, data[obs,lincom_covariates[k]])
-                            push!(lincom_labels,String.(lincom_covariates[k]))
-                        end
-                    end     
-                else
-                    println("WARNING: Elements of lincom covariates are not defined correctly. No inference will be performed.")
-                end
-            end 
-        end
-
-        if Z_lincom != nothing     
-            #Collapse and reweight to person-year observations 
-            match_id = compute_matchid(second_id, first_id)
-            Z_lincom_col = ones(size(Z_lincom,1),1)
-            for i = 1:size(Z_lincom,2)
-                Z_lincom_col = hcat(Z_lincom_col,(transform(groupby(DataFrame(z = Z_lincom[:,i], match_id = match_id), :match_id), :z => mean  => :z_py).z_py)) 
-            end
-
-            @unpack test_statistic, linear_combination , SE_linear_combination_KSS, SE_naive = lincom_KSS(y,X, Z_lincom_col, Transform, sigma_i; lincom_labels)
-        end 
-    
     # The case with time varying stuff
     else
-        leave_out_AR(y, first_id, second_id, time_id, settings)
+        #We set autocorr_plot = false for now
+        @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf = leave_out_AR(y, first_id, second_id, time_id, settings; false, lags)
     end
+    
+    Z_lincom = nothing 
+    if  parsed_args["do_lincom"]
+        #Construct Transform 
+        F = sparse(collect(1:length(second_id)),second_id,1)
+        J = size(F,2)
+        S = sparse(1.0I, J-1, J-1)
+        S = vcat(S,sparse(-zeros(1,J-1)))
+        Transform = hcat(spzeros(length(second_id),maximum(first_id)), -F*S )
+
+        #Construct Z_lincom 
+        if lincom_covariates == [] 
+            println("\n User asked for lincom but no covariates were specified. This step will not be performed.")
+        else
+            if typeof(lincom_covariates[1]) == String 
+                #Build lincom controls matrix 
+                lincom_labels = []
+                push!(lincom_labels,String.(lincom_covariates[1]))
+                
+                Z_lincom = data[obs,lincom_covariates[1]]
+                if length(lincom_covariates)>=2
+                    for k=2:length(lincom_covariates)
+                        hcat(Z_lincom, data[obs,lincom_covariates[k]])
+                        push!(lincom_labels,String.(lincom_covariates[k]))
+                    end
+                end     
+            else
+                println("WARNING: Elements of lincom covariates are not defined correctly. No inference will be performed.")
+            end
+        end 
+    end
+
+    if Z_lincom != nothing     
+        #Collapse and reweight to person-year observations 
+        match_id = compute_matchid(second_id, first_id)
+        Z_lincom_col = ones(size(Z_lincom,1),1)
+        for i = 1:size(Z_lincom,2)
+            Z_lincom_col = hcat(Z_lincom_col,(transform(groupby(DataFrame(z = Z_lincom[:,i], match_id = match_id), :match_id), :z => mean  => :z_py).z_py)) 
+        end
+
+        @unpack test_statistic, linear_combination , SE_linear_combination_KSS, SE_naive = lincom_KSS(y,X, Z_lincom_col, Transform, sigma_i; lincom_labels)
+    end 
+    
+
 
     if parsed_args["write_detailed_csv"]
 
