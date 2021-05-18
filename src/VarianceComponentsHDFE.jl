@@ -14,6 +14,7 @@ using AlgebraicMultigrid
 include("leave_out_correction.jl")
 include("parameters_settings.jl")
 include("laplacians/Laplacians.jl")
+include("leave_out_autocorrelations.jl")
 
 using .Laplacians
 include("solvers.jl")
@@ -23,6 +24,7 @@ export compute_movers, accumarray
 export lincom_KSS, compute_matchid, leave_out_estimation, get_leave_one_out_set
 export VCHDFESettings, JLAAlgorithm, ExactAlgorithm, AbstractLeverageAlgorithm
 export leave_out_KSS, leverages, kss_quadratic_form, sigma_for_stayers
+export leave_out_AR, find_balanced_set
 
 # Exporting these for the autocorrelation
 export leverages2, leverages3
@@ -293,7 +295,7 @@ function real_main()
     # The case with time varying stuff
     else
         #We set autocorr_plot = false for now
-        @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf = leave_out_AR(y, first_id, second_id, time_id, settings; false, lags)
+        @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf, acp = leave_out_AR(y, first_id, second_id, time_id, controls, settings, lags = lags)
     end
     
     Z_lincom = nothing 
@@ -403,6 +405,22 @@ function real_main()
             Bias Corrected Variance of $(second_id_display) Effects: $θ_second \n
         """ 
 
+        tmp_output= ""
+        for i in 1:size(tmp_array, 1)
+            for j in 1:size(tmp_array, 2)
+                tmp_output = tmp_output * string(tmp_array[i, j]) * " "
+            end
+            tmp_output = tmp_output * "\n "
+        end
+
+        for i in size(tmp_array, 1)
+            for j in size(tmp_array, 2)
+               print(tmp_array[i, j])
+            end
+        end
+        tmp_array
+        tmp_output
+
         if parsed_args["write_results"]
             try 
                 output_path = parsed_args["results_path"]
@@ -426,6 +444,17 @@ function real_main()
                         r2 = (θ_second+2*θCOV+θ_first)/var_den
                         write(io, "    Bias Corrected Correlation of  $(first_id_display)-$(second_id_display) Effects: $corr \n\n")                   
                         write(io, "    Bias Corrected Fraction of Variance explained by  $(first_id_display)-$(second_id_display) Effects: $r2 \n\n")                   
+                   end
+
+                   if (time_id !== nothing)
+                        acf_output = ""
+                        for i in 1:size(acf, 1)
+                            for j in 1:size(acf, 2)
+                                acf_output = acf_output * string(acf[i, j]) * " "
+                            end
+                            acf_output = acf_output * "\n "
+                        end
+                        write(io, "     Autocorrelation function is: \n $(acf_output)                                                                                                                                                                                                   ")
                    end
                    
 
