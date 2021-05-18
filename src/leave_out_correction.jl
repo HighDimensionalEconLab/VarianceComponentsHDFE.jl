@@ -25,18 +25,14 @@ abstract type AbstractLeverageAlgorithm end
 
 """
 $(TYPEDEF)
-
 Data type to pass to VCHDFESettings type, to indicate Exact algorithm
 """
 struct ExactAlgorithm <: AbstractLeverageAlgorithm  end
 
 """
 $(TYPEDEF)
-
 Data type to pass to VCHDFESettings type, to indicate JLA algorithm
-
 ### Fields
-
 * `num_simulations`: number of simulations in estimation. If num_simulations = 0, defaults to 100 * log(#total fixed effect)"
 """
 @with_kw struct JLAAlgorithm <: AbstractLeverageAlgorithm
@@ -45,11 +41,8 @@ end
 
 """
 $(TYPEDEF)
-
 The VCHDFESettings type is to pass information to methods regarding which algorithm to use. 
-
 ### Fields
-
 * `cg_maxiter`: maximum number of iterations (default = 300)
 * `leave_out_level`: leave-out level (default = match)
 * `leverage_algorithm`: which type of algorithm to use (default = JLAAlgorithm())
@@ -68,9 +61,7 @@ The VCHDFESettings type is to pass information to methods regarding which algori
     leverage_algorithm::LeverageAlgorithm = JLAAlgorithm()
     leave_out_level::String = "match"
     first_id_effects::Bool = true
-    first_id_bar_effects::Bool = true
     cov_effects::Bool = true
-    diff_effects::Bool = false
     print_level::Int64 = 1
     first_id_display_small::String = "person"
     first_id_display::String = "Person"
@@ -104,9 +95,7 @@ end
 #1) Finds AKM largest connected set
 """
 $(SIGNATURES)
-
 Returns a tuple of observation belonging to the largest connected set with the corresponding identifiers and outcomes. This requires to have the data sorted by first identifier, and time period (e.g. we sort by worked id and year). This is also the set where we can run AKM models with the original data.
-
 ### Arguments
 * `y`: outcome (e.g. log wage)
 * `first_id`: first identifier (e.g. worker id)
@@ -167,9 +156,7 @@ end
 #2) Pruning and finding Leave-Out Largest connected set
 """
 $(SIGNATURES)
-
 This function prunes the dataset from articulation points. If the first identifier is worker id it means that it prunes workers that would disconnect the graph if they were dropped.
-
 ### Arguments
 * `yvec`: outcome (e.g. log wage)
 * `first_idvar`: first identifier (e.g. worker id)
@@ -265,9 +252,7 @@ end
 #3) Drops Single Observations
 """
 $(SIGNATURES)
-
 This function drops observations that correspond with first identifiers with a single observation. For example, if first identifier is worker id, it will drop observations for workers that only appear once in the data.
-
 ### Arguments
 * `yvec`: outcome (e.g. log wage)
 * `first_idvar`: first identifier (e.g. worker id)
@@ -305,9 +290,7 @@ end
 #4) Compute Movers
 """
 $(SIGNATURES)
-
 Returns a vector that indicates whether the `first_id` (e.g. worker) is a mover across `second_id` (e.g. firms), as well as a vector with the number of periods that each `first_id` appears.
-
 ### Arguments
 * `first_id`: first identifier (e.g. worker id)
 * `second_id`: second identifier (e.g. firm id)
@@ -344,9 +327,7 @@ end
 #5) Creates match first_id using second_id id
 """
 $(SIGNATURES)
-
 Computes a match identifier for every combination of first and second identifier. For example, this can be the match identifier of worker-firm combinations.
-
 ### Arguments
 * `first_id`: first identifier (e.g. worker id)
 * `second_id`: second identifier (e.g. firm id)
@@ -361,9 +342,7 @@ end
 #6) Compute Leave-Out Connected Set : No worker is an articulation vertex and no single observations
 """
 $(SIGNATURES)
-
 Returns a tuple with the observation number of the original dataset that belongs to the Leave-out connected set as described in Kline,Saggio, Solvesten. It also provides the corresponding outcome and identifiers in this connected set. 
-
 ### Arguments
 * `y`: outcome vector
 * `first_id`: first identifier (e.g. worker id)
@@ -388,9 +367,7 @@ end
 #7) Main Routine Function : Performs Leave Out Estimation and Inference
 """
 $(SIGNATURES)
-
 Returns a tuple with the observation number of the original dataset that belongs to the Leave-out connected set as described in Kline,Saggio, Solvesten. It also provides the corresponding outcome and identifiers in this connected set. 
-
 ### Arguments
 * `y`: outcome vector
 * `first_id`: first identifier (e.g. worker id)
@@ -493,9 +470,7 @@ end
 
 """
 $(SIGNATURES)
-
 Computes variance of errors for stayers when leaving out a match. 
-
 ### Arguments
 * `y`: outcome variable
 * `first_id`: first identifier (e.g. worker id)
@@ -535,9 +510,7 @@ end
 
 """
 $(SIGNATURES)
-
 Computes a KSS quadratic form to correct bias.
-
 ### Arguments
 * `sigma_i`: variance estimator of observation i.
 * `A_1`: left matrix of quadratic form
@@ -552,56 +525,6 @@ function kss_quadratic_form(sigma_i, A_1, A_2, beta, Bii)
     theta                               = theta[1]
     dof                                 = size(left,1)-1
     theta_KSS                           = theta-(1/dof)*sum(Bii.*sigma_i)
-end
-
-function leverages3(X, Fvar, FlagVar, settings)
-    NT = size(X,1)
-    FE = size(X,2)
-
-    p = 200
-
-    #Define solver
-    S_xx = X'*X
-
-    # Create the solvers
-    ldli, la = computeLDLinv(S_xx)
-    buffs = zeros(size(la)[1],Threads.nthreads())
-    compute_sol = []
-    for i in 1:Threads.nthreads()
-        P = approxcholOperator(ldli,buffs[:,i])
-        push!(compute_sol,approxcholSolver(P,la))
-    end
-
-    #Clear that memory
-    ldli = nothing 
-    la = nothing 
-    buffs = nothing
-    S_xx = nothing
-
-    mts = MersenneTwister.(1:Threads.nthreads())
-    Bii_lag_cov = zeros(NT)
-    Bii_lag_var = zeros(NT)
-    Bii_current_var = zeros(NT)
-
-    Threads.@threads for i=1:p        
-        rademach =  rand(mts[Threads.threadid()],1,size(FlagVar,1)) .> 0.5
-        rademach  = rademach  .- (rademach .== 0)
-        rademach  = rademach /sqrt(p)
-        rademach = rademach .- mean(rademach)
-
-        Z_fe = compute_sol[Threads.threadid()]( [rademach * Fvar...]; verbose = false)
-        Z_fe = X * Z_fe
-
-        Z_lag_fe = compute_sol[Threads.threadid()]( [rademach * FlagVar...]; verbose = false)
-        Z_lag_fe = X * Z_lag_fe
-
-        # Bii_lag_cov = Bii_lag_cov + (Z_fe .* Z_lag_fe)
-
-        Bii_lag_var = Bii_lag_var + (Z_lag_fe .* Z_lag_fe)
-
-        Bii_current_var = Bii_current_var + (Z_fe .* Z_fe)
-    end
-    return (Bii_lag_var=Bii_lag_var, Bii_current_var = Bii_current_var, Bii_lag_cov=nothing)
 end
 
 
@@ -775,11 +698,60 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 end
 
 
+function leverages3(X, Fvar, FlagVar, settings)
+    NT = size(X,1)
+    FE = size(X,2)
+
+    p = 200
+
+    #Define solver
+    S_xx = X'*X
+
+    # Create the solvers
+    ldli, la = computeLDLinv(S_xx)
+    buffs = zeros(size(la)[1],Threads.nthreads())
+    compute_sol = []
+    for i in 1:Threads.nthreads()
+        P = approxcholOperator(ldli,buffs[:,i])
+        push!(compute_sol,approxcholSolver(P,la))
+    end
+
+    #Clear that memory
+    ldli = nothing 
+    la = nothing 
+    buffs = nothing
+    S_xx = nothing
+
+    mts = MersenneTwister.(1:Threads.nthreads())
+    Bii_lag_cov = zeros(NT)
+    Bii_lag_var = zeros(NT)
+    Bii_current_var = zeros(NT)
+
+    Threads.@threads for i=1:p        
+        rademach =  rand(mts[Threads.threadid()],1,size(FlagVar,1)) .> 0.5
+        rademach  = rademach  .- (rademach .== 0)
+        rademach  = rademach /sqrt(p)
+        rademach = rademach .- mean(rademach)
+
+        Z_fe = compute_sol[Threads.threadid()]( [rademach * Fvar...]; verbose = false)
+        Z_fe = X * Z_fe
+
+        Z_lag_fe = compute_sol[Threads.threadid()]( [rademach * FlagVar...]; verbose = false)
+        Z_lag_fe = X * Z_lag_fe
+
+        # Bii_lag_cov = Bii_lag_cov + (Z_fe .* Z_lag_fe)
+
+        Bii_lag_var = Bii_lag_var + (Z_lag_fe .* Z_lag_fe)
+
+        Bii_current_var = Bii_current_var + (Z_fe .* Z_fe)
+    end
+    return (Bii_lag_var=Bii_lag_var, Bii_current_var = Bii_current_var, Bii_lag_cov=nothing)
+end
+
+
 """
 $(SIGNATURES)
-
 This function computes the diagonal matrices containing Pii and Bii under Exact Algorithm. See appendix in KSS for more information.
-
 ### Arguments
 * `lev`: an instance of Exact algorithm structure.
 * `X`: the design matrix in the linear model.
@@ -787,7 +759,7 @@ This function computes the diagonal matrices containing Pii and Bii under Exact 
 * `Fvar`: matrix with incidence information of second_id
 * `settings`: settings based on data type `VCHDFESettings`. Please see the reference provided below.
 """
-function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, Dbarvar, settings)
+function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, settings)
 
     M = size(X,1)
 
@@ -808,7 +780,6 @@ function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, Dbarvar, settings)
     Bii_second = zeros(M)
     Bii_cov= settings.cov_effects ==true ? zeros(M) : nothing
     Bii_first= settings.first_id_effects == true ? zeros(M) : nothing
-    Bii_first_bar = settings.first_id_bar_effects == true ? zeros(M) : nothing
 
     Threads.@threads for i=1:M
 
@@ -832,11 +803,6 @@ function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, Dbarvar, settings)
             Bii_cov[i] = COV[1]*(size(Dvar,1)-1)
         end
 
-        if Bii_first_bar != nothing
-            COV = cov(Dbarvar * zexact, Dbarvar*zexact)
-            Bii_first_bar[i] = COV[1] * (size(Dbarvar, 1)-1)
-        end
-
     end
 
     #Censor
@@ -845,7 +811,7 @@ function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, Dbarvar, settings)
     correction_JLA = 1 
     Mii = 1 .- Pii
 
-    return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov, Bii_first_bar = Bii_first_bar)
+    return (Pii = Pii , Mii = Mii , correction_JLA = correction_JLA, Bii_first = Bii_first , Bii_second = Bii_second , Bii_cov = Bii_cov)
 end
 
 
@@ -962,12 +928,9 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
 end
 
 
-
 """
 $(SIGNATURES)
-
 This function regresses fixed effects based onto some observables. See appendix in KSS for more information.
-
 ### Arguments
 * `y`: outcome variable.
 * `X`: the design matrix in the linear model.
@@ -1111,4 +1074,3 @@ end
 #        println("p-value: ", pvalue)
 #
 #    end
-
