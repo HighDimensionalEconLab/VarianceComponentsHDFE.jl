@@ -306,6 +306,6 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
         end
     end
 
-    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, θ_firstbar = θ_firstbar, β = beta, Dalpha = pe, Fpsi = fe, Pii = Pii, Bii_first = Bii_first,
-    Bii_second = Bii_second, Bii_cov = Bii_cov, Bii_first_bar = Bii_first_bar, y = y , X = X, sigma_i = sigma_i, acf = acf, acp = acp)
+    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = β, Dalpha = Dalpha, Fpsi = Fpsi, Pii = Pii, Bii_first = Bii_first,
+    Bii_second = Bii_second, Bii_cov = Bii_cov, y = y , X = X, sigma_i = sigma_i, acf = acf, acp = acp)
 end
