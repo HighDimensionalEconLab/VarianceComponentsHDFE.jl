@@ -28,7 +28,7 @@ settings = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=0),
     print_level = 1,
     leave_out_level = "obs", 
     first_id_effects = false,
-    first_id_bar_effects = false,
+    # first_id_bar_effects = false,
     cov_effects = false, 
     )
 
@@ -36,7 +36,7 @@ controls = nothing
 
 lags = nothing
 
-@unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf, acp = leave_out_AR1(y, first_id, second_id, time_id, controls, settings, lags = lags)
+@unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf, acp = leave_out_AR(y, first_id, second_id, time_id, controls, settings, lags = lags)
 
 tmp = unique(data.:firmidg)
 data[!, :firmidg] = indexin(data.:firmidg, tmp)
