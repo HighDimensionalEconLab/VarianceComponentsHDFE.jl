@@ -296,7 +296,7 @@ function real_main()
     # The case with time varying stuff
     else
         #We set autocorr_plot = false for now
-        @unpack obs,  y  , first_id , second_id, θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf, acp = leave_out_AR(y, first_id, second_id, time_id, controls, settings, lags = lags)
+        @unpack obs, first_id , second_id, θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf, acp = leave_out_AR(y, first_id, second_id, time_id, controls, settings, lags = lags)
     end
     
     Z_lincom = nothing 
