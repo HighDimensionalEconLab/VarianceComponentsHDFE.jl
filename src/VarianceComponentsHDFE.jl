@@ -57,8 +57,8 @@ function parse_commandline()
         #     nargs = "*"
         "--lags"
             help = "The lag structure, default is all lags."
-            arg_type = Int
-            nargs = "*"
+            nargs = '*'  
+            default = []
         "--outcome_id"
             help = "column index in CSV file for outcome (e.g. Wage)."
             arg_type = Int
