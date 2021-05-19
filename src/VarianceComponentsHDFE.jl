@@ -51,11 +51,11 @@ function parse_commandline()
             help = "column index in CSV file for the time identifier (e.g. Year). If specified, it uses a time varying firm effects model and computes the autocorrelation function."
             arg_type = Int
             default = nothing
+        # "--lags"
+        #     help = "The lag structure, default is all lags."
+        #     arg_type = Array{Int64,1}
+        #     nargs = "*"
         "--lags"
-            help = "The lag structure, default is all lags."
-            arg_type = Array{Int64,1}
-            nargs = "*"
-        "--lags2"
             help = "The lag structure, default is all lags."
             arg_type = Int
             nargs = "*"
@@ -158,7 +158,7 @@ function real_main()
     second_idx = parsed_args["second_id"]
     time_idx = parsed_args["time_id"]
     lags = parsed_args["lags"]
-    lags2 = parsed_args["lags2"]
+    # lags2 = parsed_args["lags2"]
     # lags = nothing
     outcome_idx = parsed_args["outcome_id"]
     leave_out_level = parsed_args["leave_out_level"]
@@ -296,7 +296,7 @@ function real_main()
     # The case with time varying stuff
     else
         #We set autocorr_plot = false for now
-        @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf, acp = leave_out_AR(y, first_id, second_id, time_id, controls, settings, lags = lags)
+        @unpack obs,  y  , first_id , second_id, θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf, acp = leave_out_AR(y, first_id, second_id, time_id, controls, settings, lags = lags)
     end
     
     Z_lincom = nothing 
