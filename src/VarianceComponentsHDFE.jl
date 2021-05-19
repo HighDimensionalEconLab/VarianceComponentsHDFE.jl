@@ -51,14 +51,14 @@ function parse_commandline()
             help = "column index in CSV file for the time identifier (e.g. Year). If specified, it uses a time varying firm effects model and computes the autocorrelation function."
             arg_type = Int
             default = nothing
-        # # "--lags"
-        # #     help = "The lag structure, default is all lags."
-        # #     arg_type = Array{Int64,1}
-        # #     nargs = "*"
-        # "--lags2"
-        #     help = "The lag structure, default is all lags."
-        #     arg_type = Int
-        #     nargs = "*"
+        "--lags"
+            help = "The lag structure, default is all lags."
+            arg_type = Array{Int64,1}
+            nargs = "*"
+        "--lags2"
+            help = "The lag structure, default is all lags."
+            arg_type = Int
+            nargs = "*"
         "--outcome_id"
             help = "column index in CSV file for outcome (e.g. Wage)."
             arg_type = Int
@@ -157,9 +157,9 @@ function real_main()
     first_idx = parsed_args["first_id"]
     second_idx = parsed_args["second_id"]
     time_idx = parsed_args["time_id"]
-    # lags = parsed_args["lags"]
-    # lags2 = parsed_args["lags2"]
-    lags = nothing
+    lags = parsed_args["lags"]
+    lags2 = parsed_args["lags2"]
+    # lags = nothing
     outcome_idx = parsed_args["outcome_id"]
     leave_out_level = parsed_args["leave_out_level"]
     algorithm = parsed_args["algorithm"]
