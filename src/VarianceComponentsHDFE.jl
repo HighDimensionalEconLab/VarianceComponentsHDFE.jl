@@ -427,68 +427,69 @@ function real_main()
                 if isabspath(output_path) == false
                     output_path = joinpath(pwd(), output_path)
                 end
-                open(output_path, "w") do io
-                   write(io, output_template)
-                   if first_id_effects == 1 
-                        write(io, "    Bias Corrected Variance of  $(first_id_display) Effects:  $θ_first \n\n")
-                   end
+                # open(output_path, "w") do io
+                #    write(io, output_template)
+                #    if first_id_effects == 1 
+                #         write(io, "    Bias Corrected Variance of  $(first_id_display) Effects:  $θ_first \n\n")
+                #    end
 
-                   if cov_effects == 1 
-                        write(io, "    Bias Corrected Covariance of  $(first_id_display)-$(second_id_display) Effects: $θCOV \n\n")
-                   end
+                #    if cov_effects == 1 
+                #         write(io, "    Bias Corrected Covariance of  $(first_id_display)-$(second_id_display) Effects: $θCOV \n\n")
+                #    end
 
-                   if (first_id_effects == 1 ) && (cov_effects == 1 )
-                        θ_first = abs(θ_first) #This is only required for the very small dataset that does the precompilation
-                        θ_second = abs(θ_second) #This is only required for the very small dataset that does the precompilation
-                        corr = θCOV/(sqrt(θ_first)*sqrt(θ_second)) 
-                        r2 = (θ_second+2*θCOV+θ_first)/var_den
-                        write(io, "    Bias Corrected Correlation of  $(first_id_display)-$(second_id_display) Effects: $corr \n\n")                   
-                        write(io, "    Bias Corrected Fraction of Variance explained by  $(first_id_display)-$(second_id_display) Effects: $r2 \n\n")                   
-                   end
+                #    if (first_id_effects == 1 ) && (cov_effects == 1 )
+                #         θ_first = abs(θ_first) #This is only required for the very small dataset that does the precompilation
+                #         θ_second = abs(θ_second) #This is only required for the very small dataset that does the precompilation
+                #         corr = θCOV/(sqrt(θ_first)*sqrt(θ_second)) 
+                #         r2 = (θ_second+2*θCOV+θ_first)/var_den
+                #         write(io, "    Bias Corrected Correlation of  $(first_id_display)-$(second_id_display) Effects: $corr \n\n")                   
+                #         write(io, "    Bias Corrected Fraction of Variance explained by  $(first_id_display)-$(second_id_display) Effects: $r2 \n\n")                   
+                #    end
 
-                   if (time_id !== nothing)
-                        acf_output = ""
-                        for i in 1:size(acf, 1)
-                            for j in 1:size(acf, 2)
-                                acf_output = acf_output * string(acf[i, j]) * " "
-                            end
-                            acf_output = acf_output * "\n "
-                        end
-                        write(io, "     Autocorrelation function is: \n $(acf_output)                                                                                                                                                                                                   ")
-                   end
+                #    if (time_id !== nothing)
+                #         acf_output = ""
+                #         for i in 1:size(acf, 1)
+                #             for j in 1:size(acf, 2)
+                #                 acf_output = acf_output * string(acf[i, j]) * " "
+                #             end
+                #             acf_output = acf_output * "\n "
+                #         end
+                #         write(io, "    Autocorrelation function is:  \n $(acf_output) ")            
+                #         # write(io, "     Autocorrelation function is: \n $(acf_output) d")                                                                                                                                                                                                ")
+                #    end
                    
 
-                    if Z_lincom != nothing 
-                        #Write the output of inference 
-                        r = size(Z_lincom_col,2)
-                        write(io,"    Results of High Dimensional Lincom \n\n")
-                        if lincom_labels == nothing 
-                            for q=2:r
-                                if q <= r
-                                    ncol = q-1 
-                                    output_inference = """
-                                        Coefficient of Column $(ncol): $(linear_combination[q]) \n
-                                        Traditional HC Standard Error of Column $(ncol): $(SE_naive[q]) \n 
-                                        KSS Standard Error of Column $(ncol): $(SE_linear_combination_KSS[q]) \n 
-                                        T-Statistic of Column $(ncol): $(test_statistic[q]) \n
-                                    """
-                                    write(io,output_inference)
-                                end
-                            end
-                        else
-                            for q=2:r
-                                tell_me = lincom_labels[q-1]
-                                output_inference = """
-                                    Coefficient on $(tell_me): $(linear_combination[q-1]) \n
-                                    Traditional HC Standard Error on $(tell_me): $(SE_naive[q-1]) \n 
-                                    KSS Standard Error on $(tell_me): $(SE_linear_combination_KSS[q-1]) \n 
-                                    T-Statistic on $(tell_me): $(test_statistic[q-1]) \n
-                                """
-                                write(io,output_inference)  
-                            end
-                        end
-                    end
-                 end
+                #     if Z_lincom != nothing 
+                #         #Write the output of inference 
+                #         r = size(Z_lincom_col,2)
+                #         write(io,"    Results of High Dimensional Lincom \n\n")
+                #         if lincom_labels == nothing 
+                #             for q=2:r
+                #                 if q <= r
+                #                     ncol = q-1 
+                #                     output_inference = """
+                #                         Coefficient of Column $(ncol): $(linear_combination[q]) \n
+                #                         Traditional HC Standard Error of Column $(ncol): $(SE_naive[q]) \n 
+                #                         KSS Standard Error of Column $(ncol): $(SE_linear_combination_KSS[q]) \n 
+                #                         T-Statistic of Column $(ncol): $(test_statistic[q]) \n
+                #                     """
+                #                     write(io,output_inference)
+                #                 end
+                #             end
+                #         else
+                #             for q=2:r
+                #                 tell_me = lincom_labels[q-1]
+                #                 output_inference = """
+                #                     Coefficient on $(tell_me): $(linear_combination[q-1]) \n
+                #                     Traditional HC Standard Error on $(tell_me): $(SE_naive[q-1]) \n 
+                #                     KSS Standard Error on $(tell_me): $(SE_linear_combination_KSS[q-1]) \n 
+                #                     T-Statistic on $(tell_me): $(test_statistic[q-1]) \n
+                #                 """
+                #                 write(io,output_inference)  
+                #             end
+                #         end
+                #     end
+                #  end
             catch e
                 println("Error writing output to $(output_path)")
                 display(e)

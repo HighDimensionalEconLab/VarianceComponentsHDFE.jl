@@ -10,7 +10,6 @@
 getlagged(x) = [NaN; x[1:(end - 1)]]
 
 using DocStringExtensions
-using LinearMaps
 using Pipe
 
 

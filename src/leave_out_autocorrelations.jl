@@ -5,7 +5,6 @@ using LinearAlgebra
 using DataFrames
 using Pipe
 using ShiftedArrays
-using LinearMaps
 using Random
 using Statistics
 using VarianceComponentsHDFE
@@ -26,14 +25,14 @@ function find_balanced_set(first_id, second_id, time_id; settings = VCHDFESettin
     df = DataFrame(first_id = first_id, second_id = second_id, time_id = time_id)
 
     num_periods = maximum(time_id) - minimum(time_id) + 1
-    (settings.print_level >= 1) && println("Number of time periods in the balanced dataset: $(num_periods)")
+    (settings.print_level > 0) && @info "Number of time periods in the balanced dataset:" num_periods
 
     df_firmyear_collapsed = @pipe unique(df, [:second_id, :time_id]) |> select(_, [:second_id, :time_id])
 
     df_firmyear_collapsed = @pipe groupby(df_firmyear_collapsed, :second_id) |> transform(_, nrow => :num_years_present) |> transform(_, :num_years_present => (x -> (x .== num_periods)) => :is_in_balanced)
 
     new_df = leftjoin(df_firmyear_collapsed, df, on = [:second_id, :time_id])
-    (settings.print_level >= 1) && println("Number of observations belonging to the balanced dataset: $(sum(new_df.:is_in_balanced))")
+    (settings.print_level >= 1) && @info "Number of observations belonging to the balanced dataset:" sum(new_df.:is_in_balanced)
 
     return new_df.:is_in_balanced
 end
@@ -146,7 +145,7 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
     
     if autocorr_plot
         acp = Array{Union{Missing, Float64}}(missing, last_year - first_year, 1)
-        (settings.print_level > 0) && (println("autocorrelation plot values:"))
+        (settings.print_level > 0) && @info "autocorrelation plot values:"
         #TODO check sanity
         for counter in lags
             if (counter + first_year) < last_year
@@ -176,7 +175,7 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
                 W = spzeros(sum_weights, ncols)
                 i = 1
                 j = 1
-                @time for weight in weights
+                for weight in weights
                     W[i:i+weight-1, j] .= 1.0
                     i += weight
                     j += 1
@@ -192,7 +191,7 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
                     continue
                 end
 
-                @time @unpack Bii_lag_var, Bii_current_var, Bii_lag_cov = leverages3(X, Fvar, FlagVar, settings)
+                @unpack Bii_lag_var, Bii_current_var, Bii_lag_cov = leverages3(X, Fvar, FlagVar, settings)
                 
                 if size(Bii_current_var, 1) == 0 || isempty(Fvar) || isempty(FlagVar) || isempty(Bii_current_var) 
                     continue
@@ -204,20 +203,22 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
                 θ_current_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], Fvar, Fvar, beta, Bii_current_var[is_in_balanced .== 1])
 
                 if settings.print_level > 0
-                    println(counter, ":")
-                    print("cov: ")
-                    println(θ_lag_cov)
-                    # print("var lag: ")
-                    # println(θ_lag_var)
-                    print("var current: ")
-                    println(θ_current_var)
-                    # print("corr:")
-                    # println(θ_lag_cov/(sqrt(θ_lag_var) * sqrt(θ_current_var)))
-                    print("corr:")
                     corr_kss_corrected = θ_lag_cov/(sqrt(θ_second) * sqrt(θ_current_var))
-                    println(corr_kss_corrected)
-                    # println(size(WF, 1))
-                    println(" ")
+                    @info "autocorrelation " counter θ_lag_cov θ_current_var corr_kss_corrected
+                    # println(counter, ":")
+                    # print("cov: ")
+                    # println(θ_lag_cov)
+                    # # print("var lag: ")
+                    # # println(θ_lag_var)
+                    # print("var current: ")
+                    # println(θ_current_var)
+                    # # print("corr:")
+                    # # println(θ_lag_cov/(sqrt(θ_lag_var) * sqrt(θ_current_var)))
+                    # print("corr:")
+                    
+                    # println(corr_kss_corrected)
+                    # # println(size(WF, 1))
+                    # println(" ")
                 end
 
                 acp[counter] = corr_kss_corrected
@@ -232,7 +233,7 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
     end
 
     for base_year in first_year:last_year
-        (settings.print_level > 0) && println("base year: $(base_year)")
+        (settings.print_level > 0) && @info "base year:" base_year
         for counter in lags
             if (counter + first_year) < last_year
                 # df = @pipe sort(df, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (lag(x, counter) .+ counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
@@ -261,7 +262,7 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
                 W = spzeros(sum_weights, ncols)
                 i = 1
                 j = 1
-                @time for weight in weights
+                for weight in weights
                     W[i:i+weight-1, j] .= 1.0
                     i += weight
                     j += 1
@@ -277,7 +278,7 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
                     continue
                 end
 
-                @time @unpack Bii_lag_var, Bii_current_var, Bii_lag_cov = leverages3(X, Fvar, FlagVar, settings)
+                @unpack Bii_lag_var, Bii_current_var, Bii_lag_cov = leverages3(X, Fvar, FlagVar, settings)
 
                 # θ_lag_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], FlagVar, FlagVar, beta, Bii_lag_var[is_in_balanced .== 1])
                 # println(Bii_current_var)
@@ -288,17 +289,19 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
                 θ_current_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], Fvar, Fvar, beta, Bii_current_var[is_in_balanced .== 1])
                     
                 if settings.print_level > 0
-                    println(counter, ":")
-                    println("cov: $(θ_lag_cov)")
-                    # print("var lag: ")
-                    # println(θ_lag_var)
-                    println("var current: $(θ_current_var)")
                     cor_kss_corrected = θ_lag_cov/(sqrt(θ_second) * sqrt(θ_current_var))
-                    println("corr: $(cor_kss_corrected)")
-                    # print("corr2:")
-                    # println(θ_lag_cov/(sqrt(θ_second) * sqrt(θ_current_var)))
-                    # println(size(WF, 1))
-                    println(" ")
+                    @info "autocorrelations: " counter θ_lag_cov θ_current_var cor_kss_corrected
+                    # println(counter, ":")
+                    # println("cov: $(θ_lag_cov)")
+                    # # print("var lag: ")
+                    # # println(θ_lag_var)
+                    # println("var current: $(θ_current_var)")
+                    # cor_kss_corrected = θ_lag_cov/(sqrt(θ_second) * sqrt(θ_current_var))
+                    # println("corr: $(cor_kss_corrected)")
+                    # # print("corr2:")
+                    # # println(θ_lag_cov/(sqrt(θ_second) * sqrt(θ_current_var)))
+                    # # println(size(WF, 1))
+                    # println(" ")
                 end
 
                 acf[base_year - first_year + 1, base_year - first_year + 1 + counter ] = cor_kss_corrected
