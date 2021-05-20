@@ -233,8 +233,10 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
     end
 
     for base_year in first_year:last_year
+        (settings.print_level > 1) && @info typeof(base_year)
         (settings.print_level > 0) && @info "base year:" base_year
         for counter in lags
+            (settings.print_level > 1) && @info typeof(counter)
             if (counter + first_year) < last_year
                 # df = @pipe sort(df, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (lag(x, counter) .+ counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
                 # We need to be sure that the data is totally balanced, otherwise, it may not work

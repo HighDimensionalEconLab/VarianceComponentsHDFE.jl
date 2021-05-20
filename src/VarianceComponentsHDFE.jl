@@ -178,6 +178,8 @@ function real_main()
     first_id_display_small = lowercase(first_id_display)
     second_id_display_small = lowercase(second_id_display)
 
+    lags = parse.(Int, lags)
+
     print_level > 0 && println("Number of threads: $(Threads.nthreads())")
 
     data  = DataFrame!(CSV.File(path; header=header))
