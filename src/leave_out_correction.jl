@@ -573,17 +573,17 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     pe=D * beta[1:N]
     fe=F*S * beta[N+1:N+J-1]
 
-    println("\n","Plug-in Variance Components:")
+    settings.print_level > 0 && println("\n","Plug-in Variance Components:")
 
     var_den = var(y)
     σ2_ψ_AKM = var(fe)
-    println("Plug-in Variance of $(settings.second_id_display_small) Effects: ", σ2_ψ_AKM )
+    settings.print_level > 0 && println("Plug-in Variance of $(settings.second_id_display_small) Effects: ", σ2_ψ_AKM )
     σ2_α_AKM = var(pe)
-    println("Plug-in Variance of $(settings.first_id_display_small) Effects: ", σ2_α_AKM )
+    settings.print_level > 0 && println("Plug-in Variance of $(settings.first_id_display_small) Effects: ", σ2_α_AKM )
     σ2_ψα_AKM = cov(pe,-fe)
-    println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM)
-    println("Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM/(sqrt(σ2_ψ_AKM)*sqrt(σ2_α_AKM)))
-    println("Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (σ2_ψ_AKM+2*σ2_ψα_AKM+σ2_ψα_AKM)/var_den, "\n" )
+    settings.print_level > 0 &&  println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM)
+    settings.print_level > 0 && println("Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM/(sqrt(σ2_ψ_AKM)*sqrt(σ2_α_AKM)))
+    settings.print_level > 0 && println("Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (σ2_ψ_AKM+2*σ2_ψα_AKM+σ2_ψα_AKM)/var_den, "\n" )
 
     #Part 2: Collapse & Reweight (if needed)
     weight = ones(NT,1) 

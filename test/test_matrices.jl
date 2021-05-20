@@ -1,5 +1,4 @@
-using LinearAlgebra, SparseArrays,Statistics,DataFrames,DataFramesMeta
-
+using LinearAlgebra, SparseArrays,Statistics,DataFrames
 #To install Laplacians you need to put in Julia's Prompt "add Laplacians#master"
 #For some reason Pkg.add() doesn't work with this.
 #Pkg.add("MATLAB")
@@ -89,41 +88,13 @@ end
     @test compute_sol([rademacher1*Xtest...];verbose=true) ≈  [-0.5, 0.0, -1.5, 0.0, -1.0]
 end
 
-const K=0
-@testset "LambdaMatrices" begin
-    Xtest = sparse([1;2;3;4;5;6;7;8;1;3;4;5],[1;1;2;2;3;3;4;4;5;5;5;5],[1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0;-1.0;-1.0;-1.0;-1.0])
-    y_lo = [0.146297; 0.29686 ;  0.54344; 0.432677 ; 0.730622 ; 0.619239; 0.753429; 0.0863208]
-    id_lo = [1; 1; 2;2 ; 3;3 ;4;4]
-    firmid_lo = [1;2;1;1;1;2;2;2]
-    obs_id_lo1 = [1;2;3;4;6;7;8;9]
-    obs_id_lo = collect(1:8)
-    match_id = [1; 2 ; 3;3 ; 4; 5; 6; 6]
-
-    settings_exact = VCHDFESettings(leverage_algorithm = ExactAlgorithm(), first_id_effects=true, cov_effects=true)
-    settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=3), first_id_effects=true, cov_effects=true)
-
-    # @test    do_Pii(Xtest,obs_id_lo) == sparse( [1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8], [0.75,0.75,0.5,0.5,0.75,0.75,0.5,0.5] )
-    @test    eff_res(settings_exact.leverage_algorithm, Xtest,id_lo,firmid_lo,match_id, K, settings_exact).Lambda_P == sparse( [1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8], [0.75,0.75,0.5,0.5,0.75,0.75,0.5,0.5] )
-    @test    eff_res(settings_exact.leverage_algorithm, Xtest,id_lo,firmid_lo,match_id, K, settings_exact).Lambda_B_second == sparse( [1,2,5,6], [1,2,5,6], [0.5,0.5,0.5,0.5],8,8)
-    @test    eff_res(settings_exact.leverage_algorithm, Xtest,id_lo,firmid_lo,match_id, K, settings_exact).Lambda_B_first == sparse( [1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8], [0.625,0.625,0.375,0.375,0.625,0.625,0.375,0.375] )
-    @test    eff_res(settings_exact.leverage_algorithm, Xtest,id_lo,firmid_lo,match_id, K, settings_exact).Lambda_B_cov == sparse( [1,2,5,6], [1,2,5,6], [-0.25,-0.25,-0.25,-0.25],8,8)
-
-    # For now, just test that this executes
-    # @test eff_res(settings_JLA.leverage_algorithm, Xtest,id_lo,firmid_lo,match_id, K, settings_JLA).Lambda_P != nothing
-
-    # Original test
-    # @test    isapprox(eff_res(settings_JLA.leverage_algorithm, Xtest,id_lo,firmid_lo,match_id, K, settings_JLA).Lambda_P, sparse( [1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8], [0.666667,0.666667,0.5,0.5,0.666667,0.666667,0.5,0.5] ), atol = 1e-4)
-
-    # @test    isapprox(eff_res(settings_JLA.leverage_algorithm, Xtest,id_lo,firmid_lo,match_id, K, settings_JLA).Lambda_P, sparse( [1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8], [0.99,0.75,0.5,0.5,0.75,0.75,0.5,0.5] ), atol = 1e-4)
-end
-
 @testset "A throughout Test" begin
     y_full = [0.146297; 0.29686 ;  0.54344; 0.432677 ; 0.464866 ; 0.730622 ; 0.619239; 0.753429; 0.0863208; 0.372084 ;  0.958089]
     id_full = [1; 1; 2;2 ; 3; 4;4 ;5;5 ;6;6]
     firmid_full = [1;2;1;1;1;1;2;2;2;2;3]
     obs_id_full = collect(1:11)
     @testset "Exact Algorithm, person_effects = true, cov_effects = true" begin
-        settings_exact = VCHDFESettings(leverage_algorithm = ExactAlgorithm(), first_id_effects=true, cov_effects=true)
+        settings_exact = VCHDFESettings(leverage_algorithm = ExactAlgorithm(), first_id_effects=true, cov_effects=true, leave_out_level = "obs")
 
         @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y_full, id_full, firmid_full, settings_exact, nothing)
 
@@ -134,16 +105,16 @@ end
 
         # println("θ_second: $θ_second \n θ_first:$θ_first \n, θCOV: $θCOV \n obs: $obs \n β: $β \n Dalpha: $Dalpha \n Fpsi: $Fpsi \n Pii: $Pii \n Bii_first: $Bii_first \n Bii_second: $Bii_second \n Bii_cov: $Bii_cov \n")
         @test β ≈ [0.2313735, 0.5076485000000001, 0.6847255, 0.4198749, 0.019589999999999996]
-        @test [θ_second, θ_first, θCOV] ≈ [-0.004178833653678571, 0.0036744476824373262, 0.0018986001519821427]
+        @test [θ_second, θ_first, θCOV] ≈ [0.004791473893999999, 0.03292163227823429, -0.03087035341429857]
         @test Dalpha ≈  [0.2313735, 0.2313735, 0.5076485000000001, 0.5076485000000001, 0.6847255, 0.6847255, 0.4198749, 0.4198749] 
         @test Fpsi ≈  [0.019589999999999996, 0.0, 0.019589999999999996, 0.019589999999999996, 0.019589999999999996, 0.0, 0.0, 0.0]
         @test Pii ≈ diag(diagm([0.75, 0.75, 0.5, 0.5, 0.75, 0.75, 0.5, 0.5]))
-        @test Bii_first ≈ diag(diagm([0.625, 0.625, 0.375, 0.375, 0.625, 0.625, 0.375, 0.375]))
+        @test Bii_first ≈ diag(diagm([ -0.25, -0.25, 0.0, 0.0, -0.25, -0.25, 0.0, 0.0]))
         @test Bii_second ≈ diag(diagm([0.5, 0.5, 0, 0, 0.5, 0.5, 0, 0]))
-        @test Bii_cov ≈ diag(diagm([-0.25, -0.25, 0, 0, -0.25, -0.25, 0, 0]))
+        @test Bii_cov ≈ diag(diagm( [0.625, 0.625, 0.375, 0.375, 0.625, 0.625, 0.375, 0.375]))
     end
     @testset "Exact Algorithm, person_effects = false, cov_effects = false" begin
-        settings_exact = VCHDFESettings(leverage_algorithm = ExactAlgorithm(), first_id_effects=false, cov_effects=false)
+        settings_exact = VCHDFESettings(leverage_algorithm = ExactAlgorithm(), first_id_effects=false, cov_effects=false, leave_out_level = "obs")
 
         @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y_full, id_full, firmid_full, settings_exact, nothing)
 
@@ -154,7 +125,7 @@ end
 
         # println("θ_second: $θ_second \n θ_first:$θ_first \n, θCOV: $θCOV \n obs: $obs \n β: $β \n Dalpha: $Dalpha \n Fpsi: $Fpsi \n Pii: $Pii \n Bii_first: $Bii_first \n Bii_second: $Bii_second \n Bii_cov: $Bii_cov \n")
         @test β ≈ [0.2313735, 0.5076485000000001, 0.6847255, 0.4198749, 0.019589999999999996]
-        @test θ_second ≈ -0.004178833653678571
+        @test θ_second ≈ 0.004791473893999999
         @test [θ_first, θCOV] == [nothing, nothing]
         @test Dalpha ≈  [0.2313735, 0.2313735, 0.5076485000000001, 0.5076485000000001, 0.6847255, 0.6847255, 0.4198749, 0.4198749] 
         @test Fpsi ≈  [0.019589999999999996, 0.0, 0.019589999999999996, 0.019589999999999996, 0.019589999999999996, 0.0, 0.0, 0.0]
@@ -165,7 +136,7 @@ end
     end
     @testset "JLA Algorithm with three simulations, person and cov effects = true" begin
         Random.seed!(1234)
-        settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=3), first_id_effects=true, cov_effects=true)
+        settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=3), first_id_effects=true, cov_effects=true, leave_out_level = "obs")
 
         # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y_full,id_full,firmid_full,nothing,settings_JLA)
 
@@ -177,16 +148,23 @@ end
 
         println("θ_second: $θ_second \n θ_first:$θ_first \n, θCOV: $θCOV \n obs: $obs \n β: $β \n Dalpha: $Dalpha \n Fpsi: $Fpsi \n Pii: $Pii \n Bii_first: $Bii_first \n Bii_second: $Bii_second \n Bii_cov: $Bii_cov \n")
         # @test β ≈ [0.2313735, 0.5076485000000001, 0.6847255, 0.4198749, 0.019589999999999996]
-        @test isapprox([θ_second, θ_first, θCOV] ,  [-0.17707507536052222, -0.17145102440488802, 0.10101283333196641], atol=1e-1) #Rewrite this
+        @test isapprox([θ_second, θ_first, θCOV] ,  [0.023848627361476332, 0.0014221007208401193, 0.00017059846351962014], atol=1e-1) #Rewrite this
 
-        @test Pii ≈ diag(diagm([0.99, 0.99, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]))
-        @test isapprox(Bii_first, diag(diagm([0.770833, 1.10417, 0.375, 0.375, 0.604167, 0.270833, 0.375, 0.375])), atol = 1e-4)	
-        @test isapprox(Bii_second, diag(diagm([1.41667, 1.41667, 0, 0, 1.41667, 1.41667, 0, 0])), atol = 1e-4)	
-        @test isapprox(Bii_cov, diag(diagm([-0.625, -0.708333, 0, 0, -0.791667, -0.541667, 0, 0])), atol = 1e-4)
+        @test Pii ≈ diag(diagm([ 0.8749999999999999
+            0.7499999999999999
+            0.33333333333333337
+            0.33333333333333337
+            0.875
+            0.7499999999999999
+            0.33333333333333337
+            0.33333333333333337]))
+        @test isapprox(Bii_first, diag(diagm([0.12499999999999999, 1.1249999999999998, 0.041666666666666664, 0.041666666666666664, 0.12499999999999999, 0.45833333333333326, 0.7083333333333336, 0.7083333333333336])), atol = 1e-4)	
+        @test isapprox(Bii_second, diag(diagm([0.8333333333333335, 0.8333333333333335, 0.0, 0.0, 0.8333333333333335, 0.8333333333333335, 0.0, 0.0])), atol = 1e-4)	
+        @test isapprox(Bii_cov, diag(diagm([-0.08333333333333331, -0.24999999999999997, 0.0, 0.0, -0.08333333333333331, -0.24999999999999997, 0.0, 0.0])), atol = 1e-4)
     end
     @testset "JLA Algorithm with three simulations, person and cov effects = false" begin
         Random.seed!(1234)
-        settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=3), first_id_effects=false, cov_effects=false)
+        settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=3), first_id_effects=false, cov_effects=false, leave_out_level = "obs")
 
         # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y_full,id_full,firmid_full,nothing,settings_JLA)
 
@@ -198,22 +176,28 @@ end
 
         println("θ_second: $θ_second \n θ_first:$θ_first \n, θCOV: $θCOV \n obs: $obs \n β: $β \n Dalpha: $Dalpha \n Fpsi: $Fpsi \n Pii: $Pii \n Bii_first: $Bii_first \n Bii_second: $Bii_second \n Bii_cov: $Bii_cov \n")
         # @test β ≈ [0.2313735, 0.5076485000000001, 0.6847255, 0.4198749, 0.019589999999999996]
-        @test isapprox(θ_second ,  -0.17707507536052222, atol=1e-2) #Rewrite this
+        @test isapprox(θ_second ,  0.023848627361476332, atol=1e-2) #Rewrite this
 
-        @test Pii ≈ diag(diagm([0.99, 0.99, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]))	
+        @test Pii ≈ diag(diagm([ 0.8749999999999999
+            0.7499999999999999
+            0.33333333333333337
+            0.33333333333333337
+            0.875
+            0.7499999999999999
+            0.33333333333333337
+            0.33333333333333337]))	
         @test isequal(Bii_first, nothing)	
-        @test isapprox(Bii_second, diag(diagm([1.41667, 1.41667, 0, 0, 1.41667, 1.41667, 0, 0])), atol = 1e-4)	
+        @test isapprox(Bii_second, diag(diagm([0.8333333333333335, 0.8333333333333335, 0.0, 0.0, 0.8333333333333335, 0.8333333333333335, 0.0, 0.0])), atol = 1e-4)	
         @test isequal(Bii_cov,nothing)
 
     end
 end
 
-
 if run_full_test
     using CSV
     @testset "JLA Algorithm on Test.csv" begin
         Random.seed!(1234)    
-        settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=3155), first_id_effects=true, cov_effects=true)
+        settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=3155), first_id_effects=true, cov_effects=true, leave_out_level = "obs")
         data = CSV.read(joinpath(pkg_dir,"test.csv"); header=false)
         id = data[:,1]
         firmid = data[:,2]
@@ -227,5 +211,18 @@ if run_full_test
 
     
     end
+end
 
+@testset "Autocorrelation" begin
+    using CSV
+    settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=200), first_id_effects=false, cov_effects=false, leave_out_level = "obs", print_level = 0)
+    data = CSV.read(joinpath(pkg_dir, "autocorrelation_test2.csv"), DataFrame; header = false)
+    id = data[:, 3]
+    firmid = data[:, 2]
+    year = data[:, 1]
+    y = data[:, 4]
+
+    lags = [4]
+    @unpack obs, first_id , second_id, θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf, acp = leave_out_AR(y, id, firmid, year, nothing, settings_JLA, lags = lags)
+    @test isapprox(acf[1, 5], 0.394973, atol = 1e-4)
 end

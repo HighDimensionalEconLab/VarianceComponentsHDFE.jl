@@ -10,3 +10,5 @@ using Test
 #    include("test_matrices.jl")
 #    run_full_test && include("fulltest.jl")
 #end
+
+include("test_matrices.jl")
