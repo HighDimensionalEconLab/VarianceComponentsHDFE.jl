@@ -405,23 +405,6 @@ function real_main()
             Variance Outcome: $(var(y_py)) \n
             Bias Corrected Variance of $(second_id_display) Effects: $θ_second \n
         """ 
-
-        tmp_output= ""
-        for i in 1:size(tmp_array, 1)
-            for j in 1:size(tmp_array, 2)
-                tmp_output = tmp_output * string(tmp_array[i, j]) * " "
-            end
-            tmp_output = tmp_output * "\n "
-        end
-
-        for i in size(tmp_array, 1)
-            for j in size(tmp_array, 2)
-               print(tmp_array[i, j])
-            end
-        end
-        tmp_array
-        tmp_output
-
         if parsed_args["write_results"]
             try 
                 output_path = parsed_args["results_path"]
