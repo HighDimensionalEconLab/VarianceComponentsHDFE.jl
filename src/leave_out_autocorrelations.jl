@@ -139,7 +139,7 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
     first_year = minimum(df0.:year)
     last_year =maximum(df0.:year)
 
-    lags = (lags == nothing) ? (1:(last_year - first_year)) : lags
+    lags = (isempty(lags)) ? (1:(last_year - first_year)) : lags
 
     acp = nothing
     
