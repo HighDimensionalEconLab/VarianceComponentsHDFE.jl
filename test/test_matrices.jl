@@ -224,7 +224,7 @@ end
 
     lags = [4]
     @unpack obs, first_id , second_id, θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf, acp = leave_out_AR(y, id, firmid, year, nothing, settings_JLA, lags = lags)
-    @test isapprox(acf[1, 5], 0.394973, atol = 1e-4)
+    @test isapprox(acf[1, 5], 0.42889505736, atol = 1e-4)
 end
 
 # @testset "Autocorrelation_small_test" begin
