@@ -188,10 +188,10 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
                 θ_lag_cov = kss_quadratic_form(zeros(size(sigma_i, 1))[is_in_balanced .== 1, :], Fvar, FlagVar, beta, zeros(size(Bii_lag_var, 1))[is_in_balanced .== 1, :])
                 θ_current_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], Fvar, Fvar, beta, Bii_current_var[is_in_balanced .== 1])
 
-                corr_kss_corrected = θ_lag_cov/(sqrt(θ_second) * sqrt(θ_current_var))
-                settings.print_level > 0 && @info "autocorrelation between $(base_year) and $(base_year+counter):" cov=θ_lag_cov  var=θ_current_var correlation=corr_kss_corrected
+                cor_kss_corrected = θ_lag_cov/(sqrt(θ_second) * sqrt(θ_current_var))
+                settings.print_level > 0 && @info "autocorrelation between $(base_year) and $(base_year+counter):" cov=θ_lag_cov  var=θ_current_var correlation=cor_kss_corrected
 
-                acp[counter] = corr_kss_corrected
+                acp[counter] = cor_kss_corrected
 
             end
         end
@@ -258,7 +258,7 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
                 θ_current_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], Fvar, Fvar, beta, Bii_current_var[is_in_balanced .== 1])
                 
                 cor_kss_corrected = θ_lag_cov/(sqrt(θ_second) * sqrt(θ_current_var))
-                settings.print_level > 0 && @info "autocorrelation between $(base_year) and $(base_year+counter):" cov=θ_lag_cov  var=θ_current_var correlation=corr_kss_corrected
+                settings.print_level > 0 && @info "autocorrelation between $(base_year) and $(base_year+counter):" cov=θ_lag_cov  var=θ_current_var correlation=cor_kss_corrected
 
 
                 acf[base_year - first_year + 1, base_year - first_year + 1 + counter ] = cor_kss_corrected
