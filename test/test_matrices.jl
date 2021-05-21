@@ -210,8 +210,8 @@ if run_full_test
         @test isapprox([θ_second, θ_first, θCOV],  [0.010505964725588434 , 0.08534310058596604, 0.004550851841563358],atol=1e-2)
 
     
-#     end
-# end
+    end
+end
 
 @testset "Autocorrelation" begin
     using CSV
