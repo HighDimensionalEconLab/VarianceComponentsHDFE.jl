@@ -226,3 +226,17 @@ end
     @unpack obs, first_id , second_id, θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf, acp = leave_out_AR(y, id, firmid, year, nothing, settings_JLA, lags = lags)
     @test isapprox(acf[1, 5], 0.394973, atol = 1e-4)
 end
+
+@testset "Autocorrelation_small_test" begin
+    using CSV
+    settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=200), first_id_effects=false, cov_effects=false, leave_out_level = "obs", print_level = 0)
+    data = CSV.read(joinpath(pkg_dir, "autocorrelation_test2.csv"), DataFrame; header = false)
+    id = data[:, 3]
+    firmid = data[:, 2]
+    year = data[:, 1]
+    y = data[:, 4]
+
+    lags = [4]
+    @unpack obs, first_id , second_id, θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i, acf, acp = leave_out_AR(y, id, firmid, year, nothing, settings_JLA, lags = lags)
+    @test isapprox(acf[1, 5], 0.394973, atol = 1e-4)
+end

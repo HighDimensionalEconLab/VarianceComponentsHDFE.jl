@@ -9,6 +9,7 @@ using Distributions
 using LinearOperators, FastClosures, Krylov
 using ArgParse
 using AlgebraicMultigrid
+using Printf
 
 #include("init.jl")
 include("leave_out_correction.jl")
@@ -397,6 +398,7 @@ function real_main()
         var_den = var(y_py)
         movers , T = compute_movers(first_id, second_id)
         num_movers = length(unique(movers .* first_id)) - 1 
+        time_id = time_id[obs]
 
         output_template = """
             Number of observations (Leave Out Sample): $(length(obs)) \n 
@@ -433,14 +435,8 @@ function real_main()
                    end
 
                    if (time_id !== nothing)
-                        acf_output = ""
-                        for i in 1:size(acf, 1)
-                            for j in 1:size(acf, 2)
-                                acf_output = acf_output * string(acf[i, j]) * " "
-                            end
-                            acf_output = acf_output * "\n "
-                        end
-                        write(io, "    Autocorrelation function is:  \n $(acf_output) ")            
+                        write(io, "    Autocorrelation function is:  \n")    
+                        print_out_acf(io, acf_output, time_id)        
                         # write(io, "     Autocorrelation function is: \n $(acf_output) d")                                                                                                                                                                                                ")
                    end
                    
@@ -485,4 +481,38 @@ function real_main()
     
 end
 
+function print_out_acf(io, acf, time_id; s = 1)
+    max_time = maximum(time_id)
+    min_time = minimum(time_id)
+    
+    @printf(io, "         |")
+
+    # Printing times:
+    for i in min_time:s:max_time
+        @printf(io, "%8i  ", i)
+    end
+
+    @printf(io, "\n --------|")
+
+    for i in min_time:s:(max_time)
+        @printf(io , "----------")
+    end
+
+    @printf(io, "\n")
+
+    # print(output_txt)
+
+    for i in 1:size(acf, 1)
+        @printf(io, "%8i |", i + min_time - 1)
+        for j in 1:size(acf, 2)
+            if ismissing(acf[i, j])
+                @printf(io, "          ")
+            else
+                @printf(io, "%8.3f  ", acf[i, j])
+            end
+        end
+        @printf(io, "\n")
+    end
+    close(io)
+end
 end
