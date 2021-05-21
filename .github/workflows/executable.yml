@@ -32,6 +32,8 @@ jobs:
         run: rm vchdfe/bin/csv_file.csv
       - name: Copy the test file into the bin folder
         run: cp test.csv vchdfe/bin/test.csv
+      - name: Copy the autocorrelation test file into the bin folder
+        run: cp autocorrelation_test2.csv vchdfe/bin/autocorrelation_test2.csv
       - name: Get the version
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
