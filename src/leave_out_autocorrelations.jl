@@ -138,7 +138,7 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
                 df = @pipe sort(df0, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (lag(x, counter) .+ counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
                 # We need to be sure that the data is totally balanced, otherwise, it may not work
                 # df = @pipe sort(df0, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (base_year + counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
-                df[ismissing.(df.:has_prev), :has_prev] = 0
+                df[ismissing.(df.:has_prev), :has_prev] .= 0
                 df[!, :row_number] = 1:nrow(df)
 
 
@@ -208,7 +208,7 @@ function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, setti
             (settings.print_level > 1) && @info typeof(counter)
             if (counter + base_year) < last_year
                 df = @pipe sort(df0, [:firmid, :year]) |> groupby(_, :firmid) |> transform(_, :year => (x -> x .== (base_year + counter) ) => :has_prev) |> transform(_, :nworkers => (x -> lag(x, counter)) => :nworkers_prev)
-                df[ismissing.(df.:has_prev), :has_prev] = 0
+                df[ismissing.(df.:has_prev), :has_prev] .= 0
                 df[!, :row_number] = 1:nrow(df)
 
 
