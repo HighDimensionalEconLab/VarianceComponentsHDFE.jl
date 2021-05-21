@@ -436,7 +436,7 @@ function real_main()
 
                    if (time_id !== nothing)
                         write(io, "    Autocorrelation function is:  \n")    
-                        print_out_acf(io, acf_output, time_id)        
+                        print_out_acf(io, acf, time_id)        
                         # write(io, "     Autocorrelation function is: \n $(acf_output) d")                                                                                                                                                                                                ")
                    end
                    
