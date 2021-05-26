@@ -327,9 +327,11 @@ version = "0.11.0"
 
 [[PackageCompiler]]
 deps = ["Libdl", "Pkg", "UUIDs"]
-git-tree-sha1 = "d448727c4b86be81b225b738c88d30334fda6779"
+git-tree-sha1 = "011660c32f4d5eec5e8256fcb00e8b00c6fe881d"
+repo-rev = "sv-rb-lazy"
+repo-url = "https://github.com/JuliaLang/PackageCompiler.jl.git"
 uuid = "9b87118b-4619-50d2-8e1e-99f35a4d4d9d"
-version = "1.2.5"
+version = "1.2.4"
 
 [[Parameters]]
 deps = ["OrderedCollections", "UnPack"]
