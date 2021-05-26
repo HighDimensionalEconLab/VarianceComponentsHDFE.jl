@@ -22,4 +22,4 @@ settings_JLA = VCHDFESettings(leverage_algorithm = JLAAlgorithm(num_simulations=
 
 output = DataFrame(y = y, id = first_id)
 CSV.write("csv_file.csv",output)
-data = DataFrame!(CSV.File("csv_file.csv"))
+# data = DataFrame!(CSV.File("csv_file.csv"))
