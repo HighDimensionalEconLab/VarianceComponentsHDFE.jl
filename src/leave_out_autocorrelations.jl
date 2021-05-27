@@ -51,7 +51,7 @@ Returns the values for autocorrelation plot and autocorrelation table of the bal
 * `autocorr_table`: should compute the autocorrelation table? The default is false
 * `lags`: lag vectors, if nothing (default), computes for all lags. 
 """
-function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, settings = VCHDFESettings(); autocorr_plot = false, lags = nothing)
+function leave_out_AR(y, first_id, second_id, time_id, controls = nothing, settings = VCHDFESettings(); autocorr_plot = false, lags = [])
     #Create time-second_id identifier (naming it second_id) and rename the second_id to firmid as it is the second id in the time varying AKM model
     data = DataFrame(y = y, first_id = first_id, firmid = second_id, time_id = time_id)
 
