@@ -110,7 +110,7 @@ for t in 1:(last_year - first_year + 1)
     acf[t, t] = 1.0::Float64
 end
 
-for base_year in first_year:last_year
+for base_year in (first_year):last_year
     (settings.print_level > 0) && @info "base year:" base_year
     for counter in lags
         (settings.print_level > 1) && @info typeof(counter)
@@ -164,12 +164,13 @@ for base_year in first_year:last_year
                 @warn "2"
                 continue
             end
-            θ_lag_cov = kss_quadratic_form(zeros(size(sigma_i, 1))[is_in_balanced .== 1, :], Fvar, FlagVar, beta, zeros(size(Bii_current_var, 1))[is_in_balanced .== 1, :])
-            θ_current_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], Fvar, Fvar, beta, Bii_current_var[is_in_balanced .== 1])
-            θ_lag_var = kss_quadratic_form(sigma_i[is_in_balanced .== 1, :], FlagVar, FlagVar, beta, Bii_lag_var[is_in_balanced .== 1])
-            
+            θ_lag_cov = kss_quadratic_form(zeros(size(sigma_i, 1))[(is_in_balanced .== 1) .& (flag_vector .== 1), :], Fvar, FlagVar, beta, zeros(size(Bii_current_var, 1))[(is_in_balanced .== 1) .& (flag_vector .== 1), :])
+            θ_current_var = kss_quadratic_form(sigma_i[(is_in_balanced .== 1) .& (flag_vector .== 1), :], Fvar, Fvar, beta, Bii_current_var[(is_in_balanced .== 1) .& (flag_vector .== 1)])
+            θ_lag_var = kss_quadratic_form(sigma_i[(is_in_balanced .== 1) .& (flag_vector .== 1), :], FlagVar, FlagVar, beta, Bii_lag_var[(is_in_balanced .== 1) .& (flag_vector .== 1)])
+            sizes = size(sigma_i[(is_in_balanced .== 1) .& (flag_vector .== 1), :], 1)
+
             cor_kss_corrected = θ_lag_cov/(sqrt(θ_lag_var) * sqrt(θ_current_var))
-            settings.print_level > 0 && @info "autocorrelation between $(base_year) and $(base_year+counter):" cov=θ_lag_cov  var=θ_current_var var_lag=θ_lag_var correlation=cor_kss_corrected
+            settings.print_level > 0 && @info "autocorrelation between $(base_year) and $(base_year+counter):" cov=θ_lag_cov  var=θ_current_var var_lag=θ_lag_var correlation=cor_kss_corrected sizes=sizes
 
 
             acf[base_year - first_year + 1, base_year - first_year + 1 + counter ] = cor_kss_corrected
