@@ -222,6 +222,11 @@ repo-url = "https://github.com/HighDimensionalEconLab/Krylov.jl.git"
 uuid = "ba0b0d4f-ebba-5204-a429-3ac8c609bfb7"
 version = "0.6.0"
 
+[[LatexPrint]]
+git-tree-sha1 = "aa3de91174329957fd625c5a3d126d6c79977008"
+uuid = "d2208f48-c256-5759-9089-c25ed2a93924"
+version = "1.0.0"
+
 [[LazyArtifacts]]
 deps = ["Pkg"]
 git-tree-sha1 = "4bb5499a1fc437342ea9ab7e319ede5a457c0968"

@@ -517,6 +517,13 @@ Computes a KSS quadratic form to correct bias.
 * `beta`: fixed effects coefficients vector
 * `Bii`: Bii correction elements.
 """
+
+
+
+
+
+
+
 function kss_quadratic_form(sigma_i, A_1, A_2, beta, Bii)
     right                               = A_2*beta
     left                                = A_1*beta
