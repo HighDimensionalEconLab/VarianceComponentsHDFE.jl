@@ -1,4 +1,5 @@
 # using DocStringExtensions: groupby
+using VarianceComponentsHDFE
 using CSV
 using Parameters
 using SparseArrays
@@ -8,7 +9,6 @@ using Pipe
 using ShiftedArrays
 using Random
 using Statistics
-using VarianceComponentsHDFE
 using DocStringExtensions
 
 controls = nothing
