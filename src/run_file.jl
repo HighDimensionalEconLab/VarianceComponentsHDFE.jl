@@ -101,7 +101,8 @@ Fvar = hcat(spzeros(NT,N), -F*S )
 
 @time @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = leave_out_estimation(y,first_id,second_id,controls,settings)
 #save("first_round.jld2",  Dict("θ_first" => θ_first, "θ_second" => θ_second, "θCOV" => θCOV, "β" => β, "Dalpha" => Dalpha, "Fpsi" => Fpsi, "Pii" => Pii, "Bii_first" => Bii_first, "Bii_second" => Bii_second, "Bii_cov" => Bii_cov, "y" => y, "X" => X, "sigma_i" => sigma_i))
-
+# tmp = load("first_round.jld2")
+# θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = tmp["θ_first"], tmp["θ_second"], tmp["θCOV"], tmp["β"], tmp["Dalpha"], tmp["Fpsi"], tmp["Pii"], tmp["Bii_first"], tmp["Bii_second"], tmp["Bii_cov"], tmp["y"], tmp["X"], tmp["sigma_i"]
 beta = β
 df0 = DataFrame(firmid = firmid, firmyearid = second_id, year = time_id, is_in_balanced = is_in_balanced, flag1 = flag_vector)
 df0 = @pipe DataFrames.groupby(df0, :firmyearid) |> combine(_, :firmid => first => :firmid, :year => first => :year, nrow => :nworkers, :is_in_balanced => maximum => :is_in_balanced, :flag1 => maximum => :flag1) |> sort(_, [:firmid, :year])
@@ -139,7 +140,7 @@ end
 
 
 # for base_year in (first_year):last_year
-@time Threads.@threads for base_year=first_year:last_year
+for base_year=first_year:last_year
     # (settings.print_level > 0) && @info "base year:" base_year
     for counter in lags
         # (settings.print_level > 1) && @info typeof(counter)
