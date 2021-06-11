@@ -22,7 +22,7 @@ leave_out_level = "obs"
 # data_raw = CSV.read("data_set_firm_balanced_churn_rate_split.csv", DataFrame)
 
 # data_raw = CSV.read("DGP_data_churn_rates_balanced_error3.csv", DataFrame)
-data_raw = CSV.read("data/data_set_firm_balanced_churn_rate_split_reduced.csv", DataFrame)
+data_raw = CSV.read("data/data_set_firm_balanced_churn_rate_split_reduced2.csv", DataFrame)
 # data_raw = CSV.read("very_small_hand_G.csv", DataFrame)
 # time_id = data_raw.tvar
 
@@ -98,8 +98,8 @@ Fvar = hcat(spzeros(NT,N), -F*S )
 
 
 
-
-@time @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = leave_out_estimation(y,first_id,second_id,controls,settings)
+# @benchmark leave_out_estimation(y,first_id,second_id,controls,settings)
+@unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = leave_out_estimation(y,first_id,second_id,controls,settings)
 #save("first_round.jld2",  Dict("θ_first" => θ_first, "θ_second" => θ_second, "θCOV" => θCOV, "β" => β, "Dalpha" => Dalpha, "Fpsi" => Fpsi, "Pii" => Pii, "Bii_first" => Bii_first, "Bii_second" => Bii_second, "Bii_cov" => Bii_cov, "y" => y, "X" => X, "sigma_i" => sigma_i))
 # tmp = load("first_round.jld2")
 # θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = tmp["θ_first"], tmp["θ_second"], tmp["θCOV"], tmp["β"], tmp["Dalpha"], tmp["Fpsi"], tmp["Pii"], tmp["Bii_first"], tmp["Bii_second"], tmp["Bii_cov"], tmp["y"], tmp["X"], tmp["sigma_i"]
@@ -227,3 +227,7 @@ for base_year=first_year:last_year
     end
 end
 
+show(stdout, "text/plain", varss)
+show(stdout, "text/plain", varlagss)
+show(stdout, "text/plain", covss)
+show(stdout, "text/plain", acf)
