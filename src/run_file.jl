@@ -12,6 +12,8 @@ using Statistics
 using DocStringExtensions
 using FileIO
 
+print(Threads.nthreads())
+
 function all_outputs(data_raw) 
     controls = nothing
     lags = []
@@ -32,7 +34,7 @@ function all_outputs(data_raw)
     second_id = data_raw.firmidg
     time_id = data_raw.year
 
-    flag_vector = data_raw.cr_ge_09
+    flag_vector = data_raw.cr_le_01
 
     #Create time-second_id identifier (naming it second_id) and rename the second_id to firmid as it is the second id in the time varying AKM model
     data = @pipe DataFrame(y = y, first_id = first_id, firmid = second_id, time_id = time_id, flag1 = flag_vector) |> sort(_, [:firmid, :time_id])
@@ -126,7 +128,7 @@ function all_outputs(data_raw)
 
     ## Finding weights to use later:
     #TODO
-    df_weights = @pipe df0[df0.is_in_balanced .== 1, :] |> DataFrames.groupby(_, :firmid) |> combine(_, :nworkers => mean => :nworkers)
+    df_weights = @pipe df0[(df0.is_in_balanced .== 1) .& (df0.flag1 .== 1), :] |> DataFrames.groupby(_, :firmid) |> combine(_, :nworkers => mean => :nworkers)
     df_weights.:nworkers = floor.(Int, df_weights.:nworkers)
     weights = df_weights.:nworkers
     sum_weights = sum(weights)
@@ -152,8 +154,8 @@ function all_outputs(data_raw)
                 df[!, :row_number] = 1:nrow(df)
 
 
-                # df2 = df[(df.:has_prev .== 1) .& (df.:is_in_balanced .== 1) .& (df.:flag1 .== 1), :]
-                df2 = df[(df.has_prev .== 1) .& (df.:is_in_balanced .== 1), :]
+                 df2 = df[(df.:has_prev .== 1) .& (df.:is_in_balanced .== 1) .& (df.:flag1 .== 1), :]
+                #df2 = df[(df.has_prev .== 1) .& (df.:is_in_balanced .== 1), :]
 
                 df2[!, :row_number2] = 1:nrow(df2)
                 # df2[!, :nWorkers_mean] = floor.(Int, (df2.:nworkers .+ df2.:nworkers_prev) ./ 2)
@@ -233,8 +235,8 @@ function all_outputs(data_raw)
     show(stdout, "text/plain", covss)
     show(stdout, "text/plain", acf)
 
-    save("first_round.jld2",  Dict("θ_first" => θ_first, "θ_second" => θ_second, "θCOV" => θCOV, "β" => β, "Dalpha" => Dalpha, "Fpsi" => Fpsi, "Pii" => Pii, "Bii_first" => Bii_first, "Bii_second" => Bii_second, "Bii_cov" => Bii_cov, "y" => y, "X" => X, "sigma_i" => sigma_i, "acf" => acf, "varss" => varss, "covss" => covss, "varlagss" => varlagss))
+    save("leq_01.jld2",  Dict("θ_first" => θ_first, "θ_second" => θ_second, "θCOV" => θCOV, "β" => β, "Dalpha" => Dalpha, "Fpsi" => Fpsi, "Pii" => Pii, "Bii_first" => Bii_first, "Bii_second" => Bii_second, "Bii_cov" => Bii_cov, "y" => y, "X" => X, "sigma_i" => sigma_i, "acf" => acf, "varss" => varss, "covss" => covss, "varlagss" => varlagss))
 end
 
-data_raw = CSV.read("data_set_firm_balanced_churn_rate_split_reduced2.csv", DataFrame)
+data_raw = CSV.read("data/data_set_firm_balanced_churn_rate_split_reduced.csv", DataFrame)
 all_outputs(data_raw)
