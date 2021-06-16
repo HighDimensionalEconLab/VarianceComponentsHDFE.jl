@@ -11,6 +11,7 @@ using Random
 using Statistics
 using DocStringExtensions
 using FileIO
+using JLD2
 
 print(Threads.nthreads())
 
@@ -239,4 +240,5 @@ function all_outputs(data_raw)
 end
 
 data_raw = CSV.read("data/data_set_firm_balanced_churn_rate_split_reduced.csv", DataFrame)
+# data_raw = CSV.read("DGP_data_churn_rates_balanced_error3.csv", DataFrame)
 all_outputs(data_raw)
