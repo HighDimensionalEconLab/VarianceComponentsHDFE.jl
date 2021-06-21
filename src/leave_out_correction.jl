@@ -708,84 +708,93 @@ function leave_out_estimation(y,first_id,second_id,controls,settings, WFdelta)
 
     #We print on the go
     #Compute bias corrected variance comp of second (Firm) Effects
+    @info "sizes" levels_size = size(Dbarvar, 1) differences_size = size(WFdelta, 1)
     println("KSS Results:")
 
-    println("levels")
+    # println("levels")
     #var(alphbar)
     θ_firstbar = settings.first_id_bar_effects == true ? kss_quadratic_form(sigma_i, Dbarvar, Dbarvar, beta, Bii_first_bar) : nothing 
-    println(θ_firstbar)
+    # println(θ_firstbar)
 
     θ_second = kss_quadratic_form(sigma_i, Fvar, Fvar, beta, Bii_second)
-    println(θ_second)
+    # println(θ_second)
 
     θ_first = settings.first_id_effects==true  ? kss_quadratic_form(sigma_i, Dvar, Dvar, beta, Bii_first) : nothing
     # println(θ_first)
     
     θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
-    println(θCOV)
+    # println(θCOV)
 
 
     β1 = θCOV/θ_firstbar # Note that cov(psi, alphabar) = cov(psi , alpha) = θCOV
-    println(β1)
+    # println(β1)
     
     Rsquared1 = β1 * β1 * θ_firstbar / θ_second
-    println(Rsquared1)
+    # println(Rsquared1)
 
-    println("differences")
+    @info "Levels"  θ_firstbar θ_second θ_first θCOV β1 Rsquared1
+
+    # println("differences")
 
     θ_dif_first_bar = kss_quadratic_form(sigma_i, A2, A2, beta, Bii_dif_first_bar)
-    println(θ_dif_first_bar)
+    # println(θ_dif_first_bar)
     θ_dif_second_bar = kss_quadratic_form(sigma_i, A1, A1, beta, Bii_dif_second_bar)
-    println(θ_dif_second_bar)
+    # println(θ_dif_second_bar)
     θ_dif_cov = kss_quadratic_form(sigma_i, A1, A2, beta, Bii_dif_cov)
-    println(θ_dif_cov)
+    # println(θ_dif_cov)
 
     β2 = θ_dif_cov/θ_dif_first_bar
-    println(β2)
+    # println(β2)
 
     Rsquared2 = β2 * β2 * θ_dif_first_bar / θ_dif_second_bar
-    println(Rsquared2)
+    # println(Rsquared2)
+
+    @info "Differences"  θ_dif_first_bar θ_dif_second_bar θ_dif_cov β2 Rsquared2
 
     #Now we set sigma_i = 0 to find PI version
     sigma_i = zeros(size(sigma_i, 1))
 
     println("PI Results:")
 
-    println("levels")
+    # println("levels")
     #var(alphbar)
     θ_firstbar = settings.first_id_bar_effects == true ? kss_quadratic_form(sigma_i, Dbarvar, Dbarvar, beta, Bii_first_bar) : nothing 
-    println(θ_firstbar)
+    # println(θ_firstbar)
 
     θ_second = kss_quadratic_form(sigma_i, Fvar, Fvar, beta, Bii_second)
-    println(θ_second)
+    # println(θ_second)
 
     θ_first = settings.first_id_effects==true  ? kss_quadratic_form(sigma_i, Dvar, Dvar, beta, Bii_first) : nothing
     # println(θ_first)
     
     θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
-    println(θCOV)
+    # println(θCOV)
 
 
     β1 = θCOV/θ_firstbar # Note that cov(psi, alphabar) = cov(psi , alpha) = θCOV
-    println(β1)
+    # println(β1)
     
     Rsquared1 = β1 * β1 * θ_firstbar / θ_second
-    println(Rsquared1)
+    # println(Rsquared1)
 
-    println("differences")
+    @info "Levels"  θ_firstbar θ_second θ_first θCOV β1 Rsquared1
+
+    # println("differences")
 
     θ_dif_first_bar = kss_quadratic_form(sigma_i, A2, A2, beta, Bii_dif_first_bar)
-    println(θ_dif_first_bar)
+    # println(θ_dif_first_bar)
     θ_dif_second_bar = kss_quadratic_form(sigma_i, A1, A1, beta, Bii_dif_second_bar)
-    println(θ_dif_second_bar)
+    # println(θ_dif_second_bar)
     θ_dif_cov = kss_quadratic_form(sigma_i, A1, A2, beta, Bii_dif_cov)
-    println(θ_dif_cov)
+    # println(θ_dif_cov)
     
     β2 = θ_dif_cov/θ_dif_first_bar
-    println(β2)
+    # println(β2)
 
     Rsquared2 = β2 * β2 * θ_dif_first_bar / θ_dif_second_bar
-    println(Rsquared2)
+    # println(Rsquared2)
+
+    @info "Differences"  θ_dif_first_bar θ_dif_second_bar θ_dif_cov β2 Rsquared2
 
     #TODO println estimates
     if settings.print_level > 0

@@ -15,7 +15,8 @@ using LinearMaps
 # also uncomment the write section at the ends
 
 
-data = CSV.read("gen_data_homoskedastic_m0_v1.csv", DataFrame, missingstrings = ["NA", ""])
+# data = CSV.read("gen_data_homoskedastic_m0_v1.csv", DataFrame, missingstrings = ["NA", ""])
+data = CSV.read("data/DGP1_no_error.csv", DataFrame, missingstrings = ["NA", ""])
 
 ### some data cleaning
 # rename!(data, :firmid => :firmidg)
@@ -107,7 +108,8 @@ F * (F'*F)^(-1) * F'
 # @pipe data |> filter!(x -> x.obs_1 & x.obs_2 & x.obs_3 & x.obs_4 & x.obs_5, _)
 data = data[1:100000, :]
 first_id_raw = data[:,"id"]
-second_id_raw = data[:, "year_by_firm"]
+# second_id_raw = data[:, "year_by_firm"]
+second_id_raw = data[:, "firmyearid"]
 # y_raw = data[:, "log_dailywages"]
 y_raw = data[:, "lwage"]
 
@@ -124,7 +126,7 @@ Matrix(Srep)
 @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y_raw, first_id_raw, second_id_raw, settings, nothing)
 data
 data = data[obs, :]
-
+CSV.write("data/DGP1_no_error_leaveOut.csv", data)
 
 
 print(size(data,1) == size(y, 1))
