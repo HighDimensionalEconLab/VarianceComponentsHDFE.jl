@@ -12,3 +12,5 @@ benchmark/trial.md
 *.csv
 *.jld
 docs/build
+*.dta
+*.jld2
