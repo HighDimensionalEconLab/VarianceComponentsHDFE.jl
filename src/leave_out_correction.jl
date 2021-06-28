@@ -69,6 +69,7 @@ The VCHDFESettings type is to pass information to methods regarding which algori
     first_id_effects::Bool = true
     first_id_bar_effects::Bool = true
     cov_effects::Bool = true
+    differences_effects::Bool = false
     print_level::Int64 = 1
     first_id_display_small::String = "person"
     first_id_display::String = "Person"
@@ -565,7 +566,7 @@ Returns the bias-corrected components, the vector of coefficients, the correspon
 * `settings`: settings based on `VCHDFESettings`
 * `controls`: matrix of control variables. At this version it doesn't work properly for very large datasets.
 """
-function leave_out_estimation(y,first_id,second_id,controls,settings, WFdelta)
+function leave_out_estimation(y,first_id,second_id,controls,settings, WFdelta, lagMat, selectMat)
     controls = nothing
     #Create matrices for computations
     NT = size(y,1)
@@ -669,22 +670,24 @@ function leave_out_estimation(y,first_id,second_id,controls,settings, WFdelta)
         X = hcat(D, -F*S)
         Dvar = hcat(  D, spzeros(NT,J-1) )
         Fvar = hcat(spzeros(NT,N), -F*S )
+        Fvar = selectMat * Fvar
         lOp = F' * D 
         lOp = Diagonal(1 ./ sum(F, dims = 1)[1,:]) * lOp
         lOp = LinearOperator(lOp) # We are going to use this variable lOp again for the differences scenario      
         Dbarvar = F*lOp
-        Dbarvar = hcat(Dbarvar, spzeros(NT,J-1))
+        Dbarvar = lagMat * Dbarvar
+        Dbarvar = hcat(Dbarvar, spzeros(size(Dbarvar, 1),J-1))
 
-        @time A1 = hcat(spzeros(size(WFdelta, 1), N), -WFdelta[:, 1:J-1])
+        A1 = hcat(spzeros(size(WFdelta, 1), N), -WFdelta[:, 1:J-1])
 
         tmp = WFdelta * lOp #big matrice, needed to use linearoperators, note lOp is computed a few lines above
-        @time A2 = hcat(tmp, spzeros(size(WFdelta, 1), J-1) )
+        A2 = hcat(tmp, spzeros(size(WFdelta, 1), J-1) )
 
     end
 
     #Part 3: Compute Pii, Bii
     #Note that "leverages2" is a function very similar to leverages, where we compute some more terms in it. Also it has a different signiture.
-    @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov, Bii_first_bar, Bii_dif_cov, Bii_dif_first_bar, Bii_dif_second_bar = leverages2(settings.leverage_algorithm, X, Dvar, Fvar, Dbarvar, A1, A2, settings)
+    @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov, Bii_first_bar, Bii_dif_cov, Bii_dif_first_bar, Bii_dif_second_bar = VarianceComponentsHDFE.leverages2(settings.leverage_algorithm, X, Dvar, Fvar, Dbarvar, A1, A2, settings)
     (settings.print_level > 1) && println("Pii and Bii have been computed.")
 
     #Compute Leave-out residual
@@ -720,10 +723,10 @@ function leave_out_estimation(y,first_id,second_id,controls,settings, WFdelta)
     # println(θ_second)
 
     θ_first = settings.first_id_effects==true  ? kss_quadratic_form(sigma_i, Dvar, Dvar, beta, Bii_first) : nothing
-    # println(θ_first)
+    println(θ_first)
     
-    θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
-    # println(θCOV)
+    θCOV = kss_quadratic_form(sigma_i, Fvar, Dbarvar, beta, Bii_cov)
+    println(θCOV)
 
 
     β1 = θCOV/θ_firstbar # Note that cov(psi, alphabar) = cov(psi , alpha) = θCOV
@@ -767,7 +770,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings, WFdelta)
     θ_first = settings.first_id_effects==true  ? kss_quadratic_form(sigma_i, Dvar, Dvar, beta, Bii_first) : nothing
     # println(θ_first)
     
-    θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
+    θCOV =  kss_quadratic_form(sigma_i, Fvar, Dbarvar, beta, Bii_cov) 
     # println(θCOV)
 
 
@@ -931,7 +934,7 @@ function leverages2(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, A1, A2, settings)
     #Initialize output
     Pii=zeros(NT)
     Bii_second=zeros(NT)
-    Bii_cov= settings.cov_effects ==true ? zeros(NT) : nothing
+    Bii_cov= zeros(NT)
     Bii_first= settings.first_id_effects == true ? zeros(NT) : nothing
     Bii_first_bar = settings.first_id_bar_effects == true ? zeros(NT) : nothing
     Bii_dif_cov = zeros(NT)
@@ -945,7 +948,7 @@ function leverages2(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, A1, A2, settings)
 
     Threads.@threads for i=1:p
 
-        rademach =  rand(mts[Threads.threadid()],1,NT) .> 0.5
+        rademach =  rand(mts[Threads.threadid()],1,size(X,1)) .> 0.5
         rademach  = rademach  .- (rademach .== 0)
         rademach  = rademach / sqrt(p)
 
@@ -993,35 +996,43 @@ function leverages2(lev::JLAAlgorithm, X,Dvar,Fvar, Dbarvar, A1, A2, settings)
 
         #levels scenario (alphabar)
         if settings.first_id_bar_effects == true 
+            rademach =  rand(mts[Threads.threadid()],1,size(Dbarvar,1)) .> 0.5
+            rademach  = rademach  .- (rademach .== 0)
+            rademach  = rademach /sqrt(p)
+            rademach = rademach .- mean(rademach)
+            
             tmp = transpose(Dbarvar) * rademach'
             tmp = (tmp * [1])
             Z_pe_bar = compute_sol[Threads.threadid()]( [tmp...] ; verbose=false)
             Z_pe_bar = X*Z_pe_bar
 
             Bii_first_bar = Bii_first_bar + (Z_pe_bar.*Z_pe_bar)
+
+            Bii_cov = Bii_cov .+ (Z_pe_bar.*Z)
         end
 
         #Differences scenario (Delta alphabar and Delta psi)
+        if settings.differences_effects == true
+            #Another size Rademacher
+            rademach =  rand(mts[Threads.threadid()],1,size(A2,1)) .> 0.5
+            rademach  = rademach  .- (rademach .== 0)
+            rademach  = rademach /sqrt(p)
+            rademach = rademach .- mean(rademach)
 
-        #Another size Rademacher
-        rademach =  rand(mts[Threads.threadid()],1,size(A2,1)) .> 0.5
-        rademach  = rademach  .- (rademach .== 0)
-        rademach  = rademach /sqrt(p)
-        rademach = rademach .- mean(rademach)
+            tmp = transpose(A2) * rademach'
+            tmp = (tmp * [1])
+            Z_dif_pe_bar = compute_sol[Threads.threadid()]( [tmp...] ; verbose=false)
+            Z_dif_pe_bar = X * Z_dif_pe_bar
+            
+            Bii_dif_first_bar = Bii_dif_first_bar + (Z_dif_pe_bar .* Z_dif_pe_bar)
 
-        tmp = transpose(A2) * rademach'
-        tmp = (tmp * [1])
-        Z_dif_pe_bar = compute_sol[Threads.threadid()]( [tmp...] ; verbose=false)
-        Z_dif_pe_bar = X * Z_dif_pe_bar
-        
-        Bii_dif_first_bar = Bii_dif_first_bar + (Z_dif_pe_bar .* Z_dif_pe_bar)
+            Z_dif_fe_bar = compute_sol[Threads.threadid()]( [rademach*A1...] ; verbose=false)
+            Z_dif_fe_bar = X * Z_dif_fe_bar
 
-        Z_dif_fe_bar = compute_sol[Threads.threadid()]( [rademach*A1...] ; verbose=false)
-        Z_dif_fe_bar = X * Z_dif_fe_bar
+            Bii_dif_cov = Bii_dif_cov + (Z_dif_fe_bar .* Z_dif_pe_bar)
 
-        Bii_dif_cov = Bii_dif_cov + (Z_dif_fe_bar .* Z_dif_pe_bar)
-
-        Bii_dif_second_bar = Bii_dif_second_bar + (Z_dif_fe_bar .* Z_dif_fe_bar)
+            Bii_dif_second_bar = Bii_dif_second_bar + (Z_dif_fe_bar .* Z_dif_fe_bar)
+        end
     end
 
     #Censor
