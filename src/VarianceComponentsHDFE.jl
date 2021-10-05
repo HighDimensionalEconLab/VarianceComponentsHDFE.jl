@@ -159,7 +159,7 @@ function real_main()
 
     print_level > 0 && println("Number of threads: $(Threads.nthreads())")
 
-    data  = DataFrame!(CSV.File(path; header=header))
+    data  = DataFrame(CSV.File(path; header=header))
     first_id = data[:,first_idx]
     second_id = data[:,second_idx]
     y = data[:,outcome_idx]
@@ -439,3 +439,5 @@ function real_main()
 end
 
 end
+
+
