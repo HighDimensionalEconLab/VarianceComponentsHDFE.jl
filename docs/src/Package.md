@@ -52,18 +52,19 @@ Depth = 3
 
 ```
 #Load the required packages
-using VarianceComponentsHDFE, DataFrames, CSV
+using VarianceComponentsHDFE, DataFrames, CSV, SparseArrays
 
 #Load dataset
-data = DataFrame!(CSV.File("test.csv"; header=false))
+data = DataFrame(CSV.File("test.csv"; header=false))
 
 #Extract vectors of outcome, workerid, firmid
 id = data[:,1]
 firmid = data[:,2]
-y = data[:,3]
+year = data[:, 3]
+y = data[:,4]
 
 #You can define the settings using our structures
-JL = JLAAlgorithm(num.simulations = 300)
+JL = JLAAlgorithm(num_simulations = 300)
 mysettings = VCHDFESettings(leverage_algorithm = JL, first_id_effects=true, cov_effects=true)
 
 #Run KSS with no controls 
