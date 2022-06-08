@@ -29,12 +29,12 @@ controls = controls[:,1:end-1]
 @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y, id, firmid, mysettings, controls)
 # X = leave_out_estimation(y, id, firmid, controls, mysettings)
 @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = leave_out_estimation(y,first_id, second_id,controls,mysettings)
-#Perform Lincom Inference using a Region Dummy
-data = DataFrame!(CSV.File("lincom.csv"; header=false))
-id = data[:,1]
-firmid = data[:,2]
-y = data[:,5]
-region = data[:,4] 
-region[findall(region.==-1)].=0
+# #Perform Lincom Inference using a Region Dummy
+# data = DataFrame!(CSV.File("lincom.csv"; header=false))
+# id = data[:,1]
+# firmid = data[:,2]
+# y = data[:,5]
+# region = data[:,4] 
+# region[findall(region.==-1)].=0
 
-θ_first, θ_second, θCOV = leave_out_KSS(y,id,firmid; do_lincom = true , Z_lincom = region, lincom_labels = ["Region Dummmy"] )
+# θ_first, θ_second, θCOV = leave_out_KSS(y,id,firmid; do_lincom = true , Z_lincom = region, lincom_labels = ["Region Dummmy"] )
