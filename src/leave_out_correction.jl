@@ -449,8 +449,8 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
         X = hcat(D, -F*S, controls)
 
         #My best shot is to wrap AMG as LinearOperator
-        buff = zeros(size(X,2))  
-        xx = X'*X       
+        buff = zeros(size(X,2))
+        xx = X'*X
         P = AmgOperator(ruge_stuben(xx),buff)
         xy=X'*y
         beta, stats = Krylov.cg(xx,[xy...]; M = P , rtol = 1e-6, itmax = 300)
