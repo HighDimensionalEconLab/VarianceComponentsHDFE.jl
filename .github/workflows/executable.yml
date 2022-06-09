@@ -28,8 +28,8 @@ jobs:
       - run: julia --project=@. deps/make_binary.jl
       - name: Post-compilation script
         run: vchdfe/bin/vchdfe --help
-      - name: Remove the files from the precompilation
-        run: rm vchdfe/bin/csv_file.csv
+      # - name: Remove the files from the precompilation
+      #   run: rm vchdfe/bin/csv_file.csv
       - name: Copy the test file into the bin folder
         run: cp test.csv vchdfe/bin/test.csv
       - name: Get the version
