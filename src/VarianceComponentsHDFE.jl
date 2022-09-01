@@ -337,7 +337,7 @@ function real_main()
         second_id_output = [second_id_output...]
         y_output = [y_untransformed[obs]...]
         Dalpha = [Dalpha...] 
-        Fpsi = [Fpsi...]
+        Fpsi = [-1.0*Fpsi...]
         Pii = [Pii...]
 
         #todo rename the DataFrame arguments
