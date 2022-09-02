@@ -337,6 +337,7 @@ function real_main()
         second_id_output = [second_id_output...]
         y_output = [y_untransformed[obs]...]
         Dalpha = [Dalpha...] 
+        #Fpsi has the opposite sign, so we fix it here.
         Fpsi = [-1.0*Fpsi...]
         Pii = [Pii...]
 
