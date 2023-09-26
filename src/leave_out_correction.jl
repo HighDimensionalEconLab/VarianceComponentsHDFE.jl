@@ -771,12 +771,12 @@ function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, settings)
         Bii_second[i] = COV[1]*(size(Fvar,1)-1)
 
         if Bii_first != nothing
-            COV = cov(Fvar*zexact,Dvar*zexact)
+            COV = cov(Dvar*zexact,Dvar*zexact)
             Bii_first[i] = COV[1]*(size(Fvar,1)-1)
         end
 
         if Bii_cov != nothing
-            COV = cov(Dvar*zexact,Dvar*zexact)
+	    COV = cov(Fvar*zexact,Dvar*zexact)
             Bii_cov[i] = COV[1]*(size(Dvar,1)-1)
         end
 
