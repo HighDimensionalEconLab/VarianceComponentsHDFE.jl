@@ -609,7 +609,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     σ2_ψα_AKM = cov(pe,-fe)
     println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM)
     println("Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM/(sqrt(σ2_ψ_AKM)*sqrt(σ2_α_AKM)))
-    println("Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (σ2_ψ_AKM+2*σ2_ψα_AKM+σ2_ψα_AKM)/var_den, "\n" )
+    println("Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (σ2_ψ_AKM+2*σ2_ψα_AKM+σ2_α_AKM)/var_den, "\n" )
 
     #Part 2: Collapse & Reweight (if needed)
     weight = ones(NT,1) 
