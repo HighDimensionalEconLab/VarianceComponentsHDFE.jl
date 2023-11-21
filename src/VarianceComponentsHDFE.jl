@@ -27,6 +27,7 @@ export leave_out_KSS, leverages, kss_quadratic_form, sigma_for_stayers
 # Exporting these functions for ease of benchmarking/testing
 export computeLDLinv, approxcholOperator, approxcholSolver
 
+# Executable parse 
 function parse_commandline()
     argparsesettings_obj = ArgParseSettings()
 
