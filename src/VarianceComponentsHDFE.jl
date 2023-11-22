@@ -117,7 +117,7 @@ function parse_commandline()
     return parse_args(argparsesettings_obj)
 end
 
-function julia_main()::Cint
+Base.@ccallable function julia_main()::Cint
     try
         real_main()
     catch
