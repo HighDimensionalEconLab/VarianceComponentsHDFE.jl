@@ -26,8 +26,9 @@ jobs:
           version: ${{ matrix.julia-version }}
       - run: julia --project=@. -e "using Pkg; Pkg.instantiate()"
       - run: julia --project=@. deps/make_binary.jl
-      - name: Post-compilation script
-        run: vchdfe/bin/vchdfe --help
+      # There seems to be something off about this post-compilation with respect to a SSL.jl package and a certificate.
+      #- name: Post-compilation script
+      #  run: vchdfe/bin/vchdfe --help
       # - name: Remove the files from the precompilation
       #   run: rm vchdfe/bin/csv_file.csv
       - name: Copy the test file into the bin folder
