@@ -37,6 +37,9 @@ jobs:
       - name: Get the version
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+       # The line above seems to be deprecated, we might need to switch to the line below (not yet tested!)
+       # run: echo "{VERSION}=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT  
+
       - name: Compress binaries
         run: tar -cvzf vchdfe-${{ steps.get_version.outputs.VERSION }}-${{ matrix.os }}.tar.gz vchdfe
       - name: Upload binaries to release
