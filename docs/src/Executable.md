@@ -256,7 +256,7 @@ Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The 
    ```
    cd project_path
    
-   vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt
+   vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_csv --detailed_csv_path output.csv --results_path summary.txt
    ```
 
 2. To run the same thing while but we want to partial out the covariates in columns 7 and 8, we type in the terminal 
@@ -264,7 +264,7 @@ Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The 
    ```
    cd project_path
 
-   vchdfe my_data.csv --first_id 5 --second_id 3 --covariates Column7 Column8--write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt 
+   vchdfe my_data.csv --first_id 5 --second_id 3 --covariates Column7 Column8--write_results --write_detailed_csv --detailed_csv_path output.csv --results_path summary.txt 
    ```
 
 3. To only obtain the bias-correction and regress the second effects (e.g. firm effects) onto the observables in columns 7 and 8 instead, we type in the terminal 
@@ -272,7 +272,7 @@ Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The 
    ```
    cd project_path
 
-   vchdfe my_data.csv --first_id 5 --second_id 3 --do_lincom --lincom_covariates Column7 Column8 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  
+   vchdfe my_data.csv --first_id 5 --second_id 3 --do_lincom --lincom_covariates Column7 Column8 --write_results --write_detailed_csv --detailed_csv_path output.csv --results_path summary.txt  
    ```
 
 
@@ -306,7 +306,7 @@ Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The 
    ```
    cd project_path
    
-   vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt
+   vchdfe my_data.csv --first_id 5 --second_id 3 --write_results --write_detailed_csv --detailed_csv_path output.csv --results_path summary.txt
    ```
 
 2. To run the same thing while but we want to partial out the covariates in columns 7 and 8, we type in the terminal 
@@ -314,7 +314,7 @@ Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The 
    ```
    cd project_path
 
-   vchdfe my_data.csv --first_id 5 --second_id 3 --covariates Column7 Column8--write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt 
+   vchdfe my_data.csv --first_id 5 --second_id 3 --covariates Column7 Column8--write_results --write_detailed_csv --detailed_csv_path output.csv --results_path summary.txt 
    ```
 
 3. To only obtain the bias-correction and regress the second effects (e.g. firm effects) onto the observables in columns 7 and 8 instead, we type in the terminal 
@@ -322,7 +322,7 @@ Suppose we have a dataset `my_data.csv` that is stored in `"project_path"`. The 
    ```
    cd project_path
 
-   vchdfe my_data.csv --first_id 5 --second_id 3 --do_lincom --lincom_covariates Column7 Column8 --write_results --write_detailed_CSV --detailed_output_path output.csv --results_path summary.txt  
+   vchdfe my_data.csv --first_id 5 --second_id 3 --do_lincom --lincom_covariates Column7 Column8 --write_results --write_detailed_csv --detailed_csv_path output.csv --results_path summary.txt  
    ```
 
 
