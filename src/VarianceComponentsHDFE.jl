@@ -240,7 +240,7 @@ function real_main()
 
     #Residualize outcome variable 
     if controls != nothing  
-        println("\nPartialling out controls...")
+        println("\nPartialling out controls from $(settings.outcome_id_display)...")
 
         #We'll use FixedEffects.jl to partial-out FEs and then obtain coefs for controls 
         yres = deepcopy(y)
