@@ -441,8 +441,8 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
         Xres = Float64.(controls)
 
         # partial out fixed effects
-        fe1 = FixedEffect(id)
-        fe2 = FixedEffect(firmid)
+        fe1 = FixedEffect(first_id)
+        fe2 = FixedEffect(second_id)
         cols = eachcol(Xres)
         sumsquares_pre = [sum(abs2, x) for x in cols]
 

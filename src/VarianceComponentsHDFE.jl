@@ -247,14 +247,14 @@ function real_main()
         Xres = Float64.(controls)
 
         # partial out fixed effects
-        fe1 = FixedEffect(id)
-        fe2 = FixedEffect(firmid)
+        fe1 = FixedEffect(first_id)
+        fe2 = FixedEffect(second_id)
         cols = eachcol(Xres)
         sumsquares_pre = [sum(abs2, x) for x in cols]
 
-        solve_residuals!(yres, [fe1, fe2], nthreads=8)
+        solve_residuals!(yres, [fe1, fe2])
         for col in cols
-            solve_residuals!(col, [fe1, fe2],nthreads=8)
+            solve_residuals!(col, [fe1, fe2])
         end 
 
         # re-compute 2-norm (sum of squares) for each variable
