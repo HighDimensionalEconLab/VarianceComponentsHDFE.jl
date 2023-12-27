@@ -15,8 +15,8 @@ using DocStringExtensions
 #Defining types and structures
 abstract type AbstractLLSAlgorithm end
 abstract type AbstractGraphLLSAlgorithm <: AbstractLLSAlgorithm end  # i.e. requires graph laplacian
-struct CMGPreconditionedLLS <: AbstractGraphLLSAlgorithm  end
-struct AMGPreconditionedLLS <: AbstractGraphLLSAlgorithm  end
+struct CMGPreconditionedLLS <: AbstractGraphLLSAlgorithm  end #not needed anymore! will keep it in case it makes a comeback :)
+struct AMGPreconditionedLLS <: AbstractGraphLLSAlgorithm  end #not needed anymore! will keep it in case it makes a comeback :)
 struct DirectLLS <: AbstractLLSAlgorithm  end  # no graph required
 
 abstract type AbstractLeverageAlgorithm end
@@ -436,28 +436,57 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
     #Residualize outcome variable 
     if controls != nothing  
         println("\nPartialling out controls from $(settings.outcome_id_display)...")
-        NT = size(y,1)
-        J = maximum(second_id)
-        N = maximum(first_id)
-        K = size(controls,2)
-        nparameters = N + J + K
+        #We'll use FixedEffects.jl to partial-out FEs and then obtain coefs for controls 
+        yres = deepcopy(y)
+        Xres = Float64.(controls)
 
-        D = sparse(collect(1:NT),first_id,1)
-        F = sparse(collect(1:NT),second_id,1)
-        S= sparse(1.0I, J-1, J-1)
-        S=vcat(S,sparse(-zeros(1,J-1)))
-        X = hcat(D, -F*S, controls)
+        # partial out fixed effects
+        fe1 = FixedEffect(id)
+        fe2 = FixedEffect(firmid)
+        cols = eachcol(Xres)
+        sumsquares_pre = [sum(abs2, x) for x in cols]
 
-        #My best shot is to wrap AMG as LinearOperator
-        buff = zeros(size(X,2))
-        xx = X'*X
-        P = AmgOperator(ruge_stuben(xx),buff)
-        xy=X'*y
-        beta, stats = Krylov.cg(xx,[xy...]; M = P , rtol = 1e-6, itmax = 300)
+        solve_residuals!(yres, [fe1, fe2], nthreads=8)
+        for col in cols
+            solve_residuals!(col, [fe1, fe2],nthreads=8)
+        end 
 
-        y=y-X[:,N+J:end]*beta[N+J:end]
+        # re-compute 2-norm (sum of squares) for each variable
+        sumsquares_post = [sum(abs2, x) for x in cols]
+
+        # mark variables that are likely to be collinear with the fixed effects (e.g. an intercept)
+        collinear_tol = min(1e-6, 1e-8 / 10) #Don't want to add too many tuning parameters, might change later
+        collinear_fe = (sumsquares_post ./ sumsquares_pre) .< collinear_tol 
+        # set variables that are likely to be collinear with the fixed effects to zero
+        for i in 1:size(Xres,2)
+            if collinear_fe[i] 
+                    @info "Control variable on position $(i) is collinear with the fixed effects. Code will exclude it."
+                    # set to zero so that removed when taking basis
+                    Xres[:,i] .= 0.0
+            end
+        end
+
+        XXres = Xres'Xres
+        invXXres  =invsym!(Symmetric(deepcopy(XXres)), setzeros=true)
+        basis = diag(invXXres).<0
+
+        if !all(basis)
+            Xres = Xres[:, basis]
+            XXres = XXres[basis, basis]
+        end
+        Xhat = Xres
+        XhatXhat = Symmetric(XXres)
+
+        Xyres = Symmetric(hvcat(2, XhatXhat, Xhat'reshape(yres, length(yres), 1), 
+                            zeros(size(Xhat, 2))', [0.0]))
+        invsym!(Xyres; diagonal = 1:size(Xhat, 2))
+        coef = Xyres[1:(end-1),end] #Row vector 
+
+        y = y - controls[:,basis]*coef
+
+        # NOW WE CAN GO BACK TO NO CONTROLS CASE
         controls = nothing
-        println("Partialling out completed.\n")
+        println("Partialling out completed.")
     end
 
     @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = leave_out_estimation(y,first_id,second_id,controls,settings)

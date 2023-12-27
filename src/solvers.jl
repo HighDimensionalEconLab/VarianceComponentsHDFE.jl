@@ -8,6 +8,8 @@ function computeLDLinv(sddm)
     return ldli, la
 end
 
+
+
 # Wrap the LDLinv object as a preallocated linear operator
 function approxcholOperator(ldli::LDLinv{Tind,Tval},buff::Vector{Tval}) where {Tind,Tval}
     prod = @closure rhs -> LDLsolver!(buff,ldli,rhs)
@@ -80,3 +82,31 @@ function approxcholSolver(sddm::AbstractArray; tol::Real=1e-6, maxits=300, verbo
     return f
 
 end
+
+
+
+########## UTILS FUNCTION BROUGHT FROM FIXEDEFFECTSMODELS.JL 
+function invsym!(X::Symmetric; setzeros = false, diagonal = 1:size(X, 2))
+    tols = max.(diag(X), 1)
+    buffer = zeros(size(X, 1))
+    for j in diagonal
+        d = X[j,j]
+        if setzeros && abs(d) < tols[j] * sqrt(eps())
+            X.data[1:j,j] .= 0
+            X.data[j,(j+1):end] .= 0
+        else
+            # used to mimic SAS; now similar to SweepOperators
+            copy!(buffer, view(X, :, j))
+            Symmetric(BLAS.syrk!('U', 'N', -1/d, buffer, one(eltype(X)), X.data))
+            rmul!(buffer, 1 / d)
+            @views copy!(X.data[1:j-1,j], buffer[1:j-1])        
+            @views copy!(X.data[j, j+1:end], buffer[j+1:end])   
+            X[j,j] = - 1 / d
+        end
+        if setzeros && j == 1
+            tols = max.(diag(X), 1)
+        end
+    end
+    return X
+end
+
