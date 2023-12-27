@@ -438,7 +438,7 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
         println("\nPartialling out controls from $(settings.outcome_id_display)...")
         #We'll use FixedEffects.jl to partial-out FEs and then obtain coefs for controls 
         yres = deepcopy(y)
-        Xres = Float64.(controls)
+        Xres = Float64.(Matrix(controls))
 
         # partial out fixed effects
         fe1 = FixedEffect(first_id)
@@ -482,7 +482,7 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
         invsym!(Xyres; diagonal = 1:size(Xhat, 2))
         coef = Xyres[1:(end-1),end] #Row vector 
 
-        y = y - controls[:,basis]*coef
+        y = y - Matrix(controls)[:,basis]*coef
 
         # NOW WE CAN GO BACK TO NO CONTROLS CASE
         controls = nothing

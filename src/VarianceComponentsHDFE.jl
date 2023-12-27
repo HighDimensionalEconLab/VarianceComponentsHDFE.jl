@@ -244,7 +244,7 @@ function real_main()
 
         #We'll use FixedEffects.jl to partial-out FEs and then obtain coefs for controls 
         yres = deepcopy(y)
-        Xres = Float64.(controls)
+        Xres = Float64.(Matrix(controls))
 
         # partial out fixed effects
         fe1 = FixedEffect(first_id)
@@ -288,7 +288,7 @@ function real_main()
         invsym!(Xyres; diagonal = 1:size(Xhat, 2))
         coef = Xyres[1:(end-1),end] #Row vector 
 
-        y = y - controls[:,basis]*coef
+        y = y - Matrix(controls)[:,basis]*coef
 
         # NOW WE CAN GO BACK TO NO CONTROLS CASE
         controls = nothing
