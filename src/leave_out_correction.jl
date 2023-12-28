@@ -721,9 +721,6 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         sigma_i[stayers] .= [sigma_stayers[j] for j in findall(x->x==true,stayers )]
     end
 
-    pe=D * beta[1:N]
-    fe=F*S * beta[N+1:N+J-1]
-
     #Compute bias corrected variance comp of second (Firm) Effects
     σ_second , θ_second = kss_quadratic_form(sigma_i, Fvar, Fvar, beta, Bii_second)
 
@@ -731,15 +728,11 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
     σ_cov ,θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
 
-    #Pii = diag(Pii)
-
-    #Bii_second = diag(Bii_second)
-
-    #Bii_first = settings.first_id_effects == true ? diag(Bii_first) : nothing
-
-    #Bii_cov = settings.cov_effects == true ? diag(Bii_cov) : nothing
+    pe=D * beta[1:N]
+    fe=F*S * beta[N+1:N+J-1]
 
     #TODO print estimates
+
     
     if settings.print_level > 0
         println("\n","Plug-in Variance Components:")
