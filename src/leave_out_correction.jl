@@ -577,6 +577,8 @@ function kss_quadratic_form(sigma_i, A_1, A_2, beta, Bii)
     theta                               = theta[1]
     dof                                 = size(left,1)-1
     theta_KSS                           = theta-(1/dof)*sum(Bii.*sigma_i)
+
+    return (theta=theta, theta_KSS=theta_KSS)
 end
 
 
@@ -600,45 +602,45 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     N = maximum(first_id)
     K = controls == nothing ? 0 : size(controls,2)
     nparameters = N + J + K
-
+    var_den = var(y)
     match_id = compute_matchid(first_id, second_id)
 
     #first (worker) Dummies
-    D = sparse(collect(1:NT),first_id,1)
+    #D = sparse(collect(1:NT),first_id,1)
 
     #second (firm) Dummies
-    F = sparse(collect(1:NT),second_id,1)
+    #F = sparse(collect(1:NT),second_id,1)
 
     # N+J x N+J-1 restriction matrix
-    S = sparse(1.0I, J-1, J-1)
-    S = vcat(S,sparse(-zeros(1,J-1)))
+    #S = sparse(1.0I, J-1, J-1)
+    #S = vcat(S,sparse(-zeros(1,J-1)))
 
-    X = hcat(D, -F*S)
+    #X = hcat(D, -F*S)
 
     #SET DIMENSIONS
-    n=size(X,1)
+    #n=size(X,1)
 
     # PART 1: ESTIMATE HIGH DIMENSIONAL MODEL
-    xx=X'*X
-    xy=X'*y
-    compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
-    beta = compute_sol([xy...];verbose=false)
-    eta=y-X*beta
+    #xx=X'*X
+    #xy=X'*y
+    #compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
+    #beta = compute_sol([xy...];verbose=false)
+    #eta=y-X*beta
 
-    pe=D * beta[1:N]
-    fe=F*S * beta[N+1:N+J-1]
+    #pe=D * beta[1:N]
+    #fe=F*S * beta[N+1:N+J-1]
 
-    println("\n","Plug-in Variance Components:")
+    #println("\n","Plug-in Variance Components:")
 
-    var_den = var(y)
-    σ2_ψ_AKM = var(fe)
-    println("Plug-in Variance of $(settings.second_id_display_small) Effects: ", σ2_ψ_AKM )
-    σ2_α_AKM = var(pe)
-    println("Plug-in Variance of $(settings.first_id_display_small) Effects: ", σ2_α_AKM )
-    σ2_ψα_AKM = cov(pe,-fe)
-    println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM)
-    println("Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM/(sqrt(σ2_ψ_AKM)*sqrt(σ2_α_AKM)))
-    println("Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (σ2_ψ_AKM+2*σ2_ψα_AKM+σ2_α_AKM)/var_den, "\n" )
+    #var_den = var(y)
+    #σ2_ψ_AKM = var(fe)
+    #println("Plug-in Variance of $(settings.second_id_display_small) Effects: ", σ2_ψ_AKM )
+    #σ2_α_AKM = var(pe)
+    #println("Plug-in Variance of $(settings.first_id_display_small) Effects: ", σ2_α_AKM )
+    #σ2_ψα_AKM = cov(pe,-fe)
+    #println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM)
+    #println("Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM/(sqrt(σ2_ψ_AKM)*sqrt(σ2_α_AKM)))
+    #println("Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (σ2_ψ_AKM+2*σ2_ψα_AKM+σ2_α_AKM)/var_den, "\n" )
 
     #Part 2: Collapse & Reweight (if needed)
     weight = ones(NT,1) 
@@ -721,11 +723,11 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
 
     #Compute bias corrected variance comp of second (Firm) Effects
-    θ_second = kss_quadratic_form(sigma_i, Fvar, Fvar, beta, Bii_second)
+    σ_second , θ_second = kss_quadratic_form(sigma_i, Fvar, Fvar, beta, Bii_second)
 
-    θ_first = settings.first_id_effects==true  ? kss_quadratic_form(sigma_i, Dvar, Dvar, beta, Bii_first) : nothing
+    σ_first,θ_first = settings.first_id_effects==true  ? kss_quadratic_form(sigma_i, Dvar, Dvar, beta, Bii_first) : nothing
 
-    θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
+    σ_cov ,θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
 
     #Pii = diag(Pii)
 
@@ -736,8 +738,18 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     #Bii_cov = settings.cov_effects == true ? diag(Bii_cov) : nothing
 
     #TODO print estimates
+    
     if settings.print_level > 0
-        println("Bias-Corrected Variance Components:")
+        println("\n","Plug-in Variance Components:")
+
+        println("Plug-in Variance of $(settings.second_id_display_small) Effects: ", σ_second )
+        (settings.first_id_effects > 0) && println("Plug-in Variance of $(settings.first_id_display_small) Effects: ", σ_first )
+        (settings.cov_effects > 0) && println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ_cov)
+        (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ_cov/(sqrt(σ_first)*sqrt(σ_second)))
+        (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (σ_first+2*σ_cov+σ_second)/var_den, "\n" )
+
+
+        println("\n","Bias-Corrected Variance Components:")
         println("Bias-Corrected Variance of $(settings.second_id_display_small) Effects: ", θ_second)
         (settings.first_id_effects > 0) && println("Bias-Corrected Variance of $(settings.first_id_display_small) Effects: ", θ_first)
         (settings.cov_effects > 0) && println("Bias-Corrected Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", θCOV)
@@ -747,7 +759,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Bias-Corrected Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (θ_second+2*θCOV+θ_first)/var_den)
     end
 
-    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = pe, Fpsi = fe, Pii = Pii, Bii_first = Bii_first,
+    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = σ_first, Fpsi = σ_second, Pii = Pii, Bii_first = Bii_first,
             Bii_second = Bii_second, Bii_cov = Bii_cov, y = y , X = X, sigma_i = sigma_i )
 end
 
@@ -1084,4 +1096,3 @@ end
 #        println("p-value: ", pvalue)
 #
 #    end
-
