@@ -373,9 +373,10 @@ function real_main()
             Bii_first = Bii_first == nothing ? nothing : vcat(fill.(Bii_first, weights)...)
             Bii_second = Bii_second == nothing ? nothing : vcat(fill.(Bii_second, weights)...)
             Bii_cov = Bii_cov == nothing ? nothing : vcat(fill.(Bii_cov, weights)...)
-            Dalpha = vcat(fill.(Dalpha, weight)...)
-            Fpsi = vcat(fill.(Fpsi, weight)...)
+            Dalpha = vcat(fill.(Dalpha, weights)...)
+            Fpsi = vcat(fill.(Fpsi, weights)...)
         end
+
 
         #Make sure that we can put them in a DataFrame 
         obs = [obs...]
