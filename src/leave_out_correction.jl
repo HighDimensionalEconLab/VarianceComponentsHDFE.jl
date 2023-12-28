@@ -577,6 +577,8 @@ function kss_quadratic_form(sigma_i, A_1, A_2, beta, Bii)
     theta                               = theta[1]
     dof                                 = size(left,1)-1
     theta_KSS                           = theta-(1/dof)*sum(Bii.*sigma_i)
+
+    return (theta=theta, theta_KSS=theta_KSS)
 end
 
 
@@ -600,45 +602,45 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     N = maximum(first_id)
     K = controls == nothing ? 0 : size(controls,2)
     nparameters = N + J + K
-
+    var_den = var(y)
     match_id = compute_matchid(first_id, second_id)
 
     #first (worker) Dummies
-    D = sparse(collect(1:NT),first_id,1)
+    #D = sparse(collect(1:NT),first_id,1)
 
     #second (firm) Dummies
-    F = sparse(collect(1:NT),second_id,1)
+    #F = sparse(collect(1:NT),second_id,1)
 
     # N+J x N+J-1 restriction matrix
-    S = sparse(1.0I, J-1, J-1)
-    S = vcat(S,sparse(-zeros(1,J-1)))
+    #S = sparse(1.0I, J-1, J-1)
+    #S = vcat(S,sparse(-zeros(1,J-1)))
 
-    X = hcat(D, -F*S)
+    #X = hcat(D, -F*S)
 
     #SET DIMENSIONS
-    n=size(X,1)
+    #n=size(X,1)
 
     # PART 1: ESTIMATE HIGH DIMENSIONAL MODEL
-    xx=X'*X
-    xy=X'*y
-    compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
-    beta = compute_sol([xy...];verbose=false)
-    eta=y-X*beta
+    #xx=X'*X
+    #xy=X'*y
+    #compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
+    #beta = compute_sol([xy...];verbose=false)
+    #eta=y-X*beta
 
-    pe=D * beta[1:N]
-    fe=F*S * beta[N+1:N+J-1]
+    #pe=D * beta[1:N]
+    #fe=F*S * beta[N+1:N+J-1]
 
-    println("\n","Plug-in Variance Components:")
+    #println("\n","Plug-in Variance Components:")
 
-    var_den = var(y)
-    σ2_ψ_AKM = var(fe)
-    println("Plug-in Variance of $(settings.second_id_display_small) Effects: ", σ2_ψ_AKM )
-    σ2_α_AKM = var(pe)
-    println("Plug-in Variance of $(settings.first_id_display_small) Effects: ", σ2_α_AKM )
-    σ2_ψα_AKM = cov(pe,-fe)
-    println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM)
-    println("Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM/(sqrt(σ2_ψ_AKM)*sqrt(σ2_α_AKM)))
-    println("Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (σ2_ψ_AKM+2*σ2_ψα_AKM+σ2_α_AKM)/var_den, "\n" )
+    #var_den = var(y)
+    #σ2_ψ_AKM = var(fe)
+    #println("Plug-in Variance of $(settings.second_id_display_small) Effects: ", σ2_ψ_AKM )
+    #σ2_α_AKM = var(pe)
+    #println("Plug-in Variance of $(settings.first_id_display_small) Effects: ", σ2_α_AKM )
+    #σ2_ψα_AKM = cov(pe,-fe)
+    #println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM)
+    #println("Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ2_ψα_AKM/(sqrt(σ2_ψ_AKM)*sqrt(σ2_α_AKM)))
+    #println("Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (σ2_ψ_AKM+2*σ2_ψα_AKM+σ2_α_AKM)/var_den, "\n" )
 
     #Part 2: Collapse & Reweight (if needed)
     weight = ones(NT,1) 
@@ -703,7 +705,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     #Compute Leave-out residual
     xx=X'*X
     xy=X'*y
-    compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
+    compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0,tol=1e-10)
     beta = compute_sol([xy...];verbose=false)
     eta=y-X*beta
 
@@ -721,11 +723,11 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
 
 
     #Compute bias corrected variance comp of second (Firm) Effects
-    θ_second = kss_quadratic_form(sigma_i, Fvar, Fvar, beta, Bii_second)
+    σ_second , θ_second = kss_quadratic_form(sigma_i, Fvar, Fvar, beta, Bii_second)
 
-    θ_first = settings.first_id_effects==true  ? kss_quadratic_form(sigma_i, Dvar, Dvar, beta, Bii_first) : nothing
+    σ_first,θ_first = settings.first_id_effects==true  ? kss_quadratic_form(sigma_i, Dvar, Dvar, beta, Bii_first) : nothing
 
-    θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
+    σ_cov ,θCOV = settings.cov_effects==true ? kss_quadratic_form(sigma_i, Fvar, Dvar, beta, Bii_cov) : nothing
 
     #Pii = diag(Pii)
 
@@ -736,8 +738,18 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     #Bii_cov = settings.cov_effects == true ? diag(Bii_cov) : nothing
 
     #TODO print estimates
+    
     if settings.print_level > 0
-        println("Bias-Corrected Variance Components:")
+        println("\n","Plug-in Variance Components:")
+
+        println("Plug-in Variance of $(settings.second_id_display_small) Effects: ", σ_second )
+        (settings.first_id_effects > 0) && println("Plug-in Variance of $(settings.first_id_display_small) Effects: ", σ_first )
+        (settings.cov_effects > 0) && println("Plug-in Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ_cov)
+        (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Correlation of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", σ_cov/(sqrt(σ_first)*sqrt(σ_second)))
+        (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (σ_first+2*σ_cov+σ_second)/var_den, "\n" )
+
+
+        println("\n","Bias-Corrected Variance Components:")
         println("Bias-Corrected Variance of $(settings.second_id_display_small) Effects: ", θ_second)
         (settings.first_id_effects > 0) && println("Bias-Corrected Variance of $(settings.first_id_display_small) Effects: ", θ_first)
         (settings.cov_effects > 0) && println("Bias-Corrected Covariance of $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", θCOV)
@@ -747,7 +759,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Bias-Corrected Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (θ_second+2*θCOV+θ_first)/var_den)
     end
 
-    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = pe, Fpsi = fe, Pii = Pii, Bii_first = Bii_first,
+    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = σ_first, Fpsi = σ_second, Pii = Pii, Bii_first = Bii_first,
             Bii_second = Bii_second, Bii_cov = Bii_cov, y = y , X = X, sigma_i = sigma_i )
 end
 
@@ -778,7 +790,7 @@ function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, settings)
     compute_sol = []
     for i in 1:Threads.nthreads()
         P = approxcholOperator(ldli,buffs[:,i])
-        push!(compute_sol,approxcholSolver(P,la))
+        push!(compute_sol,approxcholSolver(P,la;tol=1e-10))
     end
 
     #Initialize output
@@ -850,7 +862,7 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
     compute_sol = []
     for i in 1:Threads.nthreads()
         P = approxcholOperator(ldli,buffs[:,i])
-        push!(compute_sol,approxcholSolver(P,la))
+        push!(compute_sol,approxcholSolver(P,la;tol=1e-10))
     end
 
     #Clear that memory
@@ -863,15 +875,15 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
     mts = MersenneTwister.(1:Threads.nthreads())
     
     #Initialize output
-    Pii=zeros(NT)
-    Bii_second=zeros(NT)
-    Bii_cov= settings.cov_effects ==true ? zeros(NT) : nothing
-    Bii_first= settings.first_id_effects == true ? zeros(NT) : nothing
+    Pii=zeros(NT,Threads.nthreads())
+    Bii_second=zeros(NT,Threads.nthreads())
+    Bii_cov= settings.cov_effects ==true ? zeros(NT,Threads.nthreads()) : nothing
+    Bii_first= settings.first_id_effects == true ? zeros(NT,Threads.nthreads()) : nothing
     
-    Mii = zeros(NT)
-    Pii_sq = zeros(NT)
-    Mii_sq = zeros(NT)
-    Pii_Mii = zeros(NT)
+    Mii = zeros(NT,Threads.nthreads())
+    Pii_sq = zeros(NT,Threads.nthreads())
+    Mii_sq = zeros(NT,Threads.nthreads())
+    Pii_Mii = zeros(NT,Threads.nthreads())
 
     Threads.@threads for i=1:p
 
@@ -885,17 +897,17 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
         #Auxiliaries for Non-linear Correction
 
         aux = Z.^2 / p 
-        Pii = Pii .+ aux 
+        Pii[:,Threads.threadid()] = Pii[:,Threads.threadid()] .+ aux 
 
         aux = Z.^4 / p 
-        Pii_sq = Pii_sq .+ aux 
+        Pii_sq[:,Threads.threadid()] = Pii_sq[:,Threads.threadid()] .+ aux 
 
         aux			= ((rademach' - Z).^2)/p
-		Mii			= Mii .+ aux    
+		Mii[:,Threads.threadid()]			= Mii[:,Threads.threadid()] .+ aux    
 		aux			= ((rademach' - Z).^4)/p
-		Mii_sq		= Mii_sq .+ aux
+		Mii_sq[:,Threads.threadid()]		= Mii_sq[:,Threads.threadid()] .+ aux
 		
-        Pii_Mii		= Pii_Mii .+ ((Z.^2).*((rademach' - Z).^2) )/p 
+        Pii_Mii[:,Threads.threadid()]		= Pii_Mii[:,Threads.threadid()] .+ ((Z.^2).*((rademach' - Z).^2) )/p 
         
         #Demeaned Rademacher
         rademach =  rand(mts[Threads.threadid()],1,size(Fvar,1)) .> 0.5
@@ -905,22 +917,39 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
 
         Z = compute_sol[Threads.threadid()]( [rademach*Fvar...] ; verbose=false)
         Z = X*Z
-        Bii_second = Bii_second .+ (Z.*Z) 
+        Bii_second[:,Threads.threadid()] = Bii_second[:,Threads.threadid()] .+ (Z.*Z) 
 
         if settings.first_id_effects == true | settings.cov_effects == true
             Z_pe = compute_sol[Threads.threadid()]( [rademach*Dvar...] ; verbose=false)
             Z_pe = X*Z_pe
 
             if settings.first_id_effects == true 
-                Bii_first = Bii_first .+ (Z_pe.*Z_pe)
+                Bii_first[:,Threads.threadid()] = Bii_first[:,Threads.threadid()] .+ (Z_pe.*Z_pe)
             end
 
             if settings.cov_effects == true 
-                Bii_cov = Bii_cov .+ (Z_pe.*Z)
+                Bii_cov[:,Threads.threadid()] = Bii_cov[:,Threads.threadid()] .+ (Z_pe.*Z)
             end
 
         end    
     end
+
+    #Now we sum across threads (this way im avoiding race conditions!)
+    Pii=sum(Pii,dims=2)
+    Bii_second=sum(Bii_second,dims=2)
+
+    if settings.first_id_effects == true 
+        Bii_first = sum(Bii_first,dims=2)
+    end
+
+    if settings.cov_effects == true 
+        Bii_cov = sum(Bii_cov,dims=2)
+    end
+    
+    Mii = sum(Mii,dims=2)
+    Pii_sq = sum(Pii_sq,dims=2)
+    Mii_sq = sum(Mii_sq,dims=2)
+    Pii_Mii = sum(Pii_Mii,dims=2)
 
     #Censor
     #Pii[ findall(Pii.>=0.99)] .= 0.99
@@ -964,7 +993,7 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
     
     xx=X'*X
     xy=X'*y
-    compute_sol = approxcholSolver(xx;verbose = false)
+    compute_sol = approxcholSolver(xx;verbose = false,tol=1e-10)
     beta = compute_sol([xy...];verbose=false)
 
     #PART 2: SET UP MATRIX FOR SANDWICH FORMULA
@@ -1084,4 +1113,3 @@ end
 #        println("p-value: ", pvalue)
 #
 #    end
-

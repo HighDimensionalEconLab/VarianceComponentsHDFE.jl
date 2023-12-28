@@ -238,6 +238,21 @@ function real_main()
 
     @unpack obs,  y  , first_id , second_id, controls = get_leave_one_out_set(y, first_id, second_id, settings, controls)
 
+    if settings.print_level>1
+        num_movers = length(unique(compute_movers(first_id,second_id).movers .* first_id)) - 1 
+
+        summary = """
+        Information on Leave Out Connected Sample \n
+        Number of observations: $(length(obs)) 
+        Number of $(settings.first_id_display_small)s: $(maximum(first_id)) 
+        Number of $(settings.second_id_display_small)s: $(maximum(second_id)) 
+        Number of Movers : $(num_movers)
+        Mean of $(settings.outcome_id_display): $(mean(y)) 
+        Variance of $(settings.outcome_id_display): $(var(y))
+        """ 
+    println(summary)
+    end
+
     #Residualize outcome variable 
     if controls != nothing  
         println("\nPartialling out controls from $(settings.outcome_id_display)...")
