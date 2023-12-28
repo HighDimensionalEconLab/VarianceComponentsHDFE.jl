@@ -705,7 +705,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     #Compute Leave-out residual
     xx=X'*X
     xy=X'*y
-    compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0)
+    compute_sol = approxcholSolver(xx;verbose = settings.print_level > 0,tol=1e-10)
     beta = compute_sol([xy...];verbose=false)
     eta=y-X*beta
 
@@ -790,7 +790,7 @@ function leverages(lev::ExactAlgorithm, X,Dvar,Fvar, settings)
     compute_sol = []
     for i in 1:Threads.nthreads()
         P = approxcholOperator(ldli,buffs[:,i])
-        push!(compute_sol,approxcholSolver(P,la))
+        push!(compute_sol,approxcholSolver(P,la;tol=1e-10))
     end
 
     #Initialize output
@@ -862,7 +862,7 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
     compute_sol = []
     for i in 1:Threads.nthreads()
         P = approxcholOperator(ldli,buffs[:,i])
-        push!(compute_sol,approxcholSolver(P,la))
+        push!(compute_sol,approxcholSolver(P,la;tol=1e-10))
     end
 
     #Clear that memory
@@ -875,15 +875,15 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
     mts = MersenneTwister.(1:Threads.nthreads())
     
     #Initialize output
-    Pii=zeros(NT)
-    Bii_second=zeros(NT)
-    Bii_cov= settings.cov_effects ==true ? zeros(NT) : nothing
-    Bii_first= settings.first_id_effects == true ? zeros(NT) : nothing
+    Pii=zeros(NT,Threads.nthreads())
+    Bii_second=zeros(NT,Threads.nthreads())
+    Bii_cov= settings.cov_effects ==true ? zeros(NT,Threads.nthreads()) : nothing
+    Bii_first= settings.first_id_effects == true ? zeros(NT,Threads.nthreads()) : nothing
     
-    Mii = zeros(NT)
-    Pii_sq = zeros(NT)
-    Mii_sq = zeros(NT)
-    Pii_Mii = zeros(NT)
+    Mii = zeros(NT,Threads.nthreads())
+    Pii_sq = zeros(NT,Threads.nthreads())
+    Mii_sq = zeros(NT,Threads.nthreads())
+    Pii_Mii = zeros(NT,Threads.nthreads())
 
     Threads.@threads for i=1:p
 
@@ -897,17 +897,17 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
         #Auxiliaries for Non-linear Correction
 
         aux = Z.^2 / p 
-        Pii = Pii .+ aux 
+        Pii[:,Threads.threadid()] = Pii[:,Threads.threadid()] .+ aux 
 
         aux = Z.^4 / p 
-        Pii_sq = Pii_sq .+ aux 
+        Pii_sq[:,Threads.threadid()] = Pii_sq[:,Threads.threadid()] .+ aux 
 
         aux			= ((rademach' - Z).^2)/p
-		Mii			= Mii .+ aux    
+		Mii[:,Threads.threadid()]			= Mii[:,Threads.threadid()] .+ aux    
 		aux			= ((rademach' - Z).^4)/p
-		Mii_sq		= Mii_sq .+ aux
+		Mii_sq[:,Threads.threadid()]		= Mii_sq[:,Threads.threadid()] .+ aux
 		
-        Pii_Mii		= Pii_Mii .+ ((Z.^2).*((rademach' - Z).^2) )/p 
+        Pii_Mii[:,Threads.threadid()]		= Pii_Mii[:,Threads.threadid()] .+ ((Z.^2).*((rademach' - Z).^2) )/p 
         
         #Demeaned Rademacher
         rademach =  rand(mts[Threads.threadid()],1,size(Fvar,1)) .> 0.5
@@ -917,22 +917,39 @@ function leverages(lev::JLAAlgorithm, X,Dvar,Fvar, settings)
 
         Z = compute_sol[Threads.threadid()]( [rademach*Fvar...] ; verbose=false)
         Z = X*Z
-        Bii_second = Bii_second .+ (Z.*Z) 
+        Bii_second[:,Threads.threadid()] = Bii_second[:,Threads.threadid()] .+ (Z.*Z) 
 
         if settings.first_id_effects == true | settings.cov_effects == true
             Z_pe = compute_sol[Threads.threadid()]( [rademach*Dvar...] ; verbose=false)
             Z_pe = X*Z_pe
 
             if settings.first_id_effects == true 
-                Bii_first = Bii_first .+ (Z_pe.*Z_pe)
+                Bii_first[:,Threads.threadid()] = Bii_first[:,Threads.threadid()] .+ (Z_pe.*Z_pe)
             end
 
             if settings.cov_effects == true 
-                Bii_cov = Bii_cov .+ (Z_pe.*Z)
+                Bii_cov[:,Threads.threadid()] = Bii_cov[:,Threads.threadid()] .+ (Z_pe.*Z)
             end
 
         end    
     end
+
+    #Now we sum across threads (this way im avoiding race conditions!)
+    Pii=sum(Pii,dims=2)
+    Bii_second=sum(Bii_second,dims=2)
+
+    if settings.first_id_effects == true 
+        Bii_first = sum(Bii_first,dims=2)
+    end
+
+    if settings.cov_effects == true 
+        Bii_cov = sum(Bii_cov,dims=2)
+    end
+    
+    Mii = sum(Mii,dims=2)
+    Pii_sq = sum(Pii_sq,dims=2)
+    Mii_sq = sum(Mii_sq,dims=2)
+    Pii_Mii = sum(Pii_Mii,dims=2)
 
     #Censor
     #Pii[ findall(Pii.>=0.99)] .= 0.99
@@ -976,7 +993,7 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
     
     xx=X'*X
     xy=X'*y
-    compute_sol = approxcholSolver(xx;verbose = false)
+    compute_sol = approxcholSolver(xx;verbose = false,tol=1e-10)
     beta = compute_sol([xy...];verbose=false)
 
     #PART 2: SET UP MATRIX FOR SANDWICH FORMULA
