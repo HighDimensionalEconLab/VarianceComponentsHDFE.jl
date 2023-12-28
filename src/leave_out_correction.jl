@@ -135,7 +135,7 @@ function find_connected_set(y, first_idvar, second_idvar, settings)
     end
 
     cs=connected_components(G)
-    (settings.print_level > 1) && println("Largest connected set has been found")
+    #(settings.print_level > 1) && println("Largest connected set has been found")
     pos = indexin(  [  maximum(size.(cs,1))] , size.(cs,1) )[1]
     lcs=cs[pos]
 
@@ -422,7 +422,7 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
         num_movers = length(unique(compute_movers(first_id,second_id).movers .* first_id)) - 1 
 
         summary = """
-        Information on Leave Out Connected Sample \n
+        \nInformation on Leave Out Connected Sample: \n
         Number of observations: $(length(obs)) 
         Number of $(settings.first_id_display_small)s: $(maximum(first_id)) 
         Number of $(settings.second_id_display_small)s: $(maximum(second_id)) 
@@ -700,7 +700,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
     #Part 3: Compute Pii, Bii
     @unpack Pii , Mii  , correction_JLA , Bii_first , Bii_second , Bii_cov = leverages(settings.leverage_algorithm, X, Dvar, Fvar, settings)
 
-    (settings.print_level > 1) && println("Pii and Bii have been computed.")
+    (settings.print_level > 1) && println("Pii and Bii computed successfully.")
 
     #Compute Leave-out residual
     xx=X'*X
@@ -721,6 +721,8 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         sigma_i[stayers] .= [sigma_stayers[j] for j in findall(x->x==true,stayers )]
     end
 
+    pe=D * beta[1:N]
+    fe=F*S * beta[N+1:N+J-1]
 
     #Compute bias corrected variance comp of second (Firm) Effects
     σ_second , θ_second = kss_quadratic_form(sigma_i, Fvar, Fvar, beta, Bii_second)
@@ -759,7 +761,7 @@ function leave_out_estimation(y,first_id,second_id,controls,settings)
         (settings.cov_effects > 0) && (settings.first_id_effects > 0) && println("Bias-Corrected Fraction of Variance explained by  $(settings.first_id_display_small)-$(settings.second_id_display_small) Effects: ", (θ_second+2*θCOV+θ_first)/var_den)
     end
 
-    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = σ_first, Fpsi = σ_second, Pii = Pii, Bii_first = Bii_first,
+    return (θ_first = θ_first, θ_second = θ_second, θCOV = θCOV, β = beta, Dalpha = pe, Fpsi = fe, Pii = Pii, Bii_first = Bii_first,
             Bii_second = Bii_second, Bii_cov = Bii_cov, y = y , X = X, sigma_i = sigma_i )
 end
 
