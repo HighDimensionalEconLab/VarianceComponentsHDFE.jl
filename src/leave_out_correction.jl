@@ -427,10 +427,15 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
         Number of $(settings.first_id_display_small)s: $(maximum(first_id)) 
         Number of $(settings.second_id_display_small)s: $(maximum(second_id)) 
         Number of Movers : $(num_movers)
-        Mean of $(settings.outcome_id_display): $(mean(y)) 
-        Variance of $(settings.outcome_id_display): $(var(y))
+        Mean of $(settings.outcome_id_display): $(mean(y_untransformed[obs])) 
+        Variance of $(settings.outcome_id_display): $(var(y_untransformed[obs]))
         """ 
         println(summary)
+    end
+    
+    if do_lincom == true 
+        #Subset to the Leave Out Sample
+        Z_lincom = Z_lincom[obs,:]
     end
 
     #Residualize outcome variable 
@@ -492,8 +497,6 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
     @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = leave_out_estimation(y,first_id,second_id,controls,settings)
 
     if do_lincom == true 
-        #Subset to the Leave Out Sample
-        Z_lincom = Z_lincom[obs,:]
         F = sparse(collect(1:length(second_id)),second_id,1)
         J = size(F,2)
         S = sparse(1.0I, J-1, J-1)
@@ -501,11 +504,11 @@ function leave_out_KSS(y,first_id,second_id;controls = nothing, do_lincom = fals
         Transform = hcat(spzeros(length(second_id),maximum(first_id)), -F*S )
 
         #Collapse and reweight to person-year observations 
-        match_id = compute_matchid(second_id, first_id)
-        Z_lincom_col = ones(size(Z_lincom,1),1)
-        for i = 1:size(Z_lincom,2)
-            Z_lincom_col = hcat(Z_lincom_col,(transform(groupby(DataFrame(z = Z_lincom[:,i], match_id = match_id), :match_id), :z => mean  => :z_py).z_py)) 
-        end
+        #match_id = compute_matchid(second_id, first_id)
+        #Z_lincom_col = ones(size(Z_lincom,1),1)
+        #for i = 1:size(Z_lincom,2)
+        #    Z_lincom_col = hcat(Z_lincom_col,(transform(groupby(DataFrame(z = Z_lincom[:,i], match_id = match_id), :match_id), :z => mean  => :z_py).z_py)) 
+        #end
 
         #Run Inference 
         println("\nRegressing the $(settings.second_id_display_small) effects on observables Z.")
@@ -981,6 +984,24 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
     #    positionvec = indexin(joint_test_regressors, labels) .+ 1
     #end
 
+    #Add intercept
+    Z = hcat(ones(size(Z,1),1),Z)
+
+    #Establish the independent basis Z 
+    zz = Z'*Z
+    invzz  =invsym!(Symmetric(deepcopy(zz)), setzeros=true)
+    basis = diag(invzz).<0
+
+    if !all(basis)
+        Z = Z[:, basis]
+        zz = zz[basis,basis]
+    end
+
+    # Modify labels if they are present 
+    lincom_labels = lincom_labels == nothing ? nothing : lincom_labels[basis[2:end]]
+
+    #Check if the basis includes the intercept
+    has_cons = basis[1] == true ? 1 : 0   
 
     #PART 1: COMPUTE FE 
     n = size(y,1)
@@ -993,7 +1014,7 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
 
     #PART 2: SET UP MATRIX FOR SANDWICH FORMULA
     wy = Transform*beta 
-    zz = Z'*Z 
+    #zz = Z'*Z  No need to compute anymore
     numerator=Z\wy
     sigma_i  = sparse(collect(1:n),collect(1:n),[sigma_i ...],n,n)
     sigma_i_naive = sparse(collect(1:n),collect(1:n),[(y-X*beta).^2 ...],n,n)
@@ -1021,17 +1042,21 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
     #PART 4: REPORT
     println("Inference on Linear Combinations:")
     if lincom_labels == nothing
-        for q=2:r
+        start = has_cons == 1 ? 2 : 1
+        for q=start:r
+            pos = has_cons ==  1 ? q-1 : q
             if q <= r
-                println("\nCoefficient of Column ", q-1,": ", numerator[q] )
-                println("Traditional HC Standard Error of Column ", q-1,": ", sqrt(denominator_naive[q]) )
-                println("KSS Standard Error of Column ", q-1,": ", sqrt(denominator[q]) )
-                println("T-statistic of Column ", q-1, ": ", test_statistic[q])
+                println("\nCoefficient of Column ", pos,": ", numerator[q] )
+                println("Traditional HC Standard Error of Column ", pos,": ", sqrt(denominator_naive[q]) )
+                println("KSS Standard Error of Column ", pos,": ", sqrt(denominator[q]) )
+                println("T-statistic of Column ", pos, ": ", test_statistic[q])
             end
         end
     else
-        for q=2:r
-            tell_me = lincom_labels[q-1]
+        start = has_cons == 1 ? 2 : 1
+        for q=start:r
+            pos = has_cons ==  1 ? q-1 : q
+            tell_me = lincom_labels[pos]
             println("\nCoefficient on ", tell_me,": ", numerator[q] )
             println("Traditional HC Standard Error on ", tell_me,": ", sqrt(denominator_naive[q]) )
             println("KSS Standard Error on ", tell_me,": ", sqrt(denominator[q]) )
@@ -1039,14 +1064,14 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
         end
     end
 
-    test_statistic = test_statistic[2:end]
-    linear_combination = numerator[2:end]
-    SE_linear_combination_KSS = sqrt.(denominator[2:end])
-    SE_naive = sqrt.(denominator[2:end])
+    test_statistic = has_cons == 1 ? test_statistic[2:end] : test_statistic
+    linear_combination = has_cons == 1 ? numerator[2:end] : numerator
+    SE_linear_combination_KSS = has_cons == 1 ? sqrt.(denominator[2:end]) : sqrt.(denominator)
+    SE_naive = has_cons == 1 ? sqrt.(denominator[2:end]) : sqrt.(denominator)
     return (test_statistic = test_statistic , linear_combination = linear_combination, SE_linear_combination_KSS = SE_linear_combination_KSS, SE_naive =SE_naive)
 end
 
-#    # PART 5: Joint-test. Quadratic form beta'*A*beta  MAYBE FOR FUTURE VERSION!
+#    # PART 5: Joint-test. Quadratic form beta'*A*beta  MAYBE FOR FUTURE VERSION! This can be used to create a F-stat for the regression in lincom_KSS
 #    if joint_test ==false &  (joint_test_regressors != nothing )
 #        println("Joint test will not be computed. You need to set the argument option joint_test to true.")
 #    end

@@ -253,6 +253,33 @@ function real_main()
     println(summary)
     end
 
+    Z_lincom = nothing 
+    if  parsed_args["do_lincom"]
+      #Construct Z_lincom 
+      if lincom_covariates == [] 
+        println("\n User asked for lincom but no covariates were specified. This step will not be performed.")
+      else
+        if typeof(lincom_covariates[1]) == String 
+            #Build lincom controls matrix 
+            lincom_labels = []
+            push!(lincom_labels,String.(lincom_covariates[1]))
+            
+            Z_lincom = data[obs,lincom_covariates[1]]
+            if length(lincom_covariates)>=2
+                for k=2:length(lincom_covariates)
+                    hcat(Z_lincom, data[obs,lincom_covariates[k]])
+                    push!(lincom_labels,String.(lincom_covariates[k]))
+                end
+            end     
+        else
+            println("WARNING: Elements of lincom covariates are not defined correctly. No inference will be performed.")
+        end
+    end 
+
+        #Now subset to the Leave Out Sample
+        Z_lincom = Z_lincom[obs,:]
+    end
+
     #Residualize outcome variable 
     if controls != nothing  
         println("\nPartialling out controls from $(settings.outcome_id_display)...")
@@ -313,8 +340,7 @@ function real_main()
     # @unpack θ_first, θ_second, θCOV, obs, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov = compute_whole(y,first_id,second_id,controls,settings)
     @unpack θ_first, θ_second, θCOV, β, Dalpha, Fpsi, Pii, Bii_first, Bii_second, Bii_cov, y, X, sigma_i = leave_out_estimation(y,first_id,second_id,controls,settings)
 
-    Z_lincom = nothing 
-    if  parsed_args["do_lincom"]
+    if  parsed_args["do_lincom"]   
         #Construct Transform 
         F = sparse(collect(1:length(second_id)),second_id,1)
         J = size(F,2)
@@ -322,37 +348,7 @@ function real_main()
         S = vcat(S,sparse(-zeros(1,J-1)))
         Transform = hcat(spzeros(length(second_id),maximum(first_id)), -F*S )
 
-        #Construct Z_lincom 
-        if lincom_covariates == [] 
-            println("\n User asked for lincom but no covariates were specified. This step will not be performed.")
-        else
-            if typeof(lincom_covariates[1]) == String 
-                #Build lincom controls matrix 
-                lincom_labels = []
-                push!(lincom_labels,String.(lincom_covariates[1]))
-                
-                Z_lincom = data[obs,lincom_covariates[1]]
-                if length(lincom_covariates)>=2
-                    for k=2:length(lincom_covariates)
-                        hcat(Z_lincom, data[obs,lincom_covariates[k]])
-                        push!(lincom_labels,String.(lincom_covariates[k]))
-                    end
-                end     
-            else
-                println("WARNING: Elements of lincom covariates are not defined correctly. No inference will be performed.")
-            end
-        end 
-    end
-
-    if Z_lincom != nothing     
-        #Collapse and reweight to person-year observations 
-        match_id = compute_matchid(second_id, first_id)
-        Z_lincom_col = ones(size(Z_lincom,1),1)
-        for i = 1:size(Z_lincom,2)
-            Z_lincom_col = hcat(Z_lincom_col,(transform(groupby(DataFrame(z = Z_lincom[:,i], match_id = match_id), :match_id), :z => mean  => :z_py).z_py)) 
-        end
-
-        @unpack test_statistic, linear_combination , SE_linear_combination_KSS, SE_naive = lincom_KSS(y,X, Z_lincom_col, Transform, sigma_i; lincom_labels)
+        @unpack test_statistic, linear_combination , SE_linear_combination_KSS, SE_naive = lincom_KSS(y,X, Z_lincom, Transform, sigma_i; lincom_labels)
     end 
 
     if parsed_args["write_detailed_csv"]
@@ -449,13 +445,25 @@ function real_main()
                    
 
                     if Z_lincom != nothing 
+                        #Establish basis 
+                        zz = Z_lincom'*Z_lincom
+                        invzz  =invsym!(Symmetric(deepcopy(zz)), setzeros=true)
+                        basis = diag(invzz).<0
+
+                        # Modify labels if they are present 
+                        lincom_labels = lincom_labels == nothing ? nothing : lincom_labels[basis[2:end]]
+
+                        #Check if the basis includes the intercept
+                        has_cons = basis[1] == true ? 1 : 0   
+
                         #Write the output of inference 
                         r = size(Z_lincom_col,2)
                         write(io,"    Results of High Dimensional Lincom \n\n")
                         if lincom_labels == nothing 
-                            for q=2:r
+                            start = has_cons == 1 ? 2 : 1
+                            for q=start:r
                                 if q <= r
-                                    ncol = q-1 
+                                    ncol = has_cons ==  1 ? q-1 : q
                                     output_inference = """
                                         Coefficient of Column $(ncol): $(linear_combination[q]) \n
                                         Traditional HC Standard Error of Column $(ncol): $(SE_naive[q]) \n 
@@ -466,8 +474,10 @@ function real_main()
                                 end
                             end
                         else
-                            for q=2:r
-                                tell_me = lincom_labels[q-1]
+                            start = has_cons == 1 ? 2 : 1
+                            for q=start:r
+                                pos = has_cons ==  1 ? q-1 : q
+                                tell_me = lincom_labels[pos]
                                 output_inference = """
                                     Coefficient on $(tell_me): $(linear_combination[q-1]) \n
                                     Traditional HC Standard Error on $(tell_me): $(SE_naive[q-1]) \n 
