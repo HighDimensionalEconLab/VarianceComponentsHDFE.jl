@@ -1040,7 +1040,7 @@ function lincom_KSS(y,X, Z, Transform, sigma_i; lincom_labels = nothing)
 
 
     #PART 4: REPORT
-    println("Inference on Linear Combinations:")
+    println("\nInference on Linear Combinations:")
     if lincom_labels == nothing
         start = has_cons == 1 ? 2 : 1
         for q=start:r

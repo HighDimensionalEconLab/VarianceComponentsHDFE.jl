@@ -275,9 +275,6 @@ function real_main()
             println("WARNING: Elements of lincom covariates are not defined correctly. No inference will be performed.")
         end
     end 
-
-        #Now subset to the Leave Out Sample
-        Z_lincom = Z_lincom[obs,:]
     end
 
     #Residualize outcome variable 
@@ -499,5 +496,4 @@ function real_main()
 end
 
 end
-
 
